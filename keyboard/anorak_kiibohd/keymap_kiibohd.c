@@ -1,95 +1,96 @@
-/*
- * HHKB Layout
- */
 #include "keymap_common.h"
+#include "backlight.h"
+#include "config.h"
 
+/*
+ *
+ *
+ *  Keymaps
+ *
+ *
+ */
 
-#ifdef KEYMAP_SECTION_ENABLE
-const uint8_t keymaps[][MATRIX_ROWS][MATRIX_COLS] __attribute__ ((section (".keymap.keymaps"))) = {
-#else
-const uint8_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM = {
-#endif
-    /* Layer 0: Default Layer
-     * ,-----------------------------------------------------------.
-     * |Esc|  1|  2|  3|  4|  5|  6|  7|  8|  9|  0|  -|  =|  \|  `|
-     * |-----------------------------------------------------------|
-     * |Tab  |  Q|  W|  E|  R|  T|  Y|  U|  I|  O|  P|  [|  ]|Backs|
-     * |-----------------------------------------------------------|
-     * |Contro|  A|  S|  D|  F|  G|  H|  J|  K|  L|  ;|  '|Enter   |
-     * |-----------------------------------------------------------|
-     * |Shift   |  Z|  X|  C|  V|  B|  N|  M|  ,|  .|  /|Shift |Fn0|
-     * `-----------------------------------------------------------'
-     *       |Alt|Gui  |         Space         |Gui  |Alt|
-     *       `-------------------------------------------'
+const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+    /*
+     * 0: Default layer
+     * ,-------------------------.
+     * |Esc  |   1|  2|  3|  4|  5|
+     * |--------------------------|
+     * |Tab  |   T|  Q|  W|  E|  R|
+     * |--------------------------|
+     * |RCtrl|   G|  A|  S|  D|  F|
+     * |--------------------------|
+     * |Shift|   B|  Z|  X|  C|  V|
+     * |--------------------------|
+     * |LCtrl|LAlt|Meta|FN0|Taunt|DuckJump FN7|Jump|
+     * `---------------------------------------'
+     *
      */
-    KEYMAP(ESC, 1,   2,   3,   4,   5,   6,   7,   8,   9,   0,   MINS,EQL, BSLS,GRV,   \
-           TAB, Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P,   LBRC,RBRC,BSPC,       \
-           LCTL,A,   S,   D,   F,   G,   H,   J,   K,   L,   SCLN,QUOT,ENT,             \
-           LSFT,Z,   X,   C,   V,   B,   N,   M,   COMM,DOT, SLSH,RSFT,FN0,             \
-                LALT,LGUI,          SPC,                RGUI,RALT),
-
-    /* Layer 1: HHKB mode (HHKB Fn)
-     * ,-----------------------------------------------------------.
-     * |Pwr| F1| F2| F3| F4| F5| F6| F7| F8| F9|F10|F11|F12|Ins|Del|
-     * |-----------------------------------------------------------|
-     * |Caps |   |   |   |   |   |   |   |Psc|Slk|Pus|Up |   |Backs|
-     * |-----------------------------------------------------------|
-     * |      |VoD|VoU|Mut|   |   |  *|  /|Hom|PgU|Lef|Rig|Enter   |
-     * |-----------------------------------------------------------|
-     * |        |   |   |   |   |   |  +|  -|End|PgD|Dow|      |   |
-     * `-----------------------------------------------------------'
-     *       |   |     |                       |     |   |
-     *       `-------------------------------------------'
+	KEYMAP_KIIBOHD(
+        ESC,  1,   2,   3,   4,   5, \
+        TAB,  T,   Q,   W,   E,   R, \
+        FN8,  G,   A,   S,   D,   F, \
+        LSFT, B,   Z,   X,   C,   V, \
+        LCTL, LALT, LGUI, FN0 , SPC, FN7, SPC),
+    /*
+     * 1: FN0 layer
+     *
      */
-    KEYMAP(PWR, F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9,  F10, F11, F12, INS, DEL,   \
-           CAPS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,PSCR,SLCK,PAUS, UP, TRNS, BSPC,      \
-           TRNS,VOLD,VOLU,MUTE,TRNS,TRNS,PAST,PSLS,HOME,PGUP,LEFT,RGHT,PENT,            \
-           TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,PPLS,PMNS,END, PGDN,DOWN,TRNS,TRNS,            \
-                TRNS,TRNS,          TRNS,               TRNS,TRNS),
+    KEYMAP_KIIBOHD(
+        PAUS,   6,   7,   8,   9,   0,   \
+        TRNS,VOLD,VOLU,MUTE,EJCT,TRNS,  \
+         FN1, FN2, FN3, FN4, FN5, FN6,  \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,  \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS)
 };
 
 
+/*
+ *
+ *
+ *  Actions
+ *
+ *
+ */
+
+/* id for user defined function/macro */
+enum function_id {
+    NONE,
+};
+
+enum macro_id {
+    KIIBOHD_MACRO_DUCK_JUMP,
+};
 
 /*
  * Fn action definition
  */
-#ifdef KEYMAP_SECTION_ENABLE
-const uint16_t fn_actions[] __attribute__ ((section (".keymap.fn_actions"))) = {
-    [0]  = ACTION_LAYER_MOMENTARY(1),
-    [1]  = ACTION_LAYER_MOMENTARY(2),
-    [2]  = ACTION_LAYER_MOMENTARY(3),
-    [3]  = ACTION_LAYER_MOMENTARY(4),
-    [4]  = ACTION_LAYER_MOMENTARY(5),
-    [5]  = ACTION_LAYER_MOMENTARY(6),
-    [6]  = ACTION_LAYER_MOMENTARY(7),
-    [7]  = ACTION_LAYER_TOGGLE(1),
-    [8]  = ACTION_LAYER_TOGGLE(2),
-    [9]  = ACTION_LAYER_TOGGLE(3),
-    [10] = ACTION_LAYER_TAP_TOGGLE(1),
-    [11] = ACTION_LAYER_TAP_TOGGLE(2),
-    [12] = ACTION_LAYER_TAP_TOGGLE(3),
-    [13] = ACTION_LAYER_TAP_KEY(1, KC_BSLASH),
-    [14] = ACTION_LAYER_TAP_KEY(2, KC_TAB),
-    [15] = ACTION_LAYER_TAP_KEY(3, KC_ENTER),
-    [16] = ACTION_LAYER_TAP_KEY(4, KC_SPACE),
-    [17] = ACTION_LAYER_TAP_KEY(5, KC_SCOLON),
-    [18] = ACTION_LAYER_TAP_KEY(6, KC_QUOTE),
-    [19] = ACTION_LAYER_TAP_KEY(7, KC_SLASH),
-    [20] = ACTION_MODS_TAP_KEY(MOD_LSFT, KC_SPACE),
-    [21] = ACTION_MODS_TAP_KEY(MOD_LCTL, KC_SPACE),
-    [22] = ACTION_MODS_TAP_KEY(MOD_RCTL, KC_QUOTE),
-    [23] = ACTION_MODS_TAP_KEY(MOD_RCTL, KC_ENTER),
-    [24] = ACTION_MODS_TAP_KEY(MOD_LCTL, KC_ESC),
-    [25] = ACTION_MODS_TAP_KEY(MOD_LCTL, KC_BSPACE),
-    [26] = ACTION_MODS_ONESHOT(MOD_LCTL),
-    [27] = ACTION_MODS_TAP_KEY(MOD_LSFT, KC_ESC),
-    [28] = ACTION_MODS_TAP_KEY(MOD_LSFT, KC_BSPACE),
-    [29] = ACTION_MODS_ONESHOT(MOD_LSFT),
-    [30] = ACTION_MODS_TAP_KEY(MOD_RSFT, KC_GRAVE),
-    [31] = ACTION_MODS_TAP_KEY(MOD_RSFT, KC_BSLASH),
+const uint16_t PROGMEM fn_actions[] = {
+    [0] = ACTION_LAYER_MOMENTARY(1),
+    [1] = ACTION_BACKLIGHT_TOGGLE(),
+    [2] = ACTION_BACKLIGHT_INCREASE(),
+    [3] = ACTION_BACKLIGHT_DECREASE(),
+    [4] = ACTION_BACKLIGHT_LEVEL(BACKLIGHT_ALL),
+    [5] = ACTION_BACKLIGHT_LEVEL(BACKLIGHT_WASD),
+    [6] = ACTION_BACKLIGHT_LEVEL(BACKLIGHT_JUMP),
+    [7] = ACTION_MACRO(KIIBOHD_MACRO_DUCK_JUMP),
+    //ACTION_MODS_KEY(MOD_LCTL, KC_SPC)
+    [8] = ACTION_MODS_TAP_KEY(MOD_RCTL, KC_F12),
 };
-#else
-const uint16_t fn_actions[] PROGMEM = {
-    [0]  = ACTION_LAYER_MOMENTARY(1),
-};
+
+
+/*
+ * Macro definition
+ */
+const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
+{
+#if 0
+    switch (id) {
+        case KIIBOHD_MACRO_DUCK_JUMP:
+            return (record->event.pressed ?
+                    MACRO( D(SPC) D(LCTL), END ) :
+                    MACRO( U(SPC), END ));
+    }
 #endif
+    return MACRO_NONE;
+}

@@ -19,25 +19,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CONFIG_H
 
 
-#define VENDOR_ID       0xFEED
-#define PRODUCT_ID      0xCAFE
-#define DEVICE_VER      0x0104
-#define MANUFACTURER    t.m.k.
-#define PRODUCT         HHKB mod
-#define DESCRIPTION     t.m.k. keyboard firmware for HHKB mod
+#define VENDOR_ID       0xDEAD
+#define PRODUCT_ID      0xBEEF
+#define DEVICE_VER      0x0101
+#define MANUFACTURER    Anorak
+#define PRODUCT         kiibohd
+#define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
 
 
 /* matrix size */
-#ifdef HHKB_JP
-#   define MATRIX_ROWS 16
+#define MATRIX_57
+//#define MATRIX_75
+
+#ifdef MATRIX_57
+#define MATRIX_ROWS 5
+#define MATRIX_COLS 7
 #else
-#   define MATRIX_ROWS 8
+#ifdef MATRIX_75
+#define MATRIX_ROWS 7
+#define MATRIX_COLS 5
+#else
+#error No matrix size defined!
 #endif
-#define MATRIX_COLS 8
+#endif
 
 
 /* key combination for command */
-#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT))) 
+#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LCTRL) | MOD_BIT(KC_RCTRL)))
 
 
 /* period of tapping(ms) */
@@ -50,13 +58,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* Boot Magic salt key: Space */
 #define BOOTMAGIC_KEY_SALT      KC_SPACE
 
-
 /*
  * Feature disable options
  *  These options are also useful to firmware size reduction.
  */
 /* disable debug print */
 //#define NO_DEBUG
+//#define NO_DEBUG_LEDS
 
 /* disable print */
 //#define NO_PRINT

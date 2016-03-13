@@ -36,6 +36,9 @@
 #                   bug reports to the GCC project.
 #
 # To rebuild project do "make clean" then "make all".
+#
+# avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
+#
 #----------------------------------------------------------------------------
 
 # Target file name (without extension).
@@ -119,9 +122,9 @@ COMMAND_ENABLE = yes    	# Commands for debug and configuration
 NKRO_ENABLE = yes		# USB Nkey Rollover
 #KEYMAP_SECTION_ENABLE = yes	# fixed address keymap for keymap editor
 
-OPT_DEFS += -DNO_ACTION_TAPPING
-OPT_DEFS += -DNO_ACTION_LAYER
-OPT_DEFS += -DNO_ACTION_MACRO
+#OPT_DEFS += -DNO_ACTION_TAPPING
+#OPT_DEFS += -DNO_ACTION_LAYER
+#OPT_DEFS += -DNO_ACTION_MACRO
 
 
 #

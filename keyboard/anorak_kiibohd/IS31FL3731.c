@@ -1,6 +1,6 @@
 
 #include "IS31FL3731.h"
-#include "i2c_buffer.h"
+#include "TWIlib.h"
 
 uint8_t _i2caddr;
 uint8_t _frame;
@@ -24,10 +24,26 @@ const uint8_t IS31FL3731_defaultBrightness1[] = {_i2caddr, // I2C address
                                                  0x24,     // Starting register address
                                                  ISSILedDefaultBrightness};
 
+
+
+uint8_t I2C_Send(uint8_t *data, uint8_t sendLen, uint8_t recvLen)
+{
+    TWITransmitData(data, sendLen, 0);
+
+    if (recvLen)
+    {
+        TWIReadData(_i2caddr, 1, 1);
+        // Wait until the TWI has finished before the data is available
+        while (isTWIReady() == 0) {_delay_ms(1);}
+    }
+
+    return 0;
+}
+
 // Setup
+/*
 inline void IS31FL3731_setup()
 {
-    // Register Scan CLI dictionary
 
 
 
@@ -40,6 +56,7 @@ inline void IS31FL3731_setup()
         IS31FL3731_writeReg(0x0A, 0x01, 0x0B);
     }
 }
+*/
 
 void IS31FL3731_init(uint8_t addr)
 {
@@ -125,10 +142,15 @@ void IS31FL3731_displayFrame(uint8_t f)
 
 void IS31FL3731_selectBank(uint8_t b)
 {
+    uint8_t data[3] = { _i2caddr, ISSI_COMMANDREGISTER, b };
+    TWITransmitData(data, 3, 0);
+
+    /*
     Wire.beginTransmission(_i2caddr);
     Wire.write((byte)ISSI_COMMANDREGISTER);
     Wire.write(b);
     Wire.endTransmission();
+    */
 }
 
 void IS31FL3731_audioSync(bool sync)
@@ -147,10 +169,15 @@ void IS31FL3731_writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 {
     selectBank(b);
 
+    uint8_t transmitdata[3] = { _i2caddr, reg, data };
+    TWITransmitData(transmitdata, 3, 0);
+
+    /*
     Wire.beginTransmission(_i2caddr);
     Wire.write((byte)reg);
     Wire.write((byte)data);
     Wire.endTransmission();
+    */
 
     // Serial.print("$"); Serial.print(reg, HEX);
     // Serial.print(" = 0x"); Serial.println(data, HEX);
@@ -162,6 +189,16 @@ uint8_t IS31FL3731_readRegister8(uint8_t bank, uint8_t reg)
 
     selectBank(bank);
 
+    uint8_t data[2] = { _i2caddr, reg };
+    TWITransmitData(data, 3, 0);
+
+    TWIReadData(_i2caddr, 1, 1);
+    // Wait until the TWI has finished before the data is available
+    while (isTWIReady() == 0) {_delay_ms(1);}
+    // TWI has finished, write the data to the LCD
+    return TWIReceiveBuffer[0];
+
+    /*
     Wire.beginTransmission(_i2caddr);
     Wire.write((byte)reg);
     Wire.endTransmission();
@@ -175,6 +212,7 @@ uint8_t IS31FL3731_readRegister8(uint8_t bank, uint8_t reg)
     //  Serial.print(": 0x"); Serial.println(x, HEX);
 
     return x;
+    */
 }
 
 void IS31FL3731_zeroPages(uint8_t startPage, uint8_t numPages, uint8_t startReg, uint8_t endReg)

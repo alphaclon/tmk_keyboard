@@ -11,3 +11,5 @@ tags
 *~
 build/
 *.bak
+/.cproject
+/.project

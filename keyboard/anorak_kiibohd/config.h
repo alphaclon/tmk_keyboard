@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-
 #define VENDOR_ID       0xDEAD
 #define PRODUCT_ID      0xBEEF
 #define DEVICE_VER      0x0101
@@ -42,6 +41,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #error No matrix size defined!
 #endif
 #endif
+
+
+#define BACKLIGHT_LEVELS 4
 
 
 /* key combination for command */

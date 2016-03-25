@@ -51,7 +51,7 @@ extern const uint16_t fn_actions[];
 	{ KC_##K03, KC_##K13, KC_##K23, KC_##K33, KC_##K43 }, \
 	{ KC_##K04, KC_##K14, KC_##K24, KC_##K34, KC_##K44 }, \
 	{ KC_##K05, KC_##K15, KC_##K25, KC_##K35, KC_##K45 }, \
-	{    KC_NO,    KC_NO,    KC_NO,   KC_NO, KC_##K46 } \
+	{    KC_NO,    KC_NO,    KC_NO,    KC_NO, KC_##K46 } \
 }
 
 #else

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define _IS31Fl3731_H_
 
 #include <inttypes.h>
+#include <stdbool.h>
 #include "IS31FL3731Defaults.h"
 
 /*
@@ -26,23 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * https://github.com/adafruit/Adafruit_IS31FL3731
  *
  */
-
-#define ISSI_REG_CONFIG  0x00
-#define ISSI_REG_CONFIG_PICTUREMODE 0x00
-#define ISSI_REG_CONFIG_AUTOPLAYMODE 0x08
-#define ISSI_REG_CONFIG_AUDIOPLAYMODE 0x18
-
-#define ISSI_CONF_PICTUREMODE 0x00
-#define ISSI_CONF_AUTOFRAMEMODE 0x04
-#define ISSI_CONF_AUDIOMODE 0x08
-
-#define ISSI_REG_PICTUREFRAME  0x01
-
-#define ISSI_REG_SHUTDOWN 0x0A
-#define ISSI_REG_AUDIOSYNC 0x06
-
-#define ISSI_COMMANDREGISTER 0xFD
-#define ISSI_BANK_FUNCTIONREG 0x0B    // helpfully called 'page nine'
 
 // Basic LED Control Capability
 typedef enum LedControlMode
@@ -64,9 +48,10 @@ typedef struct LedControl
     uint16_t index;
 } LedControl;
 
-void IS31FL3731_init(uint8_t addr = ISSI_ADDR_DEFAULT);
+void IS31FL3731_test(uint8_t addr);
+void IS31FL3731_init(uint8_t addr);
 void IS31FL3731_drawPixel(int16_t x, int16_t y, uint16_t color);
-void IS31FL3731_setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank = 0);
+void IS31FL3731_setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank);
 void IS31FL3731_audioSync(bool sync);
 void IS31FL3731_setFrame(uint8_t b);
 void IS31FL3731_displayFrame(uint8_t frame);

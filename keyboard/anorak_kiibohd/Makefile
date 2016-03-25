@@ -50,11 +50,17 @@ TMK_DIR = ../../tmk_core
 # Directory keyboard dependent files exist
 TARGET_DIR = .
 
-
 # List C source files here. (C dependencies are automatically generated.)
 SRC +=	keymap_common.c \
 	matrix.c \
-	led.c
+	led.c \
+	backlight_kiibohd.c \
+	TWIlib.c \
+	IS31FL3731Defaults.c \
+	IS31FL3731.c \
+	i2cmaster/twimaster.c \
+	
+	
 
 CONFIG_H = config.h
 
@@ -119,7 +125,9 @@ BOOTMAGIC_ENABLE = yes		# Virtual DIP switch configuration
 EXTRAKEY_ENABLE = yes		# Audio control and System control
 CONSOLE_ENABLE = yes		# Console for debug
 COMMAND_ENABLE = yes    	# Commands for debug and configuration
-NKRO_ENABLE = yes		# USB Nkey Rollover
+BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
+NKRO_ENABLE = yes		    # USB Nkey Rollover
+#SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 #KEYMAP_SECTION_ENABLE = yes	# fixed address keymap for keymap editor
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
@@ -145,9 +153,9 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
-debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
+debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION -Ii2cmaster
 debug-on: all
 
-debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
+debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT -Ii2cmaster
 debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
 debug-off: all

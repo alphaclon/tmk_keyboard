@@ -3,13 +3,78 @@
  *
  *  Created: 6/01/2014 10:41:33 PM
  *  Author: Chris Herring
- */ 
+ */
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
+#include <avr/io.h>
 #include "TWIlib.h"
-#include "util/delay.h"
-#include "FDCC_LCD.h"
+
+// TWI bit rate
+#define TWI_FREQ 100000
+// Get TWI status
+#define TWI_STATUS	(TWSR & 0xF8)
+// Transmit buffer length
+#define TXMAXBUFLEN 20
+// Receive buffer length
+#define RXMAXBUFLEN 20
+// Global transmit buffer
+uint8_t TWITransmitBuffer[TXMAXBUFLEN];
+// Global receive buffer
+volatile uint8_t TWIReceiveBuffer[RXMAXBUFLEN];
+// Buffer indexes
+volatile int TXBuffIndex; // Index of the transmit buffer. Is volatile, can change at any time.
+int RXBuffIndex; // Current index in the receive buffer
+// Buffer lengths
+int TXBuffLen; // The total length of the transmit buffer
+int RXBuffLen; // The total number of bytes to read (should be less than RXMAXBUFFLEN)
+
+typedef enum {
+	Ready,
+	Initializing,
+	RepeatedStartSent,
+	MasterTransmitter,
+	MasterReceiver,
+	SlaceTransmitter,
+	SlaveReciever
+	} TWIMode;
+
+ typedef struct TWIInfoStruct{
+	TWIMode mode;
+	uint8_t errorCode;
+	uint8_t repStart;
+	}TWIInfoStruct;
+TWIInfoStruct TWIInfo;
+
+
+// TWI Status Codes
+#define TWI_START_SENT			0x08 // Start sent
+#define TWI_REP_START_SENT		0x10 // Repeated Start sent
+// Master Transmitter Mode
+#define TWI_MT_SLAW_ACK			0x18 // SLA+W sent and ACK received
+#define TWI_MT_SLAW_NACK		0x20 // SLA+W sent and NACK received
+#define TWI_MT_DATA_ACK			0x28 // DATA sent and ACK received
+#define TWI_MT_DATA_NACK		0x30 // DATA sent and NACK received
+// Master Receiver Mode
+#define TWI_MR_SLAR_ACK			0x40 // SLA+R sent, ACK received
+#define TWI_MR_SLAR_NACK		0x48 // SLA+R sent, NACK received
+#define TWI_MR_DATA_ACK			0x50 // Data received, ACK returned
+#define TWI_MR_DATA_NACK		0x58 // Data received, NACK returned
+
+// Miscellaneous States
+#define TWI_LOST_ARBIT			0x38 // Arbitration has been lost
+#define TWI_NO_RELEVANT_INFO	0xF8 // No relevant information available
+#define TWI_ILLEGAL_START_STOP	0x00 // Illegal START or STOP condition has been detected
+#define TWI_SUCCESS				0xFF // Successful transfer, this state is impossible from TWSR as bit2 is 0 and read only
+
+
+#define TWISendStart()		(TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN)|(1<<TWIE)) // Send the START signal, enable interrupts and TWI, clear TWINT flag to resume transfer.
+#define TWISendStop()		(TWCR = (1<<TWINT)|(1<<TWSTO)|(1<<TWEN)|(1<<TWIE)) // Send the STOP signal, enable interrupts and TWI, clear TWINT flag.
+#define TWISendTransmit()	(TWCR = (1<<TWINT)|(1<<TWEN)|(1<<TWIE)) // Used to resume a transfer, clear TWINT and ensure that TWI and interrupts are enabled.
+#define TWISendACK()		(TWCR = (1<<TWINT)|(1<<TWEN)|(1<<TWIE)|(1<<TWEA)) // FOR MR mode. Resume a transfer, ensure that TWI and interrupts are enabled and respond with an ACK if the device is addressed as a slave or after it receives a byte.
+#define TWISendNACK()		(TWCR = (1<<TWINT)|(1<<TWEN)|(1<<TWIE)) // FOR MR mode. Resume a transfer, ensure that TWI and interrupts are enabled but DO NOT respond with an ACK if the device is addressed as a slave or after it receives a byte.
+
 
 void TWIInit()
 {
@@ -53,9 +118,9 @@ uint8_t TWITransmitData(void *const TXdata, uint8_t dataLen, uint8_t repStart)
 		// Copy transmit info to global variables
 		TXBuffLen = dataLen;
 		TXBuffIndex = 0;
-		
+
 		// If a repeated start has been sent, then devices are already listening for an address
-		// and another start does not need to be sent. 
+		// and another start does not need to be sent.
 		if (TWIInfo.mode == RepeatedStartSent)
 		{
 			TWIInfo.mode = Initializing;
@@ -67,7 +132,7 @@ uint8_t TWITransmitData(void *const TXdata, uint8_t dataLen, uint8_t repStart)
 			TWIInfo.mode = Initializing;
 			TWISendStart();
 		}
-		
+
 	}
 	else
 	{
@@ -96,6 +161,13 @@ uint8_t TWIReadData(uint8_t TWIaddr, uint8_t bytesToRead, uint8_t repStart)
 		return 0;
 	}
 	return 1;
+}
+
+uint8_t TWIReceiveBufferAt(uint8_t pos)
+{
+	if (pos < RXMAXBUFLEN)
+		return TWIReceiveBuffer[pos];
+	return 0;
 }
 
 ISR (TWI_vect)
@@ -128,9 +200,9 @@ ISR (TWI_vect)
 				TWISendStop();
 			}
 			break;
-		
+
 		// ----\/ ---- MASTER RECEIVER ----\/ ----  //
-		
+
 		case TWI_MR_SLAR_ACK: // SLA+R has been transmitted, ACK has been received
 			// Switch to Master Receiver mode
 			TWIInfo.mode = MasterReceiver;
@@ -147,9 +219,9 @@ ISR (TWI_vect)
 				TWISendNACK();
 			}
 			break;
-		
+
 		case TWI_MR_DATA_ACK: // Data has been received, ACK has been transmitted.
-		
+
 			/// -- HANDLE DATA BYTE --- ///
 			TWIReceiveBuffer[RXBuffIndex++] = TWDR;
 			// If there is more than one byte to be read, receive data byte and return an ACK
@@ -165,11 +237,11 @@ ISR (TWI_vect)
 				TWISendNACK();
 			}
 			break;
-		
+
 		case TWI_MR_DATA_NACK: // Data byte has been received, NACK has been transmitted. End of transmission.
-		
+
 			/// -- HANDLE DATA BYTE --- ///
-			TWIReceiveBuffer[RXBuffIndex++] = TWDR;	
+			TWIReceiveBuffer[RXBuffIndex++] = TWDR;
 			// This transmission is complete however do not release bus yet
 			if (TWIInfo.repStart)
 			{
@@ -184,16 +256,16 @@ ISR (TWI_vect)
 				TWISendStop();
 			}
 			break;
-		
+
 		// ----\/ ---- MT and MR common ----\/ ---- //
-		
+
 		case TWI_MR_SLAR_NACK: // SLA+R transmitted, NACK received
 		case TWI_MT_SLAW_NACK: // SLA+W transmitted, NACK received
 		case TWI_MT_DATA_NACK: // Data byte has been transmitted, NACK received
 		case TWI_LOST_ARBIT: // Arbitration has been lost
 			// Return error and send stop and set mode to ready
 			if (TWIInfo.repStart)
-			{				
+			{
 				TWIInfo.errorCode = TWI_STATUS;
 				TWISendStart();
 			}
@@ -209,15 +281,15 @@ ISR (TWI_vect)
 			// Set the mode but DO NOT clear TWINT as the next data is not yet ready
 			TWIInfo.mode = RepeatedStartSent;
 			break;
-		
+
 		// ----\/ ---- SLAVE RECEIVER ----\/ ----  //
-		
+
 		// TODO  IMPLEMENT SLAVE RECEIVER FUNCTIONALITY
-		
+
 		// ----\/ ---- SLAVE TRANSMITTER ----\/ ----  //
-		
+
 		// TODO  IMPLEMENT SLAVE TRANSMITTER FUNCTIONALITY
-		
+
 		// ----\/ ---- MISCELLANEOUS STATES ----\/ ----  //
 		case TWI_NO_RELEVANT_INFO: // It is not really possible to get into this ISR on this condition
 								   // Rather, it is there to be manually set between operations
@@ -228,5 +300,5 @@ ISR (TWI_vect)
 			TWISendStop();
 			break;
 	}
-	
+
 }

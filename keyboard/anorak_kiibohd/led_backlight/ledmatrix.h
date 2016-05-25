@@ -22,10 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define ISSI_ADDR_DEFAULT 0x74
 
-// TODO Needs to be defined per keyboard
-#define IS31FL3731_TotalChannels 144
-#define IS31FL3731_BufferLength 144
-
 /*
  * LED Mask
  *

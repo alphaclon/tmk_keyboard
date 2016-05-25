@@ -14,7 +14,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -22,33 +21,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PRODUCT_ID      0xBEEF
 #define DEVICE_VER      0x0101
 #define MANUFACTURER    Anorak
-#define PRODUCT         kiibohd
+#define PRODUCT         gaming kiibohd
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
-
 
 /* matrix size */
 #define MATRIX_57
-//#define MATRIX_75
-
-#ifdef MATRIX_57
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 7
-#else
-#ifdef MATRIX_75
-#define MATRIX_ROWS 7
-#define MATRIX_COLS 5
-#else
-#error No matrix size defined!
-#endif
-#endif
-
 
 #define BACKLIGHT_LEVELS 4
 
-
 /* key combination for command */
 #define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LCTRL) | MOD_BIT(KC_RCTRL)))
-
 
 /* period of tapping(ms) */
 #define TAPPING_TERM    300

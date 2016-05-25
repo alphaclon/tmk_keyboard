@@ -8,3 +8,5 @@ enum backlight_region
     BACKLIGHT_REGION_LOGO = 0x10,
     BACKLIGHT_REGION_CASE = 0x20,
 };
+
+

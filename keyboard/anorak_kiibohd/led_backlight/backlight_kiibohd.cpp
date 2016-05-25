@@ -16,28 +16,66 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "IS31FL3731/Adafruit_IS31FL3731.h"
+#include "backlight_kiibohd.h"
+
+
+extern "C" {
 #include "debug.h"
 #include "backlight.h"
-#include "backlight_kiibohd.h"
-#include "IS31FL3731.h"
+#include "../twi/i2c.h"
+}
 
-#ifdef USE_ASYNC_I2C
-#include "TWIlib.h"
-#else
-#include "i2cmaster/i2cmaster.h"
-#endif
+uint8_t LedMaskAll[] =
+{
+    0x0, 0x0, /* C1-1 -> C1-16 */
+    0x0, 0x0, /* C2-1 -> C2-16 */
+    0x0, 0x0, /* C3-1 -> C3-16 */
+    0x0, 0x0, /* C4-1 -> C4-16 */
+    0x0, 0x0, /* C5-1 -> C5-16 */
+    0x0, 0x0, /* C6-1 -> C6-16 */
+    0x0, 0x0, /* C7-1 -> C7-16 */
+    0x0, 0x0, /* C8-1 -> C8-16 */
+    0x0, 0x0, /* C9-1 -> C9-16 */
+};
+
+Adafruit_IS31FL3731 issi;
+
+extern "C" {
 
 void backlight_setup()
 {
-	//TWIInit();
-	i2c_init();
+	dprintf("backlight_setup\n");
 
-	IS31FL3731_test(ISSI_ADDR_DEFAULT);
+	i2cInit();
+	i2cSetBitrate(400);
+
+	issi.begin();
+	issi.setLEDPWM(1, 0xff, 0);
+
+	/*
+
+	issi.setRowEnableMask(0, 0x3F0F);
+	issi.setRowEnableMask(1, 0x3F00);
+	issi.setRowEnableMask(2, 0x3F00);
+	issi.setRowEnableMask(3, 0x3F00);
+	issi.setRowEnableMask(4, 0x3F00);
+	issi.setRowEnableMask(5, 0x0001);
+
+	*/
+
+	//TWIInit();
+	//i2c_init();
+
+	//IS31FL3731_test(ISSI_ADDR_DEFAULT);
 	//IS31FL3731_init(ISSI_ADDR_DEFAULT);
 }
 
 void backlight_set(uint8_t level)
 {
+	dprintf("backlight_set %d\n", level);
+
+	/*
 	LedControl control;
 	control.mode = LedControlMode_brightness_set_all;
 
@@ -64,6 +102,7 @@ void backlight_set(uint8_t level)
 	}
 
 	IS31FL3731_control(&control);
+	*/
 }
 
 void backlight_set_region(uint8_t region)
@@ -73,8 +112,10 @@ void backlight_set_region(uint8_t region)
 	switch (region)
 	{
 	case BACKLIGHT_REGION_ALL:
+		issi.displayFrame(0);
 		break;
 	default:
 		break;
 	}
+}
 }

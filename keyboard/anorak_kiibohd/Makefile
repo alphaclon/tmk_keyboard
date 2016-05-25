@@ -51,17 +51,24 @@ TMK_DIR = ../../tmk_core
 TARGET_DIR = .
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC +=	keymap_common.c \
+SRC += \
+	keymap_common.c \
 	matrix.c \
 	led.c \
-	backlight_kiibohd.c \
-	TWIlib.c \
 	IS31FL3731Defaults.c \
 	IS31FL3731.c \
 	i2cmaster/twimaster.c \
+	twi/i2c.c \
+	led_backlight/gfx/new.cpp \
+	led_backlight/gfx/glcdfont.c \
+	led_backlight/gfx/Adafruit_GFX.cpp \
+	led_backlight/gfx/WString.cpp \
+	led_backlight/gfx/Print.cpp \
+	led_backlight/IS31FL3731/Adafruit_IS31FL3731.cpp \
+	led_backlight/backlight_kiibohd.c \
 	
+PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
 	
-
 CONFIG_H = config.h
 
 

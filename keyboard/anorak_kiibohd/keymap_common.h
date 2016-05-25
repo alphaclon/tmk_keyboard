@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keymap.h"
 #include "config.h"
 
-
 extern const uint8_t keymaps[][MATRIX_ROWS][MATRIX_COLS];
 extern const uint16_t fn_actions[];
 
@@ -56,8 +55,8 @@ extern const uint16_t fn_actions[];
 
 #else
 
-// 7 Columns/Spalten
 // 5 Rows/Reihen
+// 7 Columns/Spalten
 
 #define KEYMAP_KIIBOHD( \
     K00, K01, K02, K03, K04, K05, \

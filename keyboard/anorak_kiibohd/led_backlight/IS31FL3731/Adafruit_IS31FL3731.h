@@ -41,10 +41,12 @@ class Adafruit_IS31FL3731 : public Adafruit_GFX {
   Adafruit_IS31FL3731(uint8_t x=16, uint8_t y=9);
   virtual ~Adafruit_IS31FL3731();
 
-  boolean begin(uint8_t addr = ISSI_ADDR_DEFAULT);
+  bool begin(uint8_t addr = ISSI_ADDR_DEFAULT);
 
   void drawPixel(int16_t x, int16_t y, uint16_t color);
+
   void clear(void);
+  void setRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank = 0);
 
   void setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank = 0);
   void setLEDPWM(tPWMData pwm, uint8_t bank = 0);
@@ -52,11 +54,12 @@ class Adafruit_IS31FL3731 : public Adafruit_GFX {
   void setFrame(uint8_t b);
   void displayFrame(uint8_t frame);
 
-  void audioSync(boolean sync);
+  void audioSync(bool sync);
 
  protected:
   void selectBank(uint8_t bank);
   void writeRegister8(uint8_t bank, uint8_t reg, uint8_t data);
+  void writeRegister16(uint8_t bank, uint8_t reg, uint16_t data);
   uint8_t readRegister8(uint8_t bank, uint8_t reg);
   uint8_t _i2caddr, _frame;
 };

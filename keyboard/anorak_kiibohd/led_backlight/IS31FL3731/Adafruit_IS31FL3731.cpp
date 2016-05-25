@@ -1,5 +1,10 @@
+
 #include "Adafruit_IS31FL3731.h"
+#include <util/delay.h>
+
+extern "C" {
 #include "../../twi/i2c.h"
+}
 
 #ifndef _swap_int16_t
 #define _swap_int16_t(a, b) { int16_t t = a; a = b; b = t; }
@@ -9,7 +14,7 @@
 Adafruit_IS31FL3731::Adafruit_IS31FL3731(uint8_t x, uint8_t y) :
 		Adafruit_GFX(x, y)
 {
-	_i2caddr = 0;
+	_i2caddr = ISSI_ADDR_DEFAULT;
 	_frame = 0;
 }
 
@@ -23,7 +28,7 @@ Adafruit_IS31FL3731_Wing::Adafruit_IS31FL3731_Wing(void) :
 {
 }
 
-boolean Adafruit_IS31FL3731::begin(uint8_t addr)
+bool Adafruit_IS31FL3731::begin(uint8_t addr)
 {
 	_i2caddr = addr;
 	_frame = 0;
@@ -31,7 +36,7 @@ boolean Adafruit_IS31FL3731::begin(uint8_t addr)
 	// shutdown
 	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x00);
 
-	delay(10);
+	_delay_ms(10);
 
 	// picture mode
 	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG,
@@ -53,7 +58,20 @@ boolean Adafruit_IS31FL3731::begin(uint8_t addr)
 	// out of shutdown
 	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x01);
 
+    writeRegister8(0,  0, 0x3F);
+    writeRegister8(0,  1, 0x0F);
+    writeRegister8(0,  2, 0x3F);
+    writeRegister8(0,  4, 0x3F);
+    writeRegister8(0,  6, 0x3F);
+    writeRegister8(0,  8, 0x3F);
+    writeRegister8(0, 10, 0x01);
+
 	return true;
+}
+
+void Adafruit_IS31FL3731::setRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank)
+{
+	writeRegister16(bank, row*2, mask);
 }
 
 void Adafruit_IS31FL3731::clear(void)
@@ -204,7 +222,7 @@ void Adafruit_IS31FL3731::selectBank(uint8_t b)
 	 */
 }
 
-void Adafruit_IS31FL3731::audioSync(boolean sync)
+void Adafruit_IS31FL3731::audioSync(bool sync)
 {
 	if (sync)
 	{
@@ -223,6 +241,23 @@ void Adafruit_IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 
 	uint8_t cmd[2] = { reg, data };
 	i2cMasterSend(_i2caddr, 2, cmd);
+
+	/*
+	Wire.beginTransmission(_i2caddr);
+	Wire.write((byte) reg);
+	Wire.write((byte) data);
+	Wire.endTransmission();
+	*/
+	//Serial.print("$"); Serial.print(reg, HEX);
+	//Serial.print(" = 0x"); Serial.println(data, HEX);
+}
+
+void Adafruit_IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
+{
+	selectBank(b);
+
+	uint8_t cmd[3] = { reg, data >> 8, data & 0xFF };
+	i2cMasterSend(_i2caddr, 3, cmd);
 
 	/*
 	Wire.beginTransmission(_i2caddr);

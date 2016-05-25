@@ -1,6 +1,6 @@
 #include "keymap_common.h"
 #include <avr/pgmspace.h>
-#include "backlight_kiibohd.h"
+#include "led_backlight/backlight_kiibohd.h"
 #include "config.h"
 
 /* Keymaps
@@ -106,6 +106,8 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
 	}
 	return MACRO_NONE;
 }
+
+void backlight_set_region(uint8_t region);
 
 /*
  * user defined action function

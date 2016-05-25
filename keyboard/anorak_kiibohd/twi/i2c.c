@@ -52,6 +52,9 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/twi.h>
+#include <avr/sfr_defs.h>
+#include <stdbool.h>
+#include "legacy.h"
 
 #include "i2c.h"
 
@@ -126,21 +129,21 @@ void i2cSetBitrate(uint16_t bitrateKHz)
 		cbi(TWSR, TWPS0);
 		cbi(TWSR, TWPS1);
 	#endif
-	// calculate bitrate division	
+	// calculate bitrate division
 	//	original
 /*	bitrate_div = ((F_CPU/1000l)/bitrateKHz);
 	if(bitrate_div >= 16)
 		bitrate_div = (bitrate_div-16)/2;
 	outb(TWBR, bitrate_div); */
-	
-	//modified by MBR 11/19/03 
+
+	//modified by MBR 11/19/03
 	//(CPU/1000/bitrate - 16)/2
-	
+
 	bitrate_div = (((F_CPU/1000)/bitrateKHz) - 16)/2;
-	
+
 	if(bitrate_div < 10)
 		bitrate_div = 10;
-		
+
 	outb(TWBR, bitrate_div);
 }
 
@@ -193,12 +196,12 @@ inline void i2cReceiveByte(uint8_t ackFlag)
 	// begin receive over i2c
 	if( ackFlag )
 	{
-		// ackFlag = TRUE: ACK the recevied data
+		// ackFlag = true: ACK the recevied data
 		outb(TWCR, (inb(TWCR)&TWCR_CMD_MASK)|BV(TWINT)|BV(TWEA));
 	}
 	else
 	{
-		// ackFlag = FALSE: NACK the recevied data
+		// ackFlag = false: NACK the recevied data
 		outb(TWCR, (inb(TWCR)&TWCR_CMD_MASK)|BV(TWINT));
 	}
 }
@@ -318,7 +321,7 @@ uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint8_t length, uint8_t *data)
 		// accept receive data and ack it
 		while(length > 1)
 		{
-			i2cReceiveByte(TRUE);
+			i2cReceiveByte(true);
 			i2cWaitForComplete();
 			*data++ = i2cGetReceivedByte();
 			// decrement length
@@ -326,7 +329,7 @@ uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint8_t length, uint8_t *data)
 		}
 
 		// accept receive data and nack it (last-byte signal)
-		i2cReceiveByte(FALSE);
+		i2cReceiveByte(false);
 		i2cWaitForComplete();
 		*data++ = i2cGetReceivedByte();
 	}
@@ -368,7 +371,7 @@ SIGNAL(TWI_vect)
 		// send device address
 		i2cSendByte(I2cDeviceAddrRW);
 		break;
-	
+
 	// Master Transmitter & Receiver status codes
 	case TW_MT_SLA_ACK:					// 0x18: Slave address acknowledged
 	case TW_MT_DATA_ACK:				// 0x28: Data acknowledged
@@ -443,10 +446,10 @@ SIGNAL(TWI_vect)
 		#endif
 		if(I2cReceiveDataIndex < (I2cReceiveDataLength-1))
 			// data byte will be received, reply with ACK (more bytes in transfer)
-			i2cReceiveByte(TRUE);
+			i2cReceiveByte(true);
 		else
 			// data byte will be received, reply with NACK (final byte in transfer)
-			i2cReceiveByte(FALSE);
+			i2cReceiveByte(false);
 		break;
 
 	// Slave Receiver status codes
@@ -481,13 +484,13 @@ SIGNAL(TWI_vect)
 		if(I2cReceiveDataIndex < I2C_RECEIVE_DATA_BUFFER_SIZE)
 		{
 			// receive data byte and return ACK
-			i2cReceiveByte(TRUE);
+			i2cReceiveByte(true);
 			//outb(TWCR, (inb(TWCR)&TWCR_CMD_MASK)|BV(TWINT)|BV(TWEA));
 		}
 		else
 		{
 			// receive data byte and return NACK
-			i2cReceiveByte(FALSE);
+			i2cReceiveByte(false);
 			//outb(TWCR, (inb(TWCR)&TWCR_CMD_MASK)|BV(TWINT));
 		}
 		break;
@@ -500,7 +503,7 @@ SIGNAL(TWI_vect)
 		#endif
 		// receive data byte and return NACK
 		GenCal_Flag = 0;
-		i2cReceiveByte(FALSE);
+		i2cReceiveByte(false);
 		//outb(TWCR, (inb(TWCR)&TWCR_CMD_MASK)|BV(TWINT));
 		break;
 	case TW_SR_STOP:					// 0xA0: STOP or REPEATED START has been received while addressed as slave

@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <inttypes.h>
 #include <stdbool.h>
-#include "IS31FL3731Defaults.h"
+
+#define IS31FL3731_BufferLength 144
 
 /*
  * Modified the original code from Adafruit for the IS31FL3731

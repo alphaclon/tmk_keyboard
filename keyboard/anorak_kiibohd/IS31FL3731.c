@@ -10,6 +10,8 @@
 #include "i2cmaster/i2cmaster.h"
 #endif
 
+
+
 #define ISSI_REG_CONFIG  0x00
 #define ISSI_REG_CONFIG_PICTUREMODE 0x00
 #define ISSI_REG_CONFIG_AUTOPLAYMODE 0x08

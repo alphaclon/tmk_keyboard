@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdbool.h>
 
 #define IS31FL3731_BufferLength 144
+#define IS31FL3731_TotalChannels 144
+#define ISSILedDefaultBrightness 5
+#define ISSI_ADDR_DEFAULT 0x74
 
 /*
  * Modified the original code from Adafruit for the IS31FL3731

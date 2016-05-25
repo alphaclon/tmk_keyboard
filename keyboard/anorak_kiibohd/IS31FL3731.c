@@ -2,7 +2,6 @@
 #include <util/delay.h>
 #include "debug.h"
 #include "IS31FL3731.h"
-#include "IS31FL3731Defaults.h"
 
 #ifdef USE_ASYNC_I2C
 #include "TWIlib.h"
@@ -41,10 +40,12 @@ typedef struct IS31FL3731_Buffer
 
 IS31FL3731_Buffer IS31FL3731_pageBuffer;
 
+/*
 // A bit mask determining which LEDs are enabled in the ISSI chip
 const uint8_t IS31FL3731_ledEnableMask1[] = { ISSI_ADDR_DEFAULT << 1, // I2C address
                                               0x00,     // Starting register address
                                               ISSILedMaskList };
+*/
 
 uint8_t I2C_Send(uint8_t *data, uint8_t sendLen, uint8_t recvLen)
 {
@@ -471,7 +472,7 @@ void IS31FL3731_init(uint8_t addr)
     IS31FL3731_zeroPages(0x00, 8, 0x00, 0xB4); // LED Registers
 
     // Enable LEDs based upon mask
-    IS31FL3731_sendPage((uint8_t *)IS31FL3731_ledEnableMask1, sizeof(IS31FL3731_ledEnableMask1), 0);
+    //IS31FL3731_sendPage((uint8_t *)IS31FL3731_ledEnableMask1, sizeof(IS31FL3731_ledEnableMask1), 0);
 
     // Set default brightness
     //IS31FL3731_sendPage((uint8_t *)IS31FL3731_defaultBrightness1, sizeof(IS31FL3731_defaultBrightness1), 0);

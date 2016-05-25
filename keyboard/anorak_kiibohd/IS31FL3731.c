@@ -406,24 +406,35 @@ void IS31FL3731_test(uint8_t addr)
 
 	_delay_ms(10);
 
-	// out of shutdown
-	IS31FL3731_writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x01);
-
     // picture mode
     IS31FL3731_writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_PICTUREMODE);
 
     IS31FL3731_displayFrame(_frame);
     IS31FL3731_audioSync(false);
 
+    for (uint8_t f = 0; f < 8; f++)
+    {
+        for (uint8_t i = 0; i < 0x11; i++)
+        	IS31FL3731_writeRegister8(f, i, 0x0); // each 8 LEDs on
+    }
+
     // all LEDs on & PWM
     for (uint8_t f = 0; f < 8; f++)
     {
         for (uint8_t i = 0; i < 144; i++)
         	IS31FL3731_setLEDPWM(i, ISSILedDefaultBrightness, f); // set each led to the default PWM
-
-        for (uint8_t i = 0; i <= 0x11; i++)
-        	IS31FL3731_writeRegister8(f, i, 0xff); // each 8 LEDs on
     }
+
+    IS31FL3731_writeRegister8(0,  0, 0x3F);
+    IS31FL3731_writeRegister8(0,  1, 0xF);
+    IS31FL3731_writeRegister8(0,  2, 0x3F);
+    IS31FL3731_writeRegister8(0,  4, 0x3F);
+    IS31FL3731_writeRegister8(0,  6, 0x3F);
+    IS31FL3731_writeRegister8(0,  8, 0x3F);
+    IS31FL3731_writeRegister8(0, 10, 0x1);
+
+	// out of shutdown
+	IS31FL3731_writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x01);
 }
 
 void IS31FL3731_init(uint8_t addr)

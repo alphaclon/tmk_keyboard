@@ -16,67 +16,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "IS31FL3731/Adafruit_IS31FL3731.h"
 #include "backlight_kiibohd.h"
-
+#include "pwm_control.h"
 
 extern "C" {
 #include "debug.h"
 #include "backlight.h"
-#include "../twi/i2c.h"
 }
-
-uint8_t LedMaskAll[] =
-{
-    0x0, 0x0, /* C1-1 -> C1-16 */
-    0x0, 0x0, /* C2-1 -> C2-16 */
-    0x0, 0x0, /* C3-1 -> C3-16 */
-    0x0, 0x0, /* C4-1 -> C4-16 */
-    0x0, 0x0, /* C5-1 -> C5-16 */
-    0x0, 0x0, /* C6-1 -> C6-16 */
-    0x0, 0x0, /* C7-1 -> C7-16 */
-    0x0, 0x0, /* C8-1 -> C8-16 */
-    0x0, 0x0, /* C9-1 -> C9-16 */
-};
-
-Adafruit_IS31FL3731 issi;
 
 extern "C" {
 
 void backlight_setup()
 {
 	dprintf("backlight_setup\n");
-
-	i2cInit();
-	i2cSetBitrate(400);
-
-	issi.begin();
-	issi.setLEDPWM(1, 0xff, 0);
-
-	/*
-
-	issi.setRowEnableMask(0, 0x3F0F);
-	issi.setRowEnableMask(1, 0x3F00);
-	issi.setRowEnableMask(2, 0x3F00);
-	issi.setRowEnableMask(3, 0x3F00);
-	issi.setRowEnableMask(4, 0x3F00);
-	issi.setRowEnableMask(5, 0x0001);
-
-	*/
-
-	//TWIInit();
-	//i2c_init();
-
-	//IS31FL3731_test(ISSI_ADDR_DEFAULT);
-	//IS31FL3731_init(ISSI_ADDR_DEFAULT);
+	IS31FL3731_init();
 }
 
 void backlight_set(uint8_t level)
 {
 	dprintf("backlight_set %d\n", level);
 
-	/*
-	LedControl control;
+	tLedPWMControlCommand control;
 	control.mode = LedControlMode_brightness_set_all;
 
 	switch (level)
@@ -101,21 +61,36 @@ void backlight_set(uint8_t level)
 		break;
 	}
 
-	IS31FL3731_control(&control);
-	*/
+	IS31FL3731_PWM_control(&control);
 }
 
 void backlight_set_region(uint8_t region)
 {
-	dprintf("backlight_set_region 0x%x\n", region);
+	dprintf("backlight_set_region %d\n", region);
+
+	tLedPWMControlCommand control;
+	control.mode = LedControlMode_enable_mask;
 
 	switch (region)
 	{
 	case BACKLIGHT_REGION_ALL:
-		issi.displayFrame(0);
+		control.mask = LedEnableMask;
 		break;
-	default:
+	case BACKLIGHT_REGION_WASD:
+		control.mask = LedEnableMask;
+		break;
+	case BACKLIGHT_REGION_JUMP:
+		control.mask = LedJumpMask;
+		break;
+	case BACKLIGHT_REGION_CONTROLS:
+		control.mask = LedEnableMask;
+		break;
+	case BACKLIGHT_REGION_LOGO:
+	case BACKLIGHT_REGION_CASE:
+		control.mask = LedLogoMask;
 		break;
 	}
+
+	IS31FL3731_PWM_control(&control);
 }
 }

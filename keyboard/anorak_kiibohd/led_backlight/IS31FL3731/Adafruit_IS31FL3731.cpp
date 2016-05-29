@@ -4,6 +4,7 @@
 
 extern "C" {
 #include "../../twi/i2c.h"
+//#include "../../i2cmaster/i2cmaster.h"
 }
 
 #ifndef _swap_int16_t
@@ -14,7 +15,7 @@ extern "C" {
 Adafruit_IS31FL3731::Adafruit_IS31FL3731(uint8_t x, uint8_t y) :
 		Adafruit_GFX(x, y)
 {
-	_i2caddr = ISSI_ADDR_DEFAULT;
+	_i2caddr = 0;
 	_frame = 0;
 }
 
@@ -30,19 +31,20 @@ Adafruit_IS31FL3731_Wing::Adafruit_IS31FL3731_Wing(void) :
 
 bool Adafruit_IS31FL3731::begin(uint8_t addr)
 {
-	_i2caddr = addr;
+	_i2caddr = (addr << 1);
 	_frame = 0;
 
 	// shutdown
-	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x00);
+	//writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x00);
+	setSoftwareShutdown(1);
 
 	_delay_ms(10);
 
 	// picture mode
-	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG,
-	ISSI_REG_CONFIG_PICTUREMODE);
+	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_PICTUREMODE);
 
 	displayFrame(_frame);
+	audioSync(false);
 
 	for (uint8_t f = 0; f < 8; f++)
 	{
@@ -50,14 +52,17 @@ bool Adafruit_IS31FL3731::begin(uint8_t addr)
 			writeRegister8(f, i, 0x0);     // each 8 LEDs off
 	}
 
+    // all LEDs on & PWM
+    for (uint8_t f = 0; f < 8; f++)
+    {
+        for (uint8_t i = 0; i < 144; i++)
+        	setLEDPWM(i, 0, f); // set each led to the default PWM
+    }
+
 	// all LEDs on & 0 PWM
-	clear(); // set each led to 0 PWM
+	//clear(); // set each led to 0 PWM
 
-	audioSync(false);
-
-	// out of shutdown
-	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x01);
-
+    /*
     writeRegister8(0,  0, 0x3F);
     writeRegister8(0,  1, 0x0F);
     writeRegister8(0,  2, 0x3F);
@@ -66,27 +71,66 @@ bool Adafruit_IS31FL3731::begin(uint8_t addr)
     writeRegister8(0,  8, 0x3F);
     writeRegister8(0, 10, 0x01);
 
+    //writeRegister8(0,  1, 0x05);
+    writeRegister8(0,  1, 0x0A);
+    */
+
+	// out of shutdown
+	//writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, 0x01);
+	setSoftwareShutdown(0);
+
 	return true;
 }
 
-void Adafruit_IS31FL3731::setRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank)
+void Adafruit_IS31FL3731::setLEDRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank)
 {
 	writeRegister16(bank, row*2, mask);
+}
+
+void Adafruit_IS31FL3731::setSoftwareShutdown(uint8_t shutdown)
+{
+	writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, shutdown ? 0x00 : 0x01);
+}
+
+void Adafruit_IS31FL3731::setLEDEnableMask(uint8_t ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank)
+{
+	union _tLEDMaskData
+	{
+		uint8_t raw[ISSI_LED_MASK_SIZE + 1];
+		struct _command
+		{
+			uint8_t start;
+			uint8_t mask[ISSI_LED_MASK_SIZE];
+		} command;
+	};
+
+	typedef union _tLEDMaskData tLEDMaskData;
+
+	tLEDMaskData data;
+
+	//setSoftwareShutdown(1);
+
+	selectBank(bank);
+
+	data.command.start = 0;
+	memcpy(data.command.mask, ledEnableMask, ISSI_LED_MASK_SIZE);
+
+	i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE + 1, data.raw);
+
+	//setSoftwareShutdown(0);
 }
 
 void Adafruit_IS31FL3731::clear(void)
 {
 	// all LEDs 0 PWM
 
-	selectBank(_frame);
-
-	uint8_t pwm0[25] =
-	{ 0 };
+	uint8_t pwm0[25] = { 0 };
 
 	for (uint8_t i = 0; i < 6; i++)
 	{
+		selectBank(_frame);
 		pwm0[0] = 0x24 + i * 24;
-		i2cMasterSend(_i2caddr, 25, pwm0);
+		//i2cMasterSend(_i2caddr, 25, pwm0);
 	}
 
 	/*
@@ -109,12 +153,28 @@ void Adafruit_IS31FL3731::setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank)
 	writeRegister8(bank, 0x24 + lednum, pwm);
 }
 
-void Adafruit_IS31FL3731::setLEDPWM(tPWMData pwm, uint8_t bank)
+void Adafruit_IS31FL3731::setLEDPWM(uint8_t pwm[ISSI_TOTAL_CHANNELS], uint8_t bank)
 {
-	pwm.command.bank = bank;
-	pwm.command.start = 0x24;
+	selectBank(bank);
 
-	i2cMasterSend(_i2caddr, 146, pwm.raw);
+	union _tPWMData
+	{
+		uint8_t raw[ISSI_TOTAL_CHANNELS + 1];
+		struct _command
+		{
+			uint8_t start;
+			uint8_t pwm[ISSI_TOTAL_CHANNELS];
+		} command;
+	};
+
+	typedef union _tPWMData tPWMData;
+
+	tPWMData data;
+
+	data.command.start = 0x24; // first PWM frame starts here
+	memcpy(data.command.pwm, pwm, ISSI_TOTAL_CHANNELS);
+
+	i2cMasterSendNI(_i2caddr, ISSI_TOTAL_CHANNELS + 1, data.raw);
 }
 
 void Adafruit_IS31FL3731_Wing::drawPixel(int16_t x, int16_t y, uint16_t color)
@@ -212,7 +272,14 @@ void Adafruit_IS31FL3731::displayFrame(uint8_t f)
 void Adafruit_IS31FL3731::selectBank(uint8_t b)
 {
 	uint8_t cmd[2] = { ISSI_COMMANDREGISTER, b };
-	i2cMasterSend(_i2caddr, 2, cmd);
+	i2cMasterSendNI(_i2caddr, 2, cmd);
+
+	/*
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(ISSI_COMMANDREGISTER);
+    i2c_write(b);
+    i2c_stop();
+    */
 
 	/*
 	 Wire.beginTransmission(_i2caddr);
@@ -235,12 +302,20 @@ void Adafruit_IS31FL3731::audioSync(bool sync)
 }
 
 /*************/
+
 void Adafruit_IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 {
 	selectBank(b);
 
 	uint8_t cmd[2] = { reg, data };
-	i2cMasterSend(_i2caddr, 2, cmd);
+	i2cMasterSendNI(_i2caddr, 2, cmd);
+
+	/*
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(reg);
+    i2c_write(data);
+    i2c_stop();
+    */
 
 	/*
 	Wire.beginTransmission(_i2caddr);
@@ -257,23 +332,32 @@ void Adafruit_IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 	selectBank(b);
 
 	uint8_t cmd[3] = { reg, data >> 8, data & 0xFF };
-	i2cMasterSend(_i2caddr, 3, cmd);
+	i2cMasterSendNI(_i2caddr, 3, cmd);
 
 	/*
-	Wire.beginTransmission(_i2caddr);
-	Wire.write((byte) reg);
-	Wire.write((byte) data);
-	Wire.endTransmission();
-	*/
-	//Serial.print("$"); Serial.print(reg, HEX);
-	//Serial.print(" = 0x"); Serial.println(data, HEX);
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(reg);
+    i2c_write(data >> 8);
+    i2c_write(data & 0xFF);
+    i2c_stop();
+    */
 }
 
 uint8_t Adafruit_IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 {
-	uint8_t x = 0;
-
 	selectBank(bank);
+
+    uint8_t data;
+
+    /*
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(reg);
+    i2c_rep_start(_i2caddr + I2C_READ);
+    data = i2c_readNak();
+    i2c_stop();
+    */
+
+    return data;
 
 	/*
 
@@ -285,10 +369,9 @@ uint8_t Adafruit_IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 	Wire.requestFrom(_i2caddr, (byte) 1);
 	x = Wire.read();
 	Wire.endTransmission();
+		return x;
 	*/
 
 	// Serial.print("$"); Serial.print(reg, HEX);
 	//  Serial.print(": 0x"); Serial.println(x, HEX);
-
-	return x;
 }

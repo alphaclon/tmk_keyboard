@@ -66,6 +66,8 @@ SRC += \
 	led_backlight/gfx/Print.cpp \
 	led_backlight/IS31FL3731/Adafruit_IS31FL3731.cpp \
 	led_backlight/backlight_kiibohd.c \
+	led_backlight/pwm_control.cpp \
+	
 	
 PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
 	

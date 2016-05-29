@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VENDOR_ID       0xDEAD
 #define PRODUCT_ID      0xBEEF
-#define DEVICE_VER      0x0101
+#define DEVICE_VER      0x0201
 #define MANUFACTURER    Anorak
 #define PRODUCT         gaming kiibohd
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd

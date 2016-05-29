@@ -33,6 +33,10 @@ void backlight_init(void)
 
 void backlight_increase(void)
 {
+	if(backlight_config.level > BACKLIGHT_LEVELS)
+	{
+		backlight_config.level = BACKLIGHT_LEVELS - 1;
+	}
     if(backlight_config.level < BACKLIGHT_LEVELS)
     {
         backlight_config.level++;

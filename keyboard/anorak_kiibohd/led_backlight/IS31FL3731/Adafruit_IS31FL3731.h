@@ -6,6 +6,11 @@
 
 #define ISSI_ADDR_DEFAULT 0x74
 
+#define ISSI_TOTAL_CHANNELS 144
+#define ISSI_TOTAL_ROWS 9
+#define ISSI_TOTAL_COLUMS 16
+#define ISSI_LED_MASK_SIZE (ISSI_TOTAL_CHANNELS / ISSI_TOTAL_COLUMS * 2)
+
 #define ISSI_REG_CONFIG  0x00
 #define ISSI_REG_CONFIG_PICTUREMODE 0x00
 #define ISSI_REG_CONFIG_AUTOPLAYMODE 0x08
@@ -23,22 +28,9 @@
 #define ISSI_COMMANDREGISTER 0xFD
 #define ISSI_BANK_FUNCTIONREG 0x0B    // helpfully called 'page nine'
 
-union _tPWMData
-{
-	uint8_t raw[146];
-	struct _command
-	{
-		uint8_t bank;
-		uint8_t start;
-		uint8_t pwm[144];
-	} command;
-};
-
-typedef union _tPWMData tPWMData;
-
 class Adafruit_IS31FL3731 : public Adafruit_GFX {
  public:
-  Adafruit_IS31FL3731(uint8_t x=16, uint8_t y=9);
+  Adafruit_IS31FL3731(uint8_t x=ISSI_TOTAL_COLUMS, uint8_t y=ISSI_TOTAL_ROWS);
   virtual ~Adafruit_IS31FL3731();
 
   bool begin(uint8_t addr = ISSI_ADDR_DEFAULT);
@@ -46,15 +38,18 @@ class Adafruit_IS31FL3731 : public Adafruit_GFX {
   void drawPixel(int16_t x, int16_t y, uint16_t color);
 
   void clear(void);
-  void setRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank = 0);
+  void setLEDEnableMask(uint8_t ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank = 0);
+  void setLEDRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank = 0);
 
   void setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank = 0);
-  void setLEDPWM(tPWMData pwm, uint8_t bank = 0);
+  void setLEDPWM(uint8_t pwm[ISSI_TOTAL_CHANNELS], uint8_t bank = 0);
 
   void setFrame(uint8_t b);
   void displayFrame(uint8_t frame);
 
   void audioSync(bool sync);
+
+  void setSoftwareShutdown(uint8_t shutdown);
 
  protected:
   void selectBank(uint8_t bank);
@@ -69,7 +64,5 @@ class Adafruit_IS31FL3731_Wing : public Adafruit_IS31FL3731 {
   Adafruit_IS31FL3731_Wing(void);
   void drawPixel(int16_t x, int16_t y, uint16_t color);
 };
-
-
 
 #endif

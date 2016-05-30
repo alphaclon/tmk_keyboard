@@ -9,4 +9,7 @@ enum backlight_region
     BACKLIGHT_REGION_CASE = 0x20,
 };
 
+void backlight_internal_enable(void);
+void backlight_pwm_increase(uint8_t level);
+void backlight_pwm_decrease(uint8_t level);
 

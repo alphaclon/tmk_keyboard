@@ -23,11 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdbool.h>
 #include <avr/io.h>
 #include <util/delay.h>
-#include "print.h"
-#include "debug.h"
+#include "led_backlight/backlight_kiibohd.h"
 #include "util.h"
 #include "matrix.h"
 #include "config.h"
+#include "print.h"
+#include "debug.h"
 
 
 #ifndef DEBOUNCE
@@ -57,25 +58,25 @@ static void select_row(uint8_t row);
  */
 
 #ifndef NO_DEBUG_LEDS
-#define LED_GRN_INIT()  do { DDRD |= (1<<5); PORTD |= (1<<5); } while (0)
-#define LED_GRN_ON()    do { PORTD &= ~(1<<5); } while (0)
-#define LED_GRN_OFF()   do { PORTD |= (1<<5); } while (0)
-#define LED_GRN_TGL()   do { PIND |= (1<<5); } while (0)
+#define LED_GREEN_INIT()  do { DDRD |= (1<<5); PORTD |= (1<<5); } while (0)
+#define LED_GREEN_ON()    do { PORTD &= ~(1<<5); } while (0)
+#define LED_GREEN_OFF()   do { PORTD |= (1<<5); } while (0)
+#define LED_GREEN_TGL()   do { PIND |= (1<<5); } while (0)
 
-#define LED_YEL_INIT()  do { DDRC |= (1<<7); PORTC &= ~(1<<7);} while (0)
-#define LED_YEL_ON()    do { PORTC |= (1<<7);} while (0)
-#define LED_YEL_OFF()   do { PORTC &= ~(1<<7); } while (0)
-#define LED_YEL_TGL()   do { PIND |= (1<<7); } while (0)
+#define LED_YELLOW_INIT()  do { DDRC |= (1<<7); PORTC &= ~(1<<7);} while (0)
+#define LED_YELLOW_ON()    do { PORTC |= (1<<7);} while (0)
+#define LED_YELLOW_OFF()   do { PORTC &= ~(1<<7); } while (0)
+#define LED_YELLOW_TGL()   do { PIND |= (1<<7); } while (0)
 #else
-#define LED_GRN_INIT()  do { } while (0)
-#define LED_GRN_ON()    do { } while (0)
-#define LED_GRN_OFF()   do { } while (0)
-#define LED_GRN_TGL()   do { } while (0)
+#define LED_GREEN_INIT()  do { } while (0)
+#define LED_GREEN_ON()    do { } while (0)
+#define LED_GREEN_OFF()   do { } while (0)
+#define LED_GREEN_TGL()   do { } while (0)
 
-#define LED_YEL_INIT()  do { } while (0)
-#define LED_YEL_ON()    do { } while (0)
-#define LED_YEL_OFF()   do { } while (0)
-#define LED_YEL_TGL()   do { } while (0)
+#define LED_YELLOW_INIT()  do { } while (0)
+#define LED_YELLOW_ON()    do { } while (0)
+#define LED_YELLOW_OFF()   do { } while (0)
+#define LED_YELLOW_TGL()   do { } while (0)
 #endif
 
 inline
@@ -90,7 +91,7 @@ uint8_t matrix_cols(void)
     return MATRIX_COLS;
 }
 
-void matrix_init(void)
+void matrix_setup(void)
 {
 	// You need to set JTD bit of MCUCR yourself to use PF4-7 as GPIO. Those
 	// pins are configured to serve JTAG function by default.
@@ -99,11 +100,16 @@ void matrix_init(void)
 	MCUCR |= (1<<JTD);
 	MCUCR |= (1<<JTD);
 
-	LED_GRN_INIT();
-	LED_YEL_INIT();
+	LED_GREEN_INIT();
+	LED_YELLOW_INIT();
 
-	LED_YEL_ON();
-	LED_GRN_ON();
+	LED_YELLOW_ON();
+	LED_GREEN_ON();
+}
+
+void matrix_init(void)
+{
+	backlight_internal_enable();
 
     // initialize row and col
     unselect_rows();
@@ -115,8 +121,8 @@ void matrix_init(void)
         matrix_debouncing[i] = 0;
     }
 
-	LED_GRN_OFF();
-	LED_YEL_OFF();
+	LED_GREEN_OFF();
+	LED_YELLOW_OFF();
 }
 
 uint8_t matrix_scan(void)
@@ -127,8 +133,8 @@ uint8_t matrix_scan(void)
 		_delay_us(30);  // without this wait read unstable value.
 		matrix_row_t cols = read_cols();
 
-		if (cols) LED_YEL_ON();
-		else LED_YEL_OFF();
+		if (cols) LED_YELLOW_ON();
+		else LED_YELLOW_OFF();
 
 		if (matrix_debouncing[i] != cols)
 		{
@@ -145,7 +151,7 @@ uint8_t matrix_scan(void)
 
 	if (debouncing)
 	{
-		LED_GRN_ON();
+		LED_GREEN_ON();
 		if (--debouncing)
 		{
 			_delay_ms(1);
@@ -160,7 +166,7 @@ uint8_t matrix_scan(void)
 	}
 	else
 	{
-		LED_GRN_OFF();
+		LED_GREEN_OFF();
 	}
 
 	return 1;

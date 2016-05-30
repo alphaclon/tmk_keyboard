@@ -16,20 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "backlight_kiibohd.h"
+#include <avr/interrupt.h>
 #include "pwm_control.h"
 
 extern "C" {
 #include "debug.h"
 #include "backlight.h"
+#include "backlight_kiibohd.h"
 }
 
 extern "C" {
 
-void backlight_setup()
+void backlight_setup(void)
 {
-	dprintf("backlight_setup\n");
 	IS31FL3731_init();
+}
+
+void backlight_internal_enable(void)
+{
+	IS31FL3731_enable();
 }
 
 void backlight_set(uint8_t level)
@@ -64,30 +69,50 @@ void backlight_set(uint8_t level)
 	IS31FL3731_PWM_control(&control);
 }
 
+void backlight_pwm_increase(uint8_t level)
+{
+	dprintf("backlight_increase\n", level);
+
+	tLedPWMControlCommand control;
+	control.mode = LedControlMode_brightness_increase_all;
+	control.amount = level;
+	IS31FL3731_PWM_control(&control);
+}
+
+void backlight_pwm_decrease(uint8_t level)
+{
+	dprintf("backlight_decrease\n", level);
+
+	tLedPWMControlCommand control;
+	control.mode = LedControlMode_brightness_decrease_all;
+	control.amount = level;
+	IS31FL3731_PWM_control(&control);
+}
+
 void backlight_set_region(uint8_t region)
 {
 	dprintf("backlight_set_region %d\n", region);
 
 	tLedPWMControlCommand control;
-	control.mode = LedControlMode_enable_mask;
+	control.mode = LedControlMode_xor_mask;
 
 	switch (region)
 	{
 	case BACKLIGHT_REGION_ALL:
-		control.mask = LedEnableMask;
+		control.mask = LedMaskFull;
 		break;
 	case BACKLIGHT_REGION_WASD:
-		control.mask = LedEnableMask;
+		control.mask = LedMaskWASD;
 		break;
 	case BACKLIGHT_REGION_JUMP:
-		control.mask = LedJumpMask;
+		control.mask = LedMaskJump;
 		break;
 	case BACKLIGHT_REGION_CONTROLS:
-		control.mask = LedEnableMask;
+		control.mask = LedMaskCtrl;
 		break;
 	case BACKLIGHT_REGION_LOGO:
 	case BACKLIGHT_REGION_CASE:
-		control.mask = LedLogoMask;
+		control.mask = LedMaskLogo;
 		break;
 	}
 

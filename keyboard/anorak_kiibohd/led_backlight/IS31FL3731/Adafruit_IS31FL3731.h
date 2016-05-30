@@ -4,6 +4,8 @@
 #include <inttypes.h>
 #include "../gfx/Adafruit_GFX.h"
 
+#define USE_BUFFERED_TWI
+
 #define ISSI_ADDR_DEFAULT 0x74
 
 #define ISSI_TOTAL_CHANNELS 144
@@ -37,12 +39,11 @@ class Adafruit_IS31FL3731 : public Adafruit_GFX {
 
   void drawPixel(int16_t x, int16_t y, uint16_t color);
 
-  void clear(void);
-  void setLEDEnableMask(uint8_t ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank = 0);
+  void setLEDEnableMask(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank = 0);
   void setLEDRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank = 0);
 
   void setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank = 0);
-  void setLEDPWM(uint8_t pwm[ISSI_TOTAL_CHANNELS], uint8_t bank = 0);
+  void setLEDPWM(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8_t bank = 0);
 
   void setFrame(uint8_t b);
   void displayFrame(uint8_t frame);

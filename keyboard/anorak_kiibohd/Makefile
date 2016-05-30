@@ -52,13 +52,13 @@ TARGET_DIR = .
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
-	keymap_common.c \
-	matrix.c \
 	led.c \
-	IS31FL3731Defaults.c \
-	IS31FL3731.c \
-	i2cmaster/twimaster.c \
+	matrix.c \
+	keymap_common.c \
 	twi/i2c.c \
+	i2cmaster/twimaster.c \
+	IS31FL3731.c \
+	IS31FL3731Defaults.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
@@ -66,9 +66,9 @@ SRC += \
 	led_backlight/gfx/Print.cpp \
 	led_backlight/IS31FL3731/Adafruit_IS31FL3731.cpp \
 	led_backlight/backlight_kiibohd.c \
-	led_backlight/pwm_control.cpp \
-	
-	
+	led_backlight/pwm_control.cpp
+
+
 PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
 	
 CONFIG_H = config.h
@@ -137,7 +137,6 @@ COMMAND_ENABLE = yes    	# Commands for debug and configuration
 BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
 NKRO_ENABLE = yes		    # USB Nkey Rollover
 #SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
-#KEYMAP_SECTION_ENABLE = yes	# fixed address keymap for keymap editor
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -162,9 +161,9 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
-debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION -Ii2cmaster
+debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
 debug-on: all
 
-debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT -Ii2cmaster
+debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
 debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
 debug-off: all

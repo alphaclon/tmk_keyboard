@@ -26,41 +26,41 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	 *
 	 */
 	KEYMAP_KIIBOHD(
-		ESC,  1,   2,   3,   4,   0, \
-		TAB,  Q,   W,   E,   R,   T, \
-		FN1,  A,   S,   D,   F,   G, \
-		LSFT, Z,   X,   C,   V,   B, \
-		LCTL, FN0, LALT, RALT, FN2, FN3, SPC),
+		 ESC,    1,    2,    3,    4,  F12, \
+		 TAB,    Q,    W,    E,    R,    T, \
+		 FN1,    A,    S,    D,    F,    G, \
+		LSFT,    Z,    X,    C,    V,    B, \
+		LCTL,  FN0, LALT, RALT,  FN2,  FN3, SPC),
     /*
      * 1: Shifted default layer (TQWER)
      *
      */
 	KEYMAP_KIIBOHD(
-        ESC,  1,   2,   3,   4,   0, \
-        TAB,  T,   Q,   W,   E,   R, \
-        FN1,  G,   A,   S,   D,   F, \
-        LSFT, B,   Z,   X,   C,   V, \
-        LCTL, FN0, LALT, RALT, FN2, FN3, SPC),
+         ESC,    1,    2,    3,    4,  F12, \
+         TAB,    T,    Q,    W,    E,    R, \
+         FN1,    G,    A,    S,    D,    F, \
+        LSFT,    B,    Z,    X,    C,    V, \
+        LCTL,  FN0, LALT, RALT,  FN2,  FN3, SPC),
     /*
      * 2: FN0 layer
      *
      */
     KEYMAP_KIIBOHD(
-        PAUS,  F1,  F2,  F3,  F4,  F5,  \
-		  F6,  F7,  F8,  F9, F10, F11,  \
-	     FN5, FN7, FN8, FN9,FN10,FN11,  \
-         FN6,VOLD,VOLU,MUTE,TRNS,TRNS,  \
-         FN4,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS),
+        PAUS,   F1,   F2,   F3,   F4,   F5, \
+		  F6,   F7,   F8,   F9,  F10,  F11, \
+	     FN5,  FN7,  FN8,  FN9, FN10, FN11, \
+         FN6, VOLD, VOLU, MUTE, TRNS, TRNS, \
+         FN4, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS),
 	/*
 	 * 3: FN2 layer
 	 *
 	 */
 	KEYMAP_KIIBOHD(
-		PAUS,  F1,  F2,  F5,  F6, F12,  \
-        TRNS,   Y,   U,   I,   O,   P,  \
-		FN12,   H,   J,   K,   L,LBRC,  \
-		FN13,   N,   M,COMM, DOT,SLSH,  \
-		TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS)
+		PAUS,   F1,   F2,   F5,   F6,  F12, \
+        TRNS,    Y,    U,    I,    O,    P, \
+		FN12,    H,    J,    K,    L, LBRC, \
+		FN13,    N,    M, COMM,  DOT, SLSH, \
+		TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS)
 };
 
 /*
@@ -91,8 +91,8 @@ enum macro_id {
  */
 const uint16_t PROGMEM fn_actions[] = {
     [0] = ACTION_LAYER_MOMENTARY(2),
-    [1] = ACTION_MODS_TAP_KEY(MOD_RCTL, KC_F12),
-    [2] = ACTION_LAYER_TAP_KEY(3, KC_MINS),
+    [1] = ACTION_MODS_TAP_KEY(MOD_RCTL, KC_I),
+    [2] = ACTION_LAYER_TAP_KEY(3, KC_SLSH),
     [3] = ACTION_MACRO(KIIBOHD_MACRO_DUCK_JUMP),
     [4] = ACTION_BACKLIGHT_TOGGLE(),
     [5] = ACTION_BACKLIGHT_INCREASE(),

@@ -23,11 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdbool.h>
 #include <avr/io.h>
 #include <util/delay.h>
-#include "print.h"
-#include "debug.h"
+#include "led_backlight/backlight_kiibohd.h"
 #include "util.h"
 #include "matrix.h"
 #include "config.h"
+#include "print.h"
+#include "debug.h"
 
 
 #ifndef DEBOUNCE
@@ -44,10 +45,38 @@ static void init_cols(void);
 static void unselect_rows(void);
 static void select_row(uint8_t row);
 
+
+/*
+ * PD5 -> grüne LED, active low
+ * PC7 -> gelbe LED, active high
+ *
+ * #define LED_CONFIG      (DDRD |= (1<<6))
+ * #define LED_ON          (PORTD &= ~(1<<6))
+ * #define LED_OFF         (PORTD |= (1<<6))
+ *
+ *
+ */
+
 #ifndef NO_DEBUG_LEDS
-#define LED_ON()    do { DDRC |= (1<<5); PORTC |= (1<<5); } while (0)
-#define LED_OFF()   do { DDRC &= ~(1<<5); PORTC &= ~(1<<5); } while (0)
-#define LED_TGL()   do { DDRC |= (1<<5); PINC |= (1<<5); } while (0)
+#define LED_GREEN_INIT()  do { DDRD |= (1<<5); PORTD |= (1<<5); } while (0)
+#define LED_GREEN_ON()    do { PORTD &= ~(1<<5); } while (0)
+#define LED_GREEN_OFF()   do { PORTD |= (1<<5); } while (0)
+#define LED_GREEN_TGL()   do { PIND |= (1<<5); } while (0)
+
+#define LED_YELLOW_INIT()  do { DDRC |= (1<<7); PORTC &= ~(1<<7);} while (0)
+#define LED_YELLOW_ON()    do { PORTC |= (1<<7);} while (0)
+#define LED_YELLOW_OFF()   do { PORTC &= ~(1<<7); } while (0)
+#define LED_YELLOW_TGL()   do { PIND |= (1<<7); } while (0)
+#else
+#define LED_GREEN_INIT()  do { } while (0)
+#define LED_GREEN_ON()    do { } while (0)
+#define LED_GREEN_OFF()   do { } while (0)
+#define LED_GREEN_TGL()   do { } while (0)
+
+#define LED_YELLOW_INIT()  do { } while (0)
+#define LED_YELLOW_ON()    do { } while (0)
+#define LED_YELLOW_OFF()   do { } while (0)
+#define LED_YELLOW_TGL()   do { } while (0)
 #endif
 
 inline
@@ -62,13 +91,29 @@ uint8_t matrix_cols(void)
     return MATRIX_COLS;
 }
 
+void matrix_setup(void)
+{
+	// You need to set JTD bit of MCUCR yourself to use PF4-7 as GPIO. Those
+	// pins are configured to serve JTAG function by default.
+	// MCUs like ATMegaU or AT90USB* are affeteced with this.
+	// JTAG disable for PORT F. write JTD bit twice within four cycles.
+	MCUCR |= (1<<JTD);
+	MCUCR |= (1<<JTD);
+
+	LED_GREEN_INIT();
+	LED_YELLOW_INIT();
+
+	LED_YELLOW_ON();
+	LED_GREEN_ON();
+}
+
 void matrix_init(void)
 {
+	backlight_internal_enable();
+
     // initialize row and col
     unselect_rows();
     init_cols();
-
-    LED_ON();
 
     // initialize matrix state: all keys off
     for (uint8_t i=0; i < MATRIX_ROWS; i++) {
@@ -76,40 +121,55 @@ void matrix_init(void)
         matrix_debouncing[i] = 0;
     }
 
-    LED_OFF();
+	LED_GREEN_OFF();
+	LED_YELLOW_OFF();
 }
 
 uint8_t matrix_scan(void)
 {
-    LED_ON();
+	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
+	{
+		select_row(i);
+		_delay_us(30);  // without this wait read unstable value.
+		matrix_row_t cols = read_cols();
 
-    for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-        select_row(i);
-        _delay_us(30);  // without this wait read unstable value.
-        matrix_row_t cols = read_cols();
-        if (matrix_debouncing[i] != cols) {
-            matrix_debouncing[i] = cols;
-            if (debouncing) {
-                debug("bounce!: "); debug_hex(debouncing); debug("\n");
-            }
-            debouncing = DEBOUNCE;
-        }
-        unselect_rows();
-    }
+		if (cols) LED_YELLOW_ON();
+		else LED_YELLOW_OFF();
 
-    if (debouncing) {
-        if (--debouncing) {
-            _delay_ms(1);
-        } else {
-            for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-                matrix[i] = matrix_debouncing[i];
-            }
-        }
-    }
+		if (matrix_debouncing[i] != cols)
+		{
+			matrix_debouncing[i] = cols;
+			if (debouncing)
+			{
+				debug("bounce!: ");
+				debug_hex(debouncing);debug("\n");
+			}
+			debouncing = DEBOUNCE;
+		}
+		unselect_rows();
+	}
 
-    LED_OFF();
+	if (debouncing)
+	{
+		LED_GREEN_ON();
+		if (--debouncing)
+		{
+			_delay_ms(1);
+		}
+		else
+		{
+			for (uint8_t i = 0; i < MATRIX_ROWS; i++)
+			{
+				matrix[i] = matrix_debouncing[i];
+			}
+		}
+	}
+	else
+	{
+		LED_GREEN_OFF();
+	}
 
-    return 1;
+	return 1;
 }
 
 bool matrix_is_modified(void)
@@ -132,10 +192,10 @@ matrix_row_t matrix_get_row(uint8_t row)
 
 void matrix_print(void)
 {
-    print("\nr/c 0123456789ABCDEF\n");
+    print("\nr/c 0123456\n");
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         phex(row); print(": ");
-        pbin_reverse16(matrix_get_row(row));
+        pbin_reverse(matrix_get_row(row));
         print("\n");
     }
 }
@@ -149,78 +209,202 @@ uint8_t matrix_key_count(void)
     return count;
 }
 
-/* Column pin configuration
- * col: 0   1   2   3   4   5   6   7   8   9   10  11  12  13
- * pin: F0  F1  E6  C7  C6  B6  D4  B1  B0  B5  B4  D7  D6  B3  (Rev.A)
- * pin:                                 B7                      (Rev.B)
- */
+#ifdef MATRIX_57
 static void  init_cols(void)
 {
-    // Input with pull-up(DDR:0, PORT:1)
-    DDRF  &= ~(1<<0 | 1<<1);
-    PORTF |=  (1<<0 | 1<<1);
-    DDRE  &= ~(1<<6);
-    PORTE |=  (1<<6);
-    DDRD  &= ~(1<<7 | 1<<6 | 1<<4);
-    PORTD |=  (1<<7 | 1<<6 | 1<<4);
-    DDRC  &= ~(1<<7 | 1<<6);
-    PORTC |=  (1<<7 | 1<<6);
-    DDRB  &= ~(1<<7 | 1<<6 | 1<< 5 | 1<<4 | 1<<3 | 1<<1 | 1<<0);
-    PORTB |=  (1<<7 | 1<<6 | 1<< 5 | 1<<4 | 1<<3 | 1<<1 | 1<<0);
+	// Column pin configuration
+	// Input with pull-up (DDR:0, PORT:1)
+	// COL 1: PB5  5
+	// COL 2: PB4  4
+	// COL 3: PE6         6
+	// COL 4: PD7      7
+	// COL 5: PC6    6
+	// COL 6: PD4      4
+	// COL 7: PD3      3
+
+	DDRB &= ~(1<<5 | 1 << 4);
+	PORTB |= (1<<5 | 1 << 4);
+
+	DDRE &= ~(1<<6);
+	PORTE |= (1<<6);
+
+	DDRD &= ~(1<<7 | 1 << 4 | 1<<3);
+	PORTD |= (1<<7 | 1 << 4 | 1<<3);
+
+	DDRC &= ~(1<<6);
+	PORTC |= (1<<6);
 }
 
 static matrix_row_t read_cols(void)
 {
-    return (PINF&(1<<0) ? 0 : (1<<0)) |
-           (PINF&(1<<1) ? 0 : (1<<1)) |
-           (PINE&(1<<6) ? 0 : (1<<2)) |
-           (PINC&(1<<7) ? 0 : (1<<3)) |
-           (PINC&(1<<6) ? 0 : (1<<4)) |
-           (PINB&(1<<6) ? 0 : (1<<5)) |
-           (PIND&(1<<4) ? 0 : (1<<6)) |
-           (PINB&(1<<1) ? 0 : (1<<7)) |
-           ((PINB&(1<<0) && PINB&(1<<7)) ? 0 : (1<<8)) |     // Rev.A and B
-           (PINB&(1<<5) ? 0 : (1<<9)) |
-           (PINB&(1<<4) ? 0 : (1<<10)) |
-           (PIND&(1<<7) ? 0 : (1<<11)) |
-           (PIND&(1<<6) ? 0 : (1<<12)) |
-           (PINB&(1<<3) ? 0 : (1<<13));
+#if 0
+	matrix_row_t
+	cols = ( ((PINB&(1<<5)) ? 0 : (1<<0)) |
+			 ((PINB&(1<<4)) ? 0 : (1<<1)) |
+			 ((PINE&(1<<6)) ? 0 : (1<<2)) |
+			 ((PIND&(1<<7)) ? 0 : (1<<3)) |
+			 ((PINC&(1<<6)) ? 0 : (1<<4)) |
+			 ((PIND&(1<<4)) ? 0 : (1<<5)) |
+			 ((PIND&(1<<3)) ? 0 : (1<<6)) );
+
+	xprintf("cols %d ", cols);
+#endif
+	return ( ((PINB&(1<<5)) ? 0 : (1<<0)) |
+			 ((PINB&(1<<4)) ? 0 : (1<<1)) |
+			 ((PINE&(1<<6)) ? 0 : (1<<2)) |
+			 ((PIND&(1<<7)) ? 0 : (1<<3)) |
+			 ((PINC&(1<<6)) ? 0 : (1<<4)) |
+			 ((PIND&(1<<4)) ? 0 : (1<<5)) |
+			 ((PIND&(1<<3)) ? 0 : (1<<6)) );
 }
 
-/* Row pin configuration
- * row: 0   1   2   3   4
- * pin: D0  D1  D2  D3  D5
- */
 static void unselect_rows(void)
 {
-    // Hi-Z(DDR:0, PORT:0) to unselect
-    DDRD  &= ~0b00101111;
-    PORTD &= ~0b00101111;
+    // Hi-Z (DDR:0, PORT:0) to unselect
+
+	DDRF &= ~(1<<7 | 1<<6);
+	PORTF &= ~(1<<7 | 1<<6);
+
+	DDRB &= ~(1<<7 | 1<<6);
+	PORTB &= ~(1<<7 | 1<<6);
+
+	DDRD &= ~(1<<6);
+	PORTD &= ~(1<<6);
 }
 
 static void select_row(uint8_t row)
 {
-    // Output low(DDR:1, PORT:0) to select
-    switch (row) {
-        case 0:
-            DDRD  |= (1<<0);
-            PORTD &= ~(1<<0);
-            break;
-        case 1:
-            DDRD  |= (1<<1);
-            PORTD &= ~(1<<1);
-            break;
-        case 2:
-            DDRD  |= (1<<2);
-            PORTD &= ~(1<<2);
-            break;
-        case 3:
-            DDRD  |= (1<<3);
-            PORTD &= ~(1<<3);
-            break;
-        case 4:
-            DDRD  |= (1<<5);
-            PORTD &= ~(1<<5);
-            break;
-    }
+	// Output low (DDR:1, PORT:0) to select
+	// ROW 1: PF7
+	// ROW 2: PF6
+	// ROW 3: PB6
+	// ROW 4: PB7
+	// ROW 5: PD6
+
+	//xprintf("row %d ", row);
+
+	switch (row)
+	{
+	case 0:
+		DDRF |= (1 << 7);
+		PORTF &= ~(1 << 7);
+		break;
+	case 1:
+		DDRF |= (1 << 6);
+		PORTF &= ~(1 << 6);
+		break;
+	case 2:
+		DDRB |= (1 << 6);
+		PORTB &= ~(1 << 6);
+		break;
+	case 3:
+		DDRB |= (1 << 7);
+		PORTB &= ~(1 << 7);
+		break;
+	case 4:
+		DDRD |= (1 << 6);
+		PORTD &= ~(1 << 6);
+		break;
+	}
 }
+#else
+static void  init_cols(void)
+{
+	// Column pin configuration
+	// Configure Pin as Input with pull-up (DDR:0, PORT:1)
+	// COL 1: PF7
+	// COL 2: PF6
+	// COL 3: PB6
+	// COL 4: PB7
+	// COL 5: PD6
+
+	DDRF &= ~(1<<7 | 1 << 6);
+	PORTF |= (1<<7 | 1 << 6);
+
+	DDRB &= ~(1<<7 | 1<<6);
+	PORTB |= (1<<7 | 1<<6);
+
+	DDRD &= ~(1<<6);
+	PORTD |= (1<<6);
+}
+
+static matrix_row_t read_cols(void)
+{
+	return ( ((PINF&(1<<7)) ? 0 : (1<<0)) |
+			 ((PINF&(1<<6)) ? 0 : (1<<1)) |
+			 ((PINB&(1<<6)) ? 0 : (1<<2)) |
+			 ((PINB&(1<<7)) ? 0 : (1<<3)) |
+			 ((PIND&(1<<6)) ? 0 : (1<<4)) );
+}
+
+static void unselect_rows(void)
+{
+	// Row pin unselect
+    // Hi-Z (DDR:0, PORT:0) to unselect
+	// ROW 1: PB5  5
+	// ROW 2: PB4  4
+	// ROW 3: PE6         6
+	// ROW 4: PD7      7
+	// ROW 5: PC6    6
+	// ROW 6: PD4      4
+	// ROW 7: PD3      3
+
+	DDRB &= ~(1<<5 | 1<<4);
+	PORTB &= ~(1<<5 | 1<<4);
+
+	DDRE &= ~(1<<6);
+	PORTE &= ~(1<<6);
+
+	DDRD &= ~(1<< 7 | 1<<4 | 1 << 3);
+	PORTD &= ~(1<< 7 | 1<<4 | 1 << 3);
+
+	DDRC &= ~(1<<6);
+	PORTC &= ~(1<<6);
+}
+
+static void select_row(uint8_t row)
+{
+	// Select row
+	// Output low  (DDR:1, PORT:0) to select
+	// Output high (DDR:1, PORT:1) to select
+	// COL 1: PB5  5
+	// COL 2: PB4  4
+	// COL 3: PE6         6
+	// COL 4: PD7      7
+	// COL 5: PC6    6
+	// COL 6: PD4      4
+	// COL 7: PD3      3
+
+	switch (row)
+	{
+	case 0:
+		DDRB |= (1 << 5);
+		PORTB &= ~(1 << 5);
+		break;
+	case 1:
+		DDRB |= (1 << 4);
+		PORTB &= ~(1 << 4);
+		break;
+	case 2:
+		DDRE |= (1 << 6);
+		PORTE &= ~(1 << 6);
+		break;
+	case 3:
+		DDRD |= (1 << 7);
+		PORTD &= ~(1 << 7);
+		break;
+	case 4:
+		DDRC |= (1 << 6);
+		PORTC &= ~(1 << 6);
+		break;
+	case 5:
+		DDRD |= (1 << 4);
+		PORTD &= ~(1 << 4);
+		break;
+	case 6:
+		DDRD |= (1 << 3);
+		PORTD &= ~(1 << 3);
+		break;
+	}
+}
+#endif

@@ -44,7 +44,7 @@
 # Target file name (without extension).
 TARGET = anorak_kiibohd_lufa
 
-# Directory common source filess exist
+# Directory common source files exist
 TMK_DIR = ../../tmk_core
 
 # Directory keyboard dependent files exist

@@ -57,8 +57,6 @@ SRC += \
 	keymap_common.c \
 	twi/i2c.c \
 	i2cmaster/twimaster.c \
-	IS31FL3731.c \
-	IS31FL3731Defaults.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \

@@ -1,5 +1,5 @@
 #ifndef _ADAFRUIT_IS31FL3731_H_
-#define _ADAFRUIT_IS31Fl3731_H_
+#define _ADAFRUIT_IS31FL3731_H_
 
 #include <inttypes.h>
 #include "../gfx/Adafruit_GFX.h"

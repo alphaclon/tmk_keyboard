@@ -1,5 +1,6 @@
 
 #include "pwm_control.h"
+#include "led_masks.h"
 
 extern "C" {
 #ifdef USE_BUFFERED_TWI

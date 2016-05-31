@@ -160,7 +160,8 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
-debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
+#debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
+debug-on: EXTRAFLAGS += -DDEBUG
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT

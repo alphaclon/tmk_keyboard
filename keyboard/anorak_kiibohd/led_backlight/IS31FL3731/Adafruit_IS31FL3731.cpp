@@ -219,6 +219,26 @@ void Adafruit_IS31FL3731::audioSync(bool sync)
 	}
 }
 
+void Adafruit_IS31FL3731::setLEDEnable(uint8_t lednum, uint8_t enable, uint8_t bank)
+{
+	if (lednum >= 144)
+		return;
+
+	uint8_t ledreg = lednum / 8;
+	uint8_t mask = readRegister8(bank, ledreg);
+
+	if (enable)
+	{
+		mask |= 1 << (lednum % 8);
+	}
+	else
+	{
+		mask &= ~(1 << (lednum % 8));
+	}
+
+	writeRegister8(bank, ledreg, mask);
+}
+
 void Adafruit_IS31FL3731::setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank)
 {
 	if (lednum >= 144)
@@ -229,7 +249,11 @@ void Adafruit_IS31FL3731::setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank)
 
 void Adafruit_IS31FL3731::setLEDEnableMask(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank)
 {
+	setSoftwareShutdown(1);
+	selectBank(bank);
+
 #ifdef USE_BUFFERED_TWI
+	/*
 	union _tLEDMaskData
 	{
 		uint8_t raw[ISSI_LED_MASK_SIZE + 1];
@@ -243,29 +267,21 @@ void Adafruit_IS31FL3731::setLEDEnableMask(uint8_t const ledEnableMask[ISSI_LED_
 	typedef union _tLEDMaskData tLEDMaskData;
 
 	tLEDMaskData data;
+	*/
 
-	//setSoftwareShutdown(1);
+	uint8_t cmd[1] = { 0 };
+	i2cMasterSendNI(_i2caddr, 1, cmd);
 
-	selectBank(bank);
-
-	data.command.start = 0;
-	memcpy(data.command.mask, ledEnableMask, ISSI_LED_MASK_SIZE);
-
-	i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE + 1, data.raw);
-
-	//setSoftwareShutdown(0);
+	i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE, ledEnableMask);
 #else
-	setSoftwareShutdown(1);
-	selectBank(bank);
-
 	i2c_start_wait(_i2caddr + I2C_WRITE);
 	i2c_write(0x0);
 	for (uint8_t p = 0; p < ISSI_LED_MASK_SIZE; ++p)
 		i2c_write(ledEnableMask[p]);
 	i2c_stop();
+#endif
 
 	setSoftwareShutdown(0);
-#endif
 }
 
 void Adafruit_IS31FL3731::setLEDPWM(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8_t bank)
@@ -274,6 +290,7 @@ void Adafruit_IS31FL3731::setLEDPWM(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint
 	selectBank(bank);
 
 #ifdef USE_BUFFERED_TWI
+	/*
 	union _tPWMData
 	{
 		uint8_t raw[ISSI_TOTAL_CHANNELS + 1];
@@ -292,6 +309,12 @@ void Adafruit_IS31FL3731::setLEDPWM(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint
 	memcpy(data.command.pwm, pwm, ISSI_TOTAL_CHANNELS);
 
 	i2cMasterSendNI(_i2caddr, ISSI_TOTAL_CHANNELS + 1, data.raw);
+	*/
+
+	uint8_t cmd[1] = { 0x24 };
+	i2cMasterSendNI(_i2caddr, 1, cmd);
+
+	i2cMasterSendNI(_i2caddr, ISSI_TOTAL_CHANNELS, pwm);
 #else
 	i2c_start_wait(_i2caddr + I2C_WRITE);
 	i2c_write(0x24);
@@ -352,6 +375,9 @@ uint8_t Adafruit_IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
     uint8_t data;
 
 #ifdef USE_BUFFERED_TWI
+    uint8_t cmd[1] = { reg };
+	i2cMasterSendNI(_i2caddr, 1, cmd);
+	i2cMasterReceiveNI(_i2caddr, 1, &data);
 #else
     i2c_start_wait(_i2caddr + I2C_WRITE);
     i2c_write(reg);

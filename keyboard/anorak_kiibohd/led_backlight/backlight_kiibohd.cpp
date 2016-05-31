@@ -99,20 +99,25 @@ void backlight_set_region(uint8_t region)
 	switch (region)
 	{
 	case BACKLIGHT_REGION_ALL:
-		control.mask = LedMaskFull;
+		memcpy_P(control.maks, LedMaskFull, ISSI_LED_MASK_SIZE);
+		//control.mask = LedMaskFull;
 		break;
 	case BACKLIGHT_REGION_WASD:
-		control.mask = LedMaskWASD;
+		memcpy_P(control.maks, LedMaskWASD, ISSI_LED_MASK_SIZE);
+		//control.mask = LedMaskWASD;
 		break;
 	case BACKLIGHT_REGION_JUMP:
-		control.mask = LedMaskJump;
+		memcpy_P(control.maks, LedMaskJump, ISSI_LED_MASK_SIZE);
+		//control.mask = LedMaskJump;
 		break;
 	case BACKLIGHT_REGION_CONTROLS:
-		control.mask = LedMaskCtrl;
+		memcpy_P(control.maks, LedMaskCtrl, ISSI_LED_MASK_SIZE);
+		//control.mask = LedMaskCtrl;
 		break;
 	case BACKLIGHT_REGION_LOGO:
 	case BACKLIGHT_REGION_CASE:
-		control.mask = LedMaskLogo;
+		memcpy_P(control.maks, LedMaskLogo, ISSI_LED_MASK_SIZE);
+		//control.mask = LedMaskLogo;
 		break;
 	}
 

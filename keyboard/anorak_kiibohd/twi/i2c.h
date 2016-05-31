@@ -35,9 +35,12 @@
 // types
 typedef enum
 {
-	I2C_IDLE = 0, I2C_BUSY = 1,
-	I2C_MASTER_TX = 2, I2C_MASTER_RX = 3,
-	I2C_SLAVE_TX = 4, I2C_SLAVE_RX = 5
+	I2C_IDLE = 0,
+	I2C_BUSY = 1,
+	I2C_MASTER_TX = 2,
+	I2C_MASTER_RX = 3,
+	I2C_SLAVE_TX = 4,
+	I2C_SLAVE_RX = 5
 } eI2cStateType;
 
 // functions
@@ -53,9 +56,9 @@ void i2cSetBitrate(uint16_t bitrateKHz);
 void i2cSetLocalDeviceAddr(uint8_t deviceAddr, uint8_t genCallEn);
 
 //! Set the user function which handles receiving (incoming) data as a slave
-void i2cSetSlaveReceiveHandler(void (*i2cSlaveRx_func)(uint8_t receiveDataLength, uint8_t* recieveData));
+void i2cSetSlaveReceiveHandler(void (*i2cSlaveRx_func)(uint8_t receiveDataLength, uint8_t const *recieveData));
 //! Set the user function which handles transmitting (outgoing) data as a slave
-void i2cSetSlaveTransmitHandler(uint8_t (*i2cSlaveTx_func)(uint8_t transmitDataLengthMax, uint8_t* transmitData));
+void i2cSetSlaveTransmitHandler(uint8_t (*i2cSlaveTx_func)(uint8_t transmitDataLengthMax, uint8_t const *transmitData));
 
 // Low-level I2C transaction commands 
 //! Send an I2C start condition in Master mode
@@ -80,12 +83,12 @@ uint8_t i2cGetGenCall(void);
 // high-level I2C transaction commands
 
 //! send I2C data to a device on the bus
-void i2cMasterSend(uint8_t deviceAddr, uint8_t length, uint8_t *data);
+void i2cMasterSend(uint8_t deviceAddr, uint8_t length, uint8_t const *data);
 //! receive I2C data from a device on the bus
-void i2cMasterReceive(uint8_t deviceAddr, uint8_t length, uint8_t* data);
+void i2cMasterReceive(uint8_t deviceAddr, uint8_t length, uint8_t *data);
 
 //! send I2C data to a device on the bus (non-interrupt based)
-uint8_t i2cMasterSendNI(uint8_t deviceAddr, uint8_t length, uint8_t* data);
+uint8_t i2cMasterSendNI(uint8_t deviceAddr, uint8_t length, uint8_t const *data);
 //! receive I2C data from a device on the bus (non-interrupt based)
 uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint8_t length, uint8_t *data);
 

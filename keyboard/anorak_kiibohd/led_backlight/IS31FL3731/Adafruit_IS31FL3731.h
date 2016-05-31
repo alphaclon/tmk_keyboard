@@ -39,6 +39,7 @@ class Adafruit_IS31FL3731 : public Adafruit_GFX {
 
   void drawPixel(int16_t x, int16_t y, uint16_t color);
 
+  void setLEDEnable(uint8_t lednum, uint8_t enable, uint8_t bank = 0);
   void setLEDEnableMask(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank = 0);
   void setLEDRowEnableMask(uint8_t row, uint16_t mask, uint8_t bank = 0);
 

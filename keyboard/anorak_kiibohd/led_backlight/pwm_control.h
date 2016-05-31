@@ -3,12 +3,6 @@
 
 #include "IS31FL3731/Adafruit_IS31FL3731.h"
 
-extern uint8_t const LedMaskFull[ISSI_LED_MASK_SIZE];
-extern uint8_t const LedMaskWASD[ISSI_LED_MASK_SIZE];
-extern uint8_t const LedMaskCtrl[ISSI_LED_MASK_SIZE];
-extern uint8_t const LedMaskLogo[ISSI_LED_MASK_SIZE];
-extern uint8_t const LedMaskJump[ISSI_LED_MASK_SIZE];
-
 // Basic LED Control Capability
 typedef enum _tLedPWMControlMode
 {
@@ -34,7 +28,7 @@ typedef struct _tLedPWMControlCommand
 	tLedPWMControlMode mode;
     uint8_t amount;
     uint16_t index;
-    uint8_t const *mask;
+    uint8_t mask[ISSI_LED_MASK_SIZE];
 } tLedPWMControlCommand;
 
 void IS31FL3731_init();

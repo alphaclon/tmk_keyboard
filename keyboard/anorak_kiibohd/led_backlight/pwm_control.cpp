@@ -90,7 +90,6 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 		break;
 
 	case LedControlMode_brightness_set_all:
-		//control->amount /= 6;
 		dprintf("set_all %d\n", control->amount);
 		for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
 		{

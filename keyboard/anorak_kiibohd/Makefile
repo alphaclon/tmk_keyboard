@@ -57,8 +57,6 @@ SRC += \
 	keymap_common.c \
 	twi/i2c.c \
 	i2cmaster/twimaster.c \
-	IS31FL3731.c \
-	IS31FL3731Defaults.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
@@ -162,7 +160,8 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
-debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
+#debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
+debug-on: EXTRAFLAGS += -DDEBUG
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT

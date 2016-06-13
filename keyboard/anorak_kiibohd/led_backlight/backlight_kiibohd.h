@@ -1,3 +1,5 @@
+#ifndef _BACKLIGHT_KIIBOHD_
+#define _BACKLIGHT_KIIBOHD_
 
 enum backlight_region
 {
@@ -13,3 +15,4 @@ void backlight_internal_enable(void);
 void backlight_pwm_increase(uint8_t level);
 void backlight_pwm_decrease(uint8_t level);
 
+#endif

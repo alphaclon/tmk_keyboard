@@ -17,7 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include "pwm_control.h"
+#include "led_masks.h"
 
 extern "C" {
 #include "debug.h"
@@ -99,24 +101,24 @@ void backlight_set_region(uint8_t region)
 	switch (region)
 	{
 	case BACKLIGHT_REGION_ALL:
-		memcpy_P(control.maks, LedMaskFull, ISSI_LED_MASK_SIZE);
+		memcpy_P(control.mask, LedMaskFull, ISSI_LED_MASK_SIZE);
 		//control.mask = LedMaskFull;
 		break;
 	case BACKLIGHT_REGION_WASD:
-		memcpy_P(control.maks, LedMaskWASD, ISSI_LED_MASK_SIZE);
+		memcpy_P(control.mask, LedMaskWASD, ISSI_LED_MASK_SIZE);
 		//control.mask = LedMaskWASD;
 		break;
 	case BACKLIGHT_REGION_JUMP:
-		memcpy_P(control.maks, LedMaskJump, ISSI_LED_MASK_SIZE);
+		memcpy_P(control.mask, LedMaskJump, ISSI_LED_MASK_SIZE);
 		//control.mask = LedMaskJump;
 		break;
 	case BACKLIGHT_REGION_CONTROLS:
-		memcpy_P(control.maks, LedMaskCtrl, ISSI_LED_MASK_SIZE);
+		memcpy_P(control.mask, LedMaskCtrl, ISSI_LED_MASK_SIZE);
 		//control.mask = LedMaskCtrl;
 		break;
 	case BACKLIGHT_REGION_LOGO:
 	case BACKLIGHT_REGION_CASE:
-		memcpy_P(control.maks, LedMaskLogo, ISSI_LED_MASK_SIZE);
+		memcpy_P(control.mask, LedMaskLogo, ISSI_LED_MASK_SIZE);
 		//control.mask = LedMaskLogo;
 		break;
 	}

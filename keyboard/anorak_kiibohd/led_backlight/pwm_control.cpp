@@ -10,6 +10,7 @@ extern "C" {
 #include "debug.h"
 }
 
+uint8_t currentBank = 0;
 uint8_t LedMask[ISSI_LED_MASK_SIZE] = { 0 };
 uint8_t LedPWMPageBuffer[ISSI_TOTAL_CHANNELS] = { 0 };
 
@@ -30,28 +31,37 @@ void IS31FL3731_init()
 void IS31FL3731_enable()
 {
 	memcpy_P(LedMask, LedMaskFull, ISSI_LED_MASK_SIZE);
-	issi.setLEDEnableMask(LedMask);
+	issi.setLEDEnableMaskForAllBanks(LedMask);
+}
+
+void select_next_bank()
+{
+	++currentBank;
+	if (currentBank >= ISSI_TOTAL_FRAMES)
+		currentBank = 0;
 }
 
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 {
+	select_next_bank();
+
 	// Configure based upon the given mode
 	// TODO Perhaps do gamma adjustment?
 	switch (control->mode)
 	{
 	case LedControlMode_brightness_decrease:
 		LedPWMPageBuffer[control->index] -= control->amount;
-		//issi.writeRegister8(0, control->index, LedPWMPageBuffer[control->index]);
+		issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
 		break;
 
 	case LedControlMode_brightness_increase:
 		LedPWMPageBuffer[control->index] += control->amount;
-		//issi.writeRegister8(0, control->index, LedPWMPageBuffer[control->index]);
+		issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
 		break;
 
 	case LedControlMode_brightness_set:
 		LedPWMPageBuffer[control->index] = control->amount;
-		//issi.writeRegister8(0, control->index, LedPWMPageBuffer[control->index]);
+		issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
 		break;
 
 	case LedControlMode_brightness_decrease_all:
@@ -60,7 +70,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 			LedPWMPageBuffer[channel] -= control->amount;
 		}
 		dprintf("decrease_all %d\n", LedPWMPageBuffer[0]);
-		issi.setLEDPWM(LedPWMPageBuffer);
+		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
 		break;
 
 	case LedControlMode_brightness_increase_all:
@@ -69,7 +79,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 			LedPWMPageBuffer[channel] += control->amount;
 		}
 		dprintf("increase_all %d\n", LedPWMPageBuffer[0]);
-		issi.setLEDPWM(LedPWMPageBuffer);
+		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
 		break;
 
 	case LedControlMode_brightness_decrease_mask:
@@ -77,7 +87,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 		{
 			LedPWMPageBuffer[channel] += control->amount;
 		}
-		issi.setLEDPWM(LedPWMPageBuffer);
+		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
 		break;
 
 	case LedControlMode_brightness_increase_mask:
@@ -85,7 +95,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 		{
 			LedPWMPageBuffer[channel] += control->amount;
 		}
-		issi.setLEDPWM(LedPWMPageBuffer);
+		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
 		break;
 
 	case LedControlMode_brightness_set_all:
@@ -95,7 +105,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 		{
 			LedPWMPageBuffer[channel] = control->amount;
 		}
-		issi.setLEDPWM(LedPWMPageBuffer);
+		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
 		break;
 
 	case LedControlMode_enable_mask:
@@ -103,7 +113,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 		{
 			LedMask[i] |= control->mask[i];
 		}
-		issi.setLEDEnableMask(LedMask);
+		issi.setLEDEnableMask(LedMask, currentBank);
 		break;
 
 	case LedControlMode_disable_mask:
@@ -111,7 +121,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 		{
 			LedMask[i] &= ~(control->mask[i]);
 		}
-		issi.setLEDEnableMask(LedMask);
+		issi.setLEDEnableMask(LedMask, currentBank);
 		break;
 
 	case LedControlMode_xor_mask:
@@ -119,8 +129,9 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 		{
 			LedMask[i] ^= control->mask[i];
 		}
-		issi.setLEDEnableMask(LedMask);
+		issi.setLEDEnableMask(LedMask, currentBank);
 		break;
 	}
 
+	issi.displayFrame(currentBank);
 }

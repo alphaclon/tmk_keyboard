@@ -22,6 +22,28 @@ uint8_t const LedMaskFull[ISSI_LED_MASK_SIZE] PROGMEM =
   //0x00, 0x00, /* C9-1 -> C9-16 */
 };
 
+
+/* Row 1: ESC,1,2,3,4,5 00011111 LOGO 00000000 */
+/* Row 2:  FN,Q,W,E,R,T 00010111  N/A 00000000 */
+/* Row 3:  FN,A,S,D,F,G 00000011  N/A 00000000 */
+/* Row 4:  FN,Y,X,C,V,B 00011111  N/A 00000000 */
+/* Row 5:  FN,F,F,F,F,F 00000000  N/A 00000000 */
+/* Row 5:         SPACE 00000000  N/A 00000000 */
+
+uint8_t const LedMaskOthr[ISSI_LED_MASK_SIZE] PROGMEM =
+{
+    0x3F, 0x0F, /* C1-1 -> C1-16 */
+    0x3F, 0x00, /* C2-1 -> C2-16 */
+    0x3F, 0x00, /* C3-1 -> C3-16 */
+    0x3F, 0x00, /* C4-1 -> C4-16 */
+    0x3F, 0x00, /* C5-1 -> C5-16 */
+	0x01, 0x00, /* C6-1 -> C6-16 */
+  //0x00, 0x00, /* C7-1 -> C7-16 */
+  //0x00, 0x00, /* C8-1 -> C8-16 */
+  //0x00, 0x00, /* C9-1 -> C9-16 */
+};
+
+
 /* Row 1: ESC,1,2,3,4,5 00000000 LOGO 00000000 */
 /* Row 2:  FN,Q,W,E,R,T 00001000  N/A 00000000 */
 /* Row 3:  FN,A,S,D,F,G 00011100  N/A 00000000 */
@@ -41,6 +63,7 @@ uint8_t const LedMaskWASD[ISSI_LED_MASK_SIZE] PROGMEM =
   //0x00, 0x00, /* C8-1 -> C8-16 */
   //0x00, 0x00, /* C9-1 -> C9-16 */
 };
+
 
 /* Row 1: ESC,1,2,3,4,5 00100000 LOGO 00000000 */
 /* Row 2:  FN,Q,W,E,R,T 00100000  N/A 00000000 */
@@ -62,6 +85,7 @@ uint8_t const LedMaskCtrl[ISSI_LED_MASK_SIZE] PROGMEM =
   //0x00, 0x00, /* C9-1 -> C9-16 */
 };
 
+
 /* Row 1: ESC,1,2,3,4,5 00000000 LOGO 00001111 */
 /* Row 2:  FN,Q,W,E,R,T 00000000  N/A 00000000 */
 /* Row 3:  FN,A,S,D,F,G 00000000  N/A 00000000 */
@@ -82,13 +106,13 @@ uint8_t const LedMaskLogo[ISSI_LED_MASK_SIZE] PROGMEM =
   //0x00, 0x00, /* C9-1 -> C9-16 */
 };
 
+
 /* Row 1: ESC,1,2,3,4,5 00000000 LOGO 00000000 */
 /* Row 2:  FN,Q,W,E,R,T 00000000  N/A 00000000 */
 /* Row 3:  FN,A,S,D,F,G 00000000  N/A 00000000 */
 /* Row 4:  FN,Y,X,C,V,B 00000000  N/A 00000000 */
 /* Row 5:  FN,F,F,F,F,F 00000011  N/A 00000000 */
 /* Row 5:         SPACE 00000001  N/A 00000000 */
-
 
 uint8_t const LedMaskJump[ISSI_LED_MASK_SIZE] PROGMEM =
 {

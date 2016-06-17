@@ -78,6 +78,7 @@ enum function_id {
 	KIIBOHD_FUNCTION_Backlight_Toggle_LOGO,
 	KIIBOHD_FUNCTION_Backlight_Toggle_CTRL,
 	KIIBOHD_FUNCTION_Backlight_Toggle_FULL,
+	KIIBOHD_FUNCTION_Backlight_Toggle_REST,
 	KIIBOHD_FUNCTION_Backlight_Increase_All,
 	KIIBOHD_FUNCTION_Backlight_Decrease_All
 };
@@ -101,7 +102,7 @@ const uint16_t PROGMEM fn_actions[] = {
     [8] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Toggle_JUMP),
     [9] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Toggle_CTRL),
    [10] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Toggle_LOGO),
-   [11] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Toggle_FULL),
+   [11] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Toggle_REST),
    [12] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Increase_All),
    [13] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Decrease_All),
 };
@@ -152,6 +153,9 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
 		break;
 	case KIIBOHD_FUNCTION_Backlight_Toggle_CTRL:
 		backlight_set_region(BACKLIGHT_REGION_CONTROLS);
+		break;
+	case KIIBOHD_FUNCTION_Backlight_Toggle_REST:
+		backlight_set_region(BACKLIGHT_REGION_OTHER);
 		break;
 	case KIIBOHD_FUNCTION_Backlight_Toggle_FULL:
 		backlight_set_region(BACKLIGHT_REGION_ALL);

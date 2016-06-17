@@ -22,107 +22,148 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "led_masks.h"
 
 extern "C" {
+#include "config.h"
 #include "debug.h"
+#include "eeconfig.h"
 #include "backlight.h"
 #include "backlight_kiibohd.h"
 }
 
 extern "C" {
 
+uint8_t regions = 0xff;
+
 void backlight_setup(void)
 {
-	IS31FL3731_init();
+	regions = eeconfig_read_backlight_regions();
+
+    IS31FL3731_init();
 }
 
 void backlight_internal_enable(void)
 {
-	IS31FL3731_enable();
+    IS31FL3731_enable();
+
+    backlight_unset_region(BACKLIGHT_REGION_ALL);
+
+    if (regions & BACKLIGHT_REGION_CASE)
+        backlight_set_region(BACKLIGHT_REGION_CASE);
+    if (regions & BACKLIGHT_REGION_CONTROLS)
+        backlight_set_region(BACKLIGHT_REGION_CONTROLS);
+    if (regions & BACKLIGHT_REGION_JUMP)
+        backlight_set_region(BACKLIGHT_REGION_JUMP);
+    if (regions & BACKLIGHT_REGION_LOGO)
+        backlight_set_region(BACKLIGHT_REGION_LOGO);
+    if (regions & BACKLIGHT_REGION_OTHER)
+        backlight_set_region(BACKLIGHT_REGION_OTHER);
+    if (regions & BACKLIGHT_REGION_WASD)
+        backlight_set_region(BACKLIGHT_REGION_WASD);
 }
 
 void backlight_set(uint8_t level)
 {
-	dprintf("backlight_set %d\n", level);
+    dprintf("backlight_set %d\n", level);
 
-	tLedPWMControlCommand control;
-	control.mode = LedControlMode_brightness_set_all;
+    tLedPWMControlCommand control;
+    control.mode = LedControlMode_brightness_set_all;
 
-	switch (level)
-	{
-	case 0:
-		control.amount = 0;
-		break;
-	case 1:
-		control.amount = 63;
-		break;
-	case 2:
-		control.amount = 127;
-		break;
-	case 3:
-		control.amount = 190;
-		break;
-	case 4:
-		control.amount = 255;
-		break;
-	default:
-		control.amount = 255;
-		break;
-	}
+    switch (level)
+    {
+    case 0:
+        control.amount = 0;
+        break;
+    case 1:
+        control.amount = 63;
+        break;
+    case 2:
+        control.amount = 127;
+        break;
+    case 3:
+        control.amount = 190;
+        break;
+    case 4:
+        control.amount = 255;
+        break;
+    default:
+        control.amount = 255;
+        break;
+    }
 
-	IS31FL3731_PWM_control(&control);
+    IS31FL3731_PWM_control(&control);
 }
 
 void backlight_pwm_increase(uint8_t level)
 {
-	dprintf("backlight_increase\n", level);
+    dprintf("backlight_increase\n", level);
 
-	tLedPWMControlCommand control;
-	control.mode = LedControlMode_brightness_increase_all;
-	control.amount = level;
-	IS31FL3731_PWM_control(&control);
+    tLedPWMControlCommand control;
+    control.mode = LedControlMode_brightness_increase_all;
+    control.amount = level;
+    IS31FL3731_PWM_control(&control);
 }
 
 void backlight_pwm_decrease(uint8_t level)
 {
-	dprintf("backlight_decrease\n", level);
+    dprintf("backlight_decrease\n", level);
 
-	tLedPWMControlCommand control;
-	control.mode = LedControlMode_brightness_decrease_all;
-	control.amount = level;
-	IS31FL3731_PWM_control(&control);
+    tLedPWMControlCommand control;
+    control.mode = LedControlMode_brightness_decrease_all;
+    control.amount = level;
+    IS31FL3731_PWM_control(&control);
+}
+
+void backlight_region(uint8_t region, tLedPWMControlMode mode)
+{
+    dprintf("backlight_set_region %d\n", region);
+
+    tLedPWMControlCommand control;
+    control.mode = mode;
+
+    switch (region)
+    {
+    case BACKLIGHT_REGION_ALL:
+        memcpy_P(control.mask, LedMaskFull, ISSI_LED_MASK_SIZE);
+        break;
+    case BACKLIGHT_REGION_WASD:
+        memcpy_P(control.mask, LedMaskWASD, ISSI_LED_MASK_SIZE);
+        break;
+    case BACKLIGHT_REGION_JUMP:
+        memcpy_P(control.mask, LedMaskJump, ISSI_LED_MASK_SIZE);
+        break;
+    case BACKLIGHT_REGION_CONTROLS:
+        memcpy_P(control.mask, LedMaskCtrl, ISSI_LED_MASK_SIZE);
+        break;
+    case BACKLIGHT_REGION_OTHER:
+    	memcpy_P(control.mask, LedMaskOthr, ISSI_LED_MASK_SIZE);
+		break;
+    case BACKLIGHT_REGION_LOGO:
+    case BACKLIGHT_REGION_CASE:
+        memcpy_P(control.mask, LedMaskLogo, ISSI_LED_MASK_SIZE);
+        break;
+    }
+
+    IS31FL3731_PWM_control(&control);
+}
+
+void backlight_toggle_region(uint8_t region)
+{
+	if (regions & region)
+		regions &= ~region;
+	else
+		regions |= region;
+
+    backlight_region(region, LedControlMode_xor_mask);
+}
+
+void backlight_unset_region(uint8_t region)
+{
+	regions &= ~region;
+	backlight_region(region, LedControlMode_disable_mask);
 }
 
 void backlight_set_region(uint8_t region)
 {
-	dprintf("backlight_set_region %d\n", region);
-
-	tLedPWMControlCommand control;
-	control.mode = LedControlMode_xor_mask;
-
-	switch (region)
-	{
-	case BACKLIGHT_REGION_ALL:
-		memcpy_P(control.mask, LedMaskFull, ISSI_LED_MASK_SIZE);
-		//control.mask = LedMaskFull;
-		break;
-	case BACKLIGHT_REGION_WASD:
-		memcpy_P(control.mask, LedMaskWASD, ISSI_LED_MASK_SIZE);
-		//control.mask = LedMaskWASD;
-		break;
-	case BACKLIGHT_REGION_JUMP:
-		memcpy_P(control.mask, LedMaskJump, ISSI_LED_MASK_SIZE);
-		//control.mask = LedMaskJump;
-		break;
-	case BACKLIGHT_REGION_CONTROLS:
-		memcpy_P(control.mask, LedMaskCtrl, ISSI_LED_MASK_SIZE);
-		//control.mask = LedMaskCtrl;
-		break;
-	case BACKLIGHT_REGION_LOGO:
-	case BACKLIGHT_REGION_CASE:
-		memcpy_P(control.mask, LedMaskLogo, ISSI_LED_MASK_SIZE);
-		//control.mask = LedMaskLogo;
-		break;
-	}
-
-	IS31FL3731_PWM_control(&control);
+	regions |= region;
+	backlight_region(region, LedControlMode_enable_mask);
 }
 }

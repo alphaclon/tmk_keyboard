@@ -11,6 +11,7 @@
 #include "IS31FL3731/Adafruit_IS31FL3731.h"
 
 extern uint8_t const LedMaskFull[ISSI_LED_MASK_SIZE];
+extern uint8_t const LedMaskOthr[ISSI_LED_MASK_SIZE];
 extern uint8_t const LedMaskWASD[ISSI_LED_MASK_SIZE];
 extern uint8_t const LedMaskCtrl[ISSI_LED_MASK_SIZE];
 extern uint8_t const LedMaskLogo[ISSI_LED_MASK_SIZE];

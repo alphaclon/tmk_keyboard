@@ -12,126 +12,126 @@ extern "C" {
 }
 
 uint8_t currentBank = 0;
-uint8_t LedMask[ISSI_LED_MASK_SIZE] = { 0 };
-uint8_t LedPWMPageBuffer[ISSI_TOTAL_CHANNELS] = { 0 };
+uint8_t LedMask[ISSI_LED_MASK_SIZE] = {0};
+uint8_t LedPWMPageBuffer[ISSI_TOTAL_CHANNELS] = {0};
 
 Adafruit_IS31FL3731 issi;
 
 void IS31FL3731_init()
 {
 #ifdef USE_BUFFERED_TWI
-	i2cInit();
-	i2cSetBitrate(400);
+    i2cInit();
+    i2cSetBitrate(400);
 #else
-	i2c_init();
+    i2c_init();
 #endif
 
-	issi.begin();
+    issi.begin();
 }
 
 void IS31FL3731_enable()
 {
-	memcpy_P(LedMask, LedMaskFull, ISSI_LED_MASK_SIZE);
-	issi.setLEDEnableMaskForAllBanks(LedMask);
+    memcpy_P(LedMask, LedMaskFull, ISSI_LED_MASK_SIZE);
+    issi.setLEDEnableMaskForAllBanks(LedMask);
 }
 
 void select_next_bank()
 {
-	++currentBank;
-	if (currentBank >= ISSI_TOTAL_FRAMES)
-		currentBank = 0;
+    ++currentBank;
+    if (currentBank >= ISSI_TOTAL_FRAMES)
+        currentBank = 0;
 }
 
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 {
-	select_next_bank();
+    select_next_bank();
 
-	// Configure based upon the given mode
-	// TODO Perhaps do gamma adjustment?
-	switch (control->mode)
-	{
-	case LedControlMode_brightness_decrease:
-		LedPWMPageBuffer[control->index] -= control->amount;
-		issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
-		break;
+    // Configure based upon the given mode
+    // TODO Perhaps do gamma adjustment?
+    switch (control->mode)
+    {
+    case LedControlMode_brightness_decrease:
+        LedPWMPageBuffer[control->index] -= control->amount;
+        issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
+        break;
 
-	case LedControlMode_brightness_increase:
-		LedPWMPageBuffer[control->index] += control->amount;
-		issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
-		break;
+    case LedControlMode_brightness_increase:
+        LedPWMPageBuffer[control->index] += control->amount;
+        issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
+        break;
 
-	case LedControlMode_brightness_set:
-		LedPWMPageBuffer[control->index] = control->amount;
-		issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
-		break;
+    case LedControlMode_brightness_set:
+        LedPWMPageBuffer[control->index] = control->amount;
+        issi.setLEDPWM(control->index, LedPWMPageBuffer[control->index], currentBank);
+        break;
 
-	case LedControlMode_brightness_decrease_all:
-		for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
-		{
-			LedPWMPageBuffer[channel] -= control->amount;
-		}
-		dprintf("decrease_all %d\n", LedPWMPageBuffer[0]);
-		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
-		break;
+    case LedControlMode_brightness_decrease_all:
+        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        {
+            LedPWMPageBuffer[channel] -= control->amount;
+        }
+        dprintf("decrease_all %d\n", LedPWMPageBuffer[0]);
+        issi.setLEDPWM(LedPWMPageBuffer, currentBank);
+        break;
 
-	case LedControlMode_brightness_increase_all:
-		for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
-		{
-			LedPWMPageBuffer[channel] += control->amount;
-		}
-		dprintf("increase_all %d\n", LedPWMPageBuffer[0]);
-		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
-		break;
+    case LedControlMode_brightness_increase_all:
+        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        {
+            LedPWMPageBuffer[channel] += control->amount;
+        }
+        dprintf("increase_all %d\n", LedPWMPageBuffer[0]);
+        issi.setLEDPWM(LedPWMPageBuffer, currentBank);
+        break;
 
-	case LedControlMode_brightness_decrease_mask:
-		for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
-		{
-			LedPWMPageBuffer[channel] += control->amount;
-		}
-		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
-		break;
+    case LedControlMode_brightness_decrease_mask:
+        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        {
+            LedPWMPageBuffer[channel] += control->amount;
+        }
+        issi.setLEDPWM(LedPWMPageBuffer, currentBank);
+        break;
 
-	case LedControlMode_brightness_increase_mask:
-		for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
-		{
-			LedPWMPageBuffer[channel] += control->amount;
-		}
-		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
-		break;
+    case LedControlMode_brightness_increase_mask:
+        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        {
+            LedPWMPageBuffer[channel] += control->amount;
+        }
+        issi.setLEDPWM(LedPWMPageBuffer, currentBank);
+        break;
 
-	case LedControlMode_brightness_set_all:
-		dprintf("set_all %d\n", control->amount);
-		for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
-		{
-			LedPWMPageBuffer[channel] = control->amount;
-		}
-		issi.setLEDPWM(LedPWMPageBuffer, currentBank);
-		break;
+    case LedControlMode_brightness_set_all:
+        dprintf("set_all %d\n", control->amount);
+        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        {
+            LedPWMPageBuffer[channel] = control->amount;
+        }
+        issi.setLEDPWM(LedPWMPageBuffer, currentBank);
+        break;
 
-	case LedControlMode_enable_mask:
-		for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
-		{
-			LedMask[i] |= control->mask[i];
-		}
-		issi.setLEDEnableMask(LedMask, currentBank);
-		break;
+    case LedControlMode_enable_mask:
+        for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
+        {
+            LedMask[i] |= control->mask[i];
+        }
+        issi.setLEDEnableMask(LedMask, currentBank);
+        break;
 
-	case LedControlMode_disable_mask:
-		for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
-		{
-			LedMask[i] &= ~(control->mask[i]);
-		}
-		issi.setLEDEnableMask(LedMask, currentBank);
-		break;
+    case LedControlMode_disable_mask:
+        for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
+        {
+            LedMask[i] &= ~(control->mask[i]);
+        }
+        issi.setLEDEnableMask(LedMask, currentBank);
+        break;
 
-	case LedControlMode_xor_mask:
-		for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
-		{
-			LedMask[i] ^= control->mask[i];
-		}
-		issi.setLEDEnableMask(LedMask, currentBank);
-		break;
-	}
+    case LedControlMode_xor_mask:
+        for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
+        {
+            LedMask[i] ^= control->mask[i];
+        }
+        issi.setLEDEnableMask(LedMask, currentBank);
+        break;
+    }
 
-	issi.displayFrame(currentBank);
+    issi.displayFrame(currentBank);
 }

@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EECONFIG_MOUSEKEY_ACCEL                     (uint8_t *)5
 #define EECONFIG_BACKLIGHT                          (uint8_t *)6
 #define EECONFIG_BACKLIGHT_REGIONS                  (uint8_t *)7
-
+#define EECONFIG_BACKLIGHT_REGION_PWM               (uint8_t *)8
 
 /* debug bit */
 #define EECONFIG_DEBUG_ENABLE                       (1<<0)
@@ -74,6 +74,9 @@ void eeconfig_write_backlight(uint8_t val);
 
 uint8_t eeconfig_read_backlight_regions(void);
 void eeconfig_write_backlight_regions(uint8_t val);
+
+uint8_t eeconfig_read_backlight_region_brightness(uint8_t region);
+void eeconfig_write_backlight_region_brightness(uint8_t region, uint8_t brightness);
 #endif
 
 #endif

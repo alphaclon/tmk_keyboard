@@ -16,5 +16,6 @@ extern uint8_t const LedMaskWASD[ISSI_LED_MASK_SIZE];
 extern uint8_t const LedMaskCtrl[ISSI_LED_MASK_SIZE];
 extern uint8_t const LedMaskLogo[ISSI_LED_MASK_SIZE];
 extern uint8_t const LedMaskJump[ISSI_LED_MASK_SIZE];
+extern uint8_t const LedMaskCase[ISSI_LED_MASK_SIZE];
 
 #endif /* KEYBOARD_ANORAK_KIIBOHD_LED_BACKLIGHT_LED_MASKS_H_ */

@@ -12,8 +12,24 @@ enum backlight_region
     BACKLIGHT_REGION_OTHER = 0x40,
 };
 
-void backlight_internal_enable(void);
-void backlight_pwm_increase(uint8_t level);
-void backlight_pwm_decrease(uint8_t level);
+#define BACKLIGHT_MAX_REGIONS 7
+
+void backlight_initialize_regions(void);
+
+void backlight_set_brightness(uint8_t brightness);
+void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness);
+
+void backlight_increase_brightness(uint8_t delta_brightness);
+void backlight_decrease_brightness(uint8_t delta_brightness);
+
+void backlight_toggle_region(uint8_t region);
+void backlight_disable_region(uint8_t region);
+void backlight_enable_region(uint8_t region);
+
+void backlight_select_region(uint8_t region);
+void backlight_toggle_selected_region();
+
+void backlight_increase_brightness_selected_region(uint8_t delta_brightness);
+void backlight_decrease_brightness_selected_region(uint8_t delta_brightness);
 
 #endif

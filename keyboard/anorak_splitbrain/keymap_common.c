@@ -199,7 +199,7 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
     return MACRO_NONE;
 }
 
-void backlight_set_region(uint8_t region);
+void backlight_enable_region(uint8_t region);
 
 /*
  * user defined action function
@@ -218,25 +218,25 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         switch (id)
         {
         case KIIBOHD_FUNCTION_Backlight_Toggle_WASD:
-            backlight_set_region(BACKLIGHT_REGION_WASD);
+            backlight_enable_region(BACKLIGHT_REGION_WASD);
             break;
         case KIIBOHD_FUNCTION_Backlight_Toggle_JUMP:
-            backlight_set_region(BACKLIGHT_REGION_JUMP);
+            backlight_enable_region(BACKLIGHT_REGION_JUMP);
             break;
         case KIIBOHD_FUNCTION_Backlight_Toggle_LOGO:
-            backlight_set_region(BACKLIGHT_REGION_LOGO);
+            backlight_enable_region(BACKLIGHT_REGION_LOGO);
             break;
         case KIIBOHD_FUNCTION_Backlight_Toggle_CTRL:
-            backlight_set_region(BACKLIGHT_REGION_CONTROLS);
+            backlight_enable_region(BACKLIGHT_REGION_CONTROLS);
             break;
         case KIIBOHD_FUNCTION_Backlight_Toggle_FULL:
-            backlight_set_region(BACKLIGHT_REGION_ALL);
+            backlight_enable_region(BACKLIGHT_REGION_ALL);
             break;
         case KIIBOHD_FUNCTION_Backlight_Increase_All:
-            backlight_pwm_increase(5);
+            backlight_brightness_increase(5);
             break;
         case KIIBOHD_FUNCTION_Backlight_Decrease_All:
-            backlight_pwm_decrease(5);
+            backlight_brightness_decrease(5);
             break;
         }
     }

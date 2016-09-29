@@ -109,7 +109,7 @@ void matrix_setup(void)
 
 void matrix_init(void)
 {
-	backlight_internal_enable();
+	backlight_initialize_regions();
 
     // initialize row and col
     unselect_rows();

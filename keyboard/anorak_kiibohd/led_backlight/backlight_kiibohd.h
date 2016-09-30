@@ -32,4 +32,7 @@ void backlight_toggle_selected_region();
 void backlight_increase_brightness_selected_region(uint8_t delta_brightness);
 void backlight_decrease_brightness_selected_region(uint8_t delta_brightness);
 
+void backlight_save_region_states();
+void backlight_load_region_states();
+
 #endif

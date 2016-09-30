@@ -115,7 +115,7 @@ void set_and_save_brightness_for_region(uint8_t region, uint8_t pos, uint8_t bri
 {
     set_brightness_for_region(current_region, brightness, LedControlMode_brightness_set_by_mask);
     region_brightness[pos] = brightness;
-    eeconfig_write_backlight_region_brightness(pos, brightness);
+    //eeconfig_write_backlight_region_brightness(pos, brightness);
 }
 
 void set_brightness_for_all_regions(uint8_t brightness, tLedPWMControlMode mode)
@@ -138,6 +138,9 @@ void backlight_increase_brightness_for_region(uint8_t region, uint8_t delta_brig
 
     brightness += delta_brightness;
 
+    if (brightness < delta_brightness)
+        brightness = 255;
+
     set_and_save_brightness_for_region(region, pos, brightness);
 }
 
@@ -157,7 +160,7 @@ void backlight_decrease_brightness_for_region(uint8_t region, uint8_t delta_brig
     uint8_t brightness = region_brightness[pos];
 
     if (delta_brightness >= brightness)
-        brightness = 255;
+        brightness = MINIMAL_ALLOWED_BRIGHTNES;
     else
         brightness -= delta_brightness;
 
@@ -234,7 +237,7 @@ void backlight_toggle_region(uint8_t region)
         regions |= region;
 
     set_region_mode(region, LedControlMode_xor_mask);
-    eeconfig_write_backlight_regions(regions);
+    //eeconfig_write_backlight_regions(regions);
 }
 
 void backlight_toggle_selected_region()
@@ -248,7 +251,7 @@ void backlight_disable_region(uint8_t region)
     current_region = region;
 
     set_region_mode(region, LedControlMode_disable_mask);
-    eeconfig_write_backlight_regions(regions);
+    //eeconfig_write_backlight_regions(regions);
 }
 
 void backlight_enable_region(uint8_t region)
@@ -257,7 +260,46 @@ void backlight_enable_region(uint8_t region)
     current_region = region;
 
     set_region_mode(region, LedControlMode_enable_mask);
+    //eeconfig_write_backlight_regions(regions);
+}
+
+void backlight_save_region_states()
+{
     eeconfig_write_backlight_regions(regions);
+
+    for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
+    {
+        eeconfig_write_backlight_region_brightness(pos, region_brightness[pos]);
+    }
+}
+
+void backlight_load_region_states()
+{
+    regions = eeconfig_read_backlight_regions();
+
+    for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
+    {
+        uint8_t brightness = eeconfig_read_backlight_region_brightness(pos);
+
+        if (brightness < MINIMAL_ALLOWED_BRIGHTNES)
+            brightness = MINIMAL_ALLOWED_BRIGHTNES;
+
+        region_brightness[pos] = brightness;
+    }
+}
+
+void backlight_set_regions_from_saved_state(void)
+{
+    for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
+    {
+        uint8_t region = (1 << pos);
+
+        if (regions & region)
+            set_region_mode(region, LedControlMode_enable_mask);
+
+        uint8_t brightness = region_brightness[pos];
+        set_brightness_for_region(region, brightness, LedControlMode_brightness_set_by_mask);
+    }
 }
 
 void backlight_setup(void)
@@ -287,7 +329,7 @@ void backlight_set(uint8_t level)
     }
     else
     {
-        set_region_mode(BACKLIGHT_REGION_ALL, LedControlMode_enable_mask);
+        backlight_set_regions_from_saved_state();
     }
 }
 
@@ -296,19 +338,8 @@ void backlight_initialize_regions(void)
     IS31FL3731_enable();
     set_region_mode(BACKLIGHT_REGION_ALL, LedControlMode_disable_mask);
 
-    regions = eeconfig_read_backlight_regions();
-
-    for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
-    {
-        uint8_t region = (1 << pos);
-
-        if (regions & region)
-            set_region_mode(region, LedControlMode_enable_mask);
-
-        uint8_t brightness = eeconfig_read_backlight_region_brightness(pos);
-        set_brightness_for_region(region, brightness, LedControlMode_brightness_set_by_mask);
-        region_brightness[pos] = brightness;
-    }
+    backlight_load_region_states();
+    backlight_set_regions_from_saved_state();
 }
 
 } /* C */

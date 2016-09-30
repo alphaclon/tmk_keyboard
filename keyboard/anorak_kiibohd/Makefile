@@ -55,8 +55,7 @@ SRC += \
 	led.c \
 	matrix.c \
 	keymap_common.c \
-	twi/i2c.c \
-	i2cmaster/twimaster.c \
+	led_backlight/twi/i2c.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
@@ -91,7 +90,6 @@ MCU = atmega32u4
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
 F_CPU = 16000000
-
 
 #
 # LUFA specific

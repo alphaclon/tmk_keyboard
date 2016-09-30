@@ -37,7 +37,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      *
      */
     KEYMAP_KIIBOHD(
-        PAUS, FN16, FN17, FN18, FN19, FN20, \
+        PAUS, FN17, FN18, FN19, FN20, FN21, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
@@ -52,7 +52,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
          FN5, TRNS, TRNS, TRNS, TRNS, TRNS, \
          FN6,  FN7,  FN8,  FN9, FN10, FN11, \
          FN4, VOLD, VOLU, MUTE, TRNS, TRNS, \
-        FN15, TRNS, FN12, FN13, TRNS, TRNS, TRNS),
+        FN16, TRNS, TRNS, TRNS, FN12, FN13, FN15),
     /*
      * 3: layer 3, TF2 F-key layer,
      *    activated by FN2 (leftmost thumb key)
@@ -104,7 +104,8 @@ enum function_id {
     KIIBOHD_FUNCTION_Backlight_Increase_All,
     KIIBOHD_FUNCTION_Backlight_Decrease_All,
     KIIBOHD_FUNCTION_Backlight_Increase_Region,
-    KIIBOHD_FUNCTION_Backlight_Decrease_Region
+    KIIBOHD_FUNCTION_Backlight_Decrease_Region,
+    KIIBOHD_FUNCTION_Backlight_Save_Current_State
 };
 
 enum macro_id {
@@ -114,7 +115,8 @@ enum macro_id {
 /*
  * Fn action definition
  */
-const uint16_t PROGMEM fn_actions[] = {
+const uint16_t PROGMEM fn_actions[] =
+{
     [0] = ACTION_LAYER_MOMENTARY(2),
     [1] = ACTION_MODS_TAP_KEY(KC_M, KC_I),
     [2] = ACTION_LAYER_TAP_KEY(3, KC_SLSH),
@@ -131,8 +133,9 @@ const uint16_t PROGMEM fn_actions[] = {
    [13] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Decrease_Region),
    [14] = ACTION_LAYER_MOMENTARY(1),
    [15] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Toggle_Region),
-   [16] = ACTION_LAYER_TOGGLE(4),
-   [17] = ACTION_LAYER_TOGGLE(5),
+   [16] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Save_Current_State),
+   [17] = ACTION_LAYER_TOGGLE(4),
+   [18] = ACTION_LAYER_TOGGLE(5),
 };
 
 
@@ -186,6 +189,8 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         case KIIBOHD_FUNCTION_Backlight_Decrease_Region:
             backlight_decrease_brightness_selected_region(10);
             break;
+        case KIIBOHD_FUNCTION_Backlight_Save_Current_State:
+            backlight_save_region_states();
         }
     }
 }

@@ -19,21 +19,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CONFIG_H
 
 
-#define VENDOR_ID       0xDEAD
-#define PRODUCT_ID      0xBEEF
-#define DEVICE_VER      0x0104
+#define VENDOR_ID       0xBADE
+#define PRODUCT_ID      0xAFFE
+#define DEVICE_VER      0x0100
 #define MANUFACTURER    Anorak
-#define PRODUCT         kiibohd
-#define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
+#define PRODUCT         spitbrain
+#define DESCRIPTION     t.m.k. keyboard firmware for Anorak splitbrain
 
 
 /* matrix size */
-#define MATRIX_ROWS 7
+#define MATRIX_ROWS 17
 #define MATRIX_COLS 6
 
 
 /* key combination for command */
-#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT)))
+#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_LCTRL)))
 
 
 /* period of tapping(ms) */

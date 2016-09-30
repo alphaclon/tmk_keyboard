@@ -39,7 +39,7 @@
 #----------------------------------------------------------------------------
 
 # Target file name (without extension).
-TARGET = anorak_kiibohd_lufa
+TARGET = anorak_splitbrain_lufa
 
 # Directory common source filess exist
 TMK_DIR = ../../tmk_core
@@ -47,6 +47,7 @@ TMK_DIR = ../../tmk_core
 # Directory keyboard dependent files exist
 TARGET_DIR = .
 
+PROGRAM_CMD = avrdude -v -c avr109 -p at90usb646 -P /dev/ttyACM0 -U flash:w:anorak_splitbrain_lufa.hex
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC +=	keymap_common.c \
@@ -60,7 +61,7 @@ CONFIG_H = config.h
 # PJRC Teensy++ 2.0
 #MCU = at90usb1286
 # TMK Alt Controller or PJRC Teensy 2.0
-MCU = atmega32u4
+MCU = at90usb646
 
 # Processor frequency.
 #     This will define a symbol, F_CPU, in all source code files equal to the
@@ -125,17 +126,6 @@ SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
 #OPT_DEFS += -DNO_ACTION_MACRO
-
-
-#
-# Keymap file
-#
-ifdef KEYMAP
-    SRC := keymap_$(KEYMAP).c $(SRC)
-else
-    SRC := keymap_kiibohd.c $(SRC)
-endif
-
 
 # Search Path
 VPATH += $(TARGET_DIR)

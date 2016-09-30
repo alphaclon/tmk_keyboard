@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
 
 /* matrix size */
-#define MATRIX_57
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 7
 

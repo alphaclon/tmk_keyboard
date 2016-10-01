@@ -1,11 +1,12 @@
 
 #include "pwm_control.h"
+#include "led_masks.h"
 
 extern "C" {
 #ifdef USE_BUFFERED_TWI
-#include "../twi/i2c.h"
+#include "twi/i2c.h"
 #else
-#include "../i2cmaster/i2cmaster.h"
+#include "i2cmaster/i2cmaster.h"
 #endif
 #include "debug.h"
 }
@@ -25,14 +26,7 @@ void IS31FL3731_init()
 #else
     i2c_init();
 #endif
-
     issi.begin();
-}
-
-void IS31FL3731_enable()
-{
-    //memcpy_P(LedMask, LedMaskFull, ISSI_LED_MASK_SIZE);
-    //issi.setLEDEnableMaskForAllBanks(LedMask);
 }
 
 void IS31FL3731_set_maximum_power_consumption(uint16_t value)
@@ -52,9 +46,14 @@ uint8_t channel_enabled_by_mask(uint16_t channel, tLedPWMControlCommand *control
     uint8_t mask_byte = channel / 8;
     uint8_t mask_bit = channel % 8;
 
-    if ((mask_byte < ISSI_LED_MASK_SIZE) && (control->mask[i] & (1 << mask_bit)))
-        return 1;
-    return 0;
+    //dprintf("%u:%u\n", mask_byte, mask_bit);
+
+    if (mask_byte >= ISSI_LED_MASK_SIZE)
+        	return 0;
+
+    //dprintf("b: %u, s: %u\n", control->mask[mask_byte], (control->mask[mask_byte] & (1 << mask_bit)) ? 1 : 0);
+
+    return ((control->mask[mask_byte] & (1 << mask_bit)));
 }
 
 uint8_t channel_enabled_masked(uint16_t channel)
@@ -62,9 +61,14 @@ uint8_t channel_enabled_masked(uint16_t channel)
     uint8_t mask_byte = channel / 8;
     uint8_t mask_bit = channel % 8;
 
-    if ((mask_byte < ISSI_LED_MASK_SIZE) && (LedMask[i] & (1 << mask_bit)))
-        return 1;
-    return 0;
+    //dprintf("%u:%u\n", mask_byte, mask_bit);
+
+    if (mask_byte >= ISSI_LED_MASK_SIZE)
+        	return 0;
+
+    //dprintf("b: %u, s: %u\n", LedMask[mask_byte], (LedMask[mask_byte] & (1 << mask_bit)) ? 1 : 0);
+
+    return ((LedMask[mask_byte] & (1 << mask_bit)));
 }
 
 uint16_t get_pwm_summed_up()
@@ -84,6 +88,8 @@ void fix_max_pwm()
 
     uint16_t sum = get_pwm_summed_up();
 
+    dprintf("fixing %u\n", sum);
+
     while (sum > maximum_total_pwm)
     {
         sum = 0;
@@ -95,13 +101,15 @@ void fix_max_pwm()
             sum += LedPWMPageBuffer[channel];
         }
     }
+
+    dprintf("fixed %u\n", sum);
 }
 
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 {
-    dprintf("IS31FL3731_PWM_control %d: %d\n", control->mode, control->amount);
+    //dprintf("IS_PWM_control %d: %d\n", control->mode, control->amount);
 
-    select_next_bank();
+    //select_next_bank();
 
     // Configure based upon the given mode
     // TODO Perhaps do gamma adjustment?
@@ -195,15 +203,27 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 
     fix_max_pwm();
 
+    /*
+    for (uint8_t i = 0; i < 6; i++)
+    {
+    	for (uint8_t j = 0; j < 16; j++)
+    	{
+    		dprintf("%03u ", LedPWMPageBuffer[i*16+j]);
+    	}
+
+    	dprintf("\n");
+    }
+    */
+
     issi.setLEDPWM(LedPWMPageBuffer, currentBank);
-    issi.displayFrame(currentBank);
+    //issi.displayFrame(currentBank);
 }
 
 void IS31FL3731_region_control(tLedRegionControlCommand *control)
 {
-    dprintf("IS31FL3731_region_control: %d\n", control->mode);
+    //dprintf("IS_region_control: %d\n", control->mode);
 
-    select_next_bank();
+    //select_next_bank();
 
     switch (control->mode)
     {
@@ -230,6 +250,6 @@ void IS31FL3731_region_control(tLedRegionControlCommand *control)
     }
 
     issi.setLEDEnableMask(LedMask, currentBank);
-    issi.displayFrame(currentBank);
+    //issi.displayFrame(currentBank);
 }
 

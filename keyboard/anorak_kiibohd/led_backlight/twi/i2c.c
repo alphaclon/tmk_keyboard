@@ -55,6 +55,7 @@
 #include <avr/sfr_defs.h>
 #include <stdbool.h>
 #include <util/twi.h>
+#include <string.h>
 
 #include "debug.h"
 #include "i2c.h"
@@ -219,7 +220,6 @@ inline uint8_t i2cGetStatus(void)
 
 void i2cMasterSend(uint8_t deviceAddr, uint8_t length, uint8_t const *data)
 {
-    uint8_t i;
     // wait for interface to be ready
     while (I2cState)
         ;
@@ -227,8 +227,8 @@ void i2cMasterSend(uint8_t deviceAddr, uint8_t length, uint8_t const *data)
     I2cState = I2C_MASTER_TX;
     // save data
     I2cDeviceAddrRW = (deviceAddr & 0xFE); // RW cleared: write operation
-    memcpy(I2cSendData[i], data, length);
-    //for (i = 0; i < length; i++)
+    memcpy(I2cSendData, data, length);
+    //for (uint8_t i = 0; i < length; i++)
     //    I2cSendData[i] = *data++;
     I2cSendDataIndex = 0;
     I2cSendDataLength = length;
@@ -238,7 +238,6 @@ void i2cMasterSend(uint8_t deviceAddr, uint8_t length, uint8_t const *data)
 
 void i2cMasterReceive(uint8_t deviceAddr, uint8_t length, uint8_t *data)
 {
-    uint8_t i;
     // wait for interface to be ready
     while (I2cState)
         ;
@@ -255,7 +254,7 @@ void i2cMasterReceive(uint8_t deviceAddr, uint8_t length, uint8_t *data)
         ;
     // return data
     memcpy(data, I2cReceiveData, length);
-    //for (i = 0; i < length; i++)
+    //for (uint8_t i = 0; i < length; i++)
     //    *data++ = I2cReceiveData[i];
 }
 

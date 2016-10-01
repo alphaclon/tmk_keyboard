@@ -3,7 +3,11 @@
 #include <util/delay.h>
 
 extern "C" {
-#include "../../twi/i2c.h"
+#ifdef USE_BUFFERED_TWI
+#include "../twi/i2c.h"
+#else
+#include "../i2cmaster/i2cmaster.h"
+#endif
 }
 
 #define ISSI_REG_CONFIG 0x00
@@ -67,8 +71,8 @@ bool Adafruit_IS31FL3731::begin(uint8_t addr)
     // all LEDs on & PWM
     for (uint8_t f = 0; f < ISSI_TOTAL_FRAMES; f++)
     {
-        for (uint8_t i = 0; i < ISSI_TOTAL_CHANNELS; i++)
-            setLEDPWM(i, 0, f); // set each led to the default PWM
+        for (uint8_t led = 0; led < ISSI_TOTAL_CHANNELS; led++)
+            setLEDPWM(led, 0, 0); // set each led to the default PWM
     }
 
     // out of shutdown
@@ -159,9 +163,22 @@ void Adafruit_IS31FL3731::setLEDEnableMask(uint8_t const ledEnableMask[ISSI_LED_
 {
     selectBank(bank);
 
-    uint8_t cmd[1] = {0};
-    i2cMasterSendNI(_i2caddr, 1, cmd);
-    i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE, ledEnableMask);
+#ifdef USE_BUFFERED_TWI
+    //uint8_t cmd[1] = {0};
+    //i2cMasterSendNI(_i2caddr, 1, cmd);
+    //i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE, ledEnableMask);
+    uint8_t cmd[ISSI_LED_MASK_SIZE+1];
+    cmd[0] = 0;
+    memcpy(&cmd[1], ledEnableMask, ISSI_LED_MASK_SIZE);
+    i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE+1, cmd);
+    //i2cMasterSend(_i2caddr, ISSI_LED_MASK_SIZE+1, cmd);
+#else
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(0x0);
+    for (uint8_t p = 0; p < ISSI_LED_MASK_SIZE; ++p)
+        i2c_write(ledEnableMask[p]);
+    i2c_stop();
+#endif
 }
 
 void Adafruit_IS31FL3731::setLEDEnableMaskForAllBanks(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE])
@@ -184,17 +201,37 @@ void Adafruit_IS31FL3731::setLEDPWM(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint
 {
     selectBank(bank);
 
-    uint8_t cmd[1] = {0x24};
-    i2cMasterSendNI(_i2caddr, 1, cmd);
-    i2cMasterSendNI(_i2caddr, ISSI_USED_CHANNELS, pwm);
+#ifdef USE_BUFFERED_TWI
+    //uint8_t cmd[1] = {0x24};
+    //i2cMasterSendNI(_i2caddr, 1, cmd);
+    //i2cMasterSendNI(_i2caddr, ISSI_USED_CHANNELS, pwm);
+    uint8_t cmd[ISSI_USED_CHANNELS+1];
+    cmd[0] = 0x24;
+    memcpy(&cmd[1], pwm, ISSI_USED_CHANNELS);
+    i2cMasterSendNI(_i2caddr, ISSI_USED_CHANNELS + 1, cmd);
+    //i2cMasterSend(_i2caddr, ISSI_USED_CHANNELS + 1, cmd);
+#else
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(0x24);
+    for (uint8_t p = 0; p < ISSI_USED_CHANNELS; ++p)
+        i2c_write(pwm[p]);
+    i2c_stop();
+#endif
 }
 
 /*************/
 
 void Adafruit_IS31FL3731::selectBank(uint8_t bank)
 {
+#ifdef USE_BUFFERED_TWI
     uint8_t cmd[2] = {ISSI_COMMANDREGISTER, bank};
     i2cMasterSendNI(_i2caddr, 2, cmd);
+#else
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(ISSI_COMMANDREGISTER);
+    i2c_write(bank);
+    i2c_stop();
+#endif
 
     /*
      Wire.beginTransmission(_i2caddr);
@@ -208,23 +245,31 @@ void Adafruit_IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 {
     selectBank(b);
 
+#ifdef USE_BUFFERED_TWI
     uint8_t cmd[2] = {reg, data};
     i2cMasterSendNI(_i2caddr, 2, cmd);
-
-    /*
-    Wire.beginTransmission(_i2caddr);
-    Wire.write((byte) reg);
-    Wire.write((byte) data);
-    Wire.endTransmission();
-    */
+#else
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(reg);
+    i2c_write(data);
+    i2c_stop();
+#endif
 }
 
 void Adafruit_IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 {
     selectBank(b);
 
+#ifdef USE_BUFFERED_TWI
     uint8_t cmd[3] = {reg, data >> 8, data & 0xFF};
     i2cMasterSendNI(_i2caddr, 3, cmd);
+#else
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(reg);
+    i2c_write(data >> 8);
+    i2c_write(data & 0xFF);
+    i2c_stop();
+#endif
 }
 
 uint8_t Adafruit_IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
@@ -233,9 +278,17 @@ uint8_t Adafruit_IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 
     uint8_t data;
 
+#ifdef USE_BUFFERED_TWI
     uint8_t cmd[1] = {reg};
     i2cMasterSendNI(_i2caddr, 1, cmd);
     i2cMasterReceiveNI(_i2caddr, 1, &data);
+#else
+    i2c_start_wait(_i2caddr + I2C_WRITE);
+    i2c_write(reg);
+    i2c_rep_start(_i2caddr + I2C_READ);
+    data = i2c_readNak();
+    i2c_stop();
+#endif
 
     return data;
 

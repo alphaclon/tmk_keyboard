@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VENDOR_ID       0xDEAD
 #define PRODUCT_ID      0xBEEF
-#define DEVICE_VER      0x0201
+#define DEVICE_VER      0x0202
 #define MANUFACTURER    Anorak
 #define PRODUCT         gaming kiibohd
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 7
 
-#define BACKLIGHT_LEVELS 2
+#define BACKLIGHT_LEVELS 8
 
 /* key combination for command */
 #define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LCTRL) | MOD_BIT(KC_LSHIFT)))
@@ -49,7 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /* disable debug print */
 //#define NO_DEBUG
-//#define NO_DEBUG_LEDS
+#define NO_DEBUG_LEDS
 
 /* disable print */
 //#define NO_PRINT

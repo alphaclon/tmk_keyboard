@@ -56,6 +56,7 @@ SRC += \
 	matrix.c \
 	keymap_common.c \
 	led_backlight/twi/i2c.c \
+	led_backlight/i2cmaster/twimaster.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \

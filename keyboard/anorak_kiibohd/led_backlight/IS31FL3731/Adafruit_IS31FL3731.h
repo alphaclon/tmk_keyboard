@@ -4,6 +4,8 @@
 #include <inttypes.h>
 #include "../gfx/Adafruit_GFX.h"
 
+#define USE_BUFFERED_TWI
+
 #define ISSI_ADDR_DEFAULT 0x74
 
 #define ISSI_TOTAL_CHANNELS 144

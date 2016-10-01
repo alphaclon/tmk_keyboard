@@ -47,7 +47,6 @@ typedef struct _tLedRegionControlCommand
 } tLedRegionControlCommand;
 
 void IS31FL3731_init();
-void IS31FL3731_enable();
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control);
 void IS31FL3731_region_control(tLedRegionControlCommand *control);
 

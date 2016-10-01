@@ -91,7 +91,7 @@ void eeconfig_write_backlight_regions(uint8_t val)
 
 uint8_t eeconfig_read_backlight_region_brightness(uint8_t region)
 {
-    return eeprom_read_byte(EECONFIG_BACKLIGHT_REGION + region);
+    return eeprom_read_byte(EECONFIG_BACKLIGHT_REGION_PWM + region);
 }
 
 void eeconfig_write_backlight_region_brightness(uint8_t region, uint8_t brightness)

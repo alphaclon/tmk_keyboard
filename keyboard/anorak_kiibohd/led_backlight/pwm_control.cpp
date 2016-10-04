@@ -4,7 +4,7 @@
 
 extern "C" {
 #ifdef USE_BUFFERED_TWI
-#include "twi/i2c.h"
+#include "twi/twi_master.h"
 #else
 #include "i2cmaster/i2cmaster.h"
 #endif
@@ -49,7 +49,7 @@ uint8_t channel_enabled_by_mask(uint16_t channel, tLedPWMControlCommand *control
     //dprintf("%u:%u\n", mask_byte, mask_bit);
 
     if (mask_byte >= ISSI_LED_MASK_SIZE)
-        	return 0;
+            return 0;
 
     //dprintf("b: %u, s: %u\n", control->mask[mask_byte], (control->mask[mask_byte] & (1 << mask_bit)) ? 1 : 0);
 
@@ -64,7 +64,7 @@ uint8_t channel_enabled_masked(uint16_t channel)
     //dprintf("%u:%u\n", mask_byte, mask_bit);
 
     if (mask_byte >= ISSI_LED_MASK_SIZE)
-        	return 0;
+            return 0;
 
     //dprintf("b: %u, s: %u\n", LedMask[mask_byte], (LedMask[mask_byte] & (1 << mask_bit)) ? 1 : 0);
 
@@ -206,12 +206,12 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
     /*
     for (uint8_t i = 0; i < 6; i++)
     {
-    	for (uint8_t j = 0; j < 16; j++)
-    	{
-    		dprintf("%03u ", LedPWMPageBuffer[i*16+j]);
-    	}
+        for (uint8_t j = 0; j < 16; j++)
+        {
+            dprintf("%03u ", LedPWMPageBuffer[i*16+j]);
+        }
 
-    	dprintf("\n");
+        dprintf("\n");
     }
     */
 

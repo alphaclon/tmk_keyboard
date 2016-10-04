@@ -55,8 +55,7 @@ SRC += \
 	led.c \
 	matrix.c \
 	keymap_common.c \
-	led_backlight/twi/i2c.c \
-	led_backlight/i2cmaster/twimaster.c \
+	led_backlight/twi/twi_master.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
@@ -66,6 +65,8 @@ SRC += \
 	led_backlight/backlight_kiibohd.c \
 	led_backlight/pwm_control.cpp \
 	led_backlight/led_masks.cpp
+
+#	led_backlight/i2cmaster/twimaster.c \
 
 
 PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex

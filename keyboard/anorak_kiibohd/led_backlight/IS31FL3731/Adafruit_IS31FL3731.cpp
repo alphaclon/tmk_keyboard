@@ -4,7 +4,7 @@
 
 extern "C" {
 #ifdef USE_BUFFERED_TWI
-#include "../twi/i2c.h"
+#include "../twi/twi_master.h"
 #else
 #include "../i2cmaster/i2cmaster.h"
 #endif

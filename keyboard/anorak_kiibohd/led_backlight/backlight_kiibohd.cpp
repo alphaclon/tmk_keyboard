@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include "pwm_control.h"
+#include "led_control.h"
 #include "led_masks.h"
 
 extern "C" {
@@ -33,8 +34,8 @@ extern "C" {
 
 extern "C" {
 
-#define MAX_GAMMA_STEPS 7
-uint8_t gamma_correction_table[MAX_GAMMA_STEPS+1] = { 4, 18, 39, 69, 106, 149, 212, 255 };
+#define GAMMA_STEPS 8
+uint8_t gamma_correction_table[GAMMA_STEPS] = { 4, 18, 39, 69, 106, 149, 212, 255 };
 
 uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
@@ -66,8 +67,8 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
         memcpy_P(mask, LedMaskFull, ISSI_LED_MASK_SIZE);
         break;
     default:
-    	memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
-    	dprintf("unknown region %d\n", region);
+        memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
+        dprintf("unknown region %d\n", region);
         break;
     }
 }
@@ -118,7 +119,7 @@ void set_region_mode(uint8_t region, tLedRegionControlMode mode)
 
 void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMControlMode mode)
 {
-	//dprintf("set bri %d\n", brightness);
+    //dprintf("set bri %d\n", brightness);
     tLedPWMControlCommand control;
     control.mode = mode;
     control.amount = gamma_correction_table[brightness];
@@ -128,9 +129,9 @@ void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMContro
 
 void set_and_save_brightness_for_region(uint8_t region, uint8_t pos, uint8_t brightness)
 {
-	//dprintf("set bri %d\n", brightness);
-	if (brightness > MAX_GAMMA_STEPS)
-		brightness = MAX_GAMMA_STEPS;
+    //dprintf("set bri %d\n", brightness);
+    if (brightness >= GAMMA_STEPS)
+        brightness = GAMMA_STEPS - 1;
 
     set_brightness_for_region(region, brightness, LedControlMode_brightness_set_by_mask);
     region_brightness[pos] = brightness;
@@ -147,21 +148,21 @@ void set_brightness_for_all_regions(uint8_t brightness, tLedPWMControlMode mode)
 
 void backlight_increase_brightness_for_region(uint8_t region)
 {
-	dprintf("bl_inc_bri_for_region %d\n", region);
+    dprintf("bl_inc_bri_for_region %d\n", region);
 
     if ((regions & region) == 0)
     {
-    	//set_region_mode(region, LedControlMode_enable_mask);
+        //set_region_mode(region, LedControlMode_enable_mask);
         return;
     }
 
     uint8_t pos = get_array_position_for_region(region);
     uint8_t brightness = region_brightness[pos];
 
-    if (brightness > MAX_GAMMA_STEPS)
-    	brightness = MAX_GAMMA_STEPS;
+    if (brightness >= GAMMA_STEPS)
+        brightness = GAMMA_STEPS - 1;
 
-    if (brightness < MAX_GAMMA_STEPS)
+    if (brightness < (GAMMA_STEPS - 1))
         brightness++;
 
     dprintf("bri %d\n", brightness);
@@ -180,7 +181,7 @@ void backlight_decrease_brightness_for_region(uint8_t region)
 
     if ((regions & region) == 0)
     {
-    	//set_region_mode(region, LedControlMode_enable_mask);
+        //set_region_mode(region, LedControlMode_enable_mask);
         return;
     }
 
@@ -244,7 +245,7 @@ void backlight_select_region(uint8_t region)
 
 void backlight_toggle_region(uint8_t region)
 {
-	dprintf("bl_tog_region %d\n", region);
+    dprintf("bl_tog_region %d\n", region);
 
     current_region = region;
 
@@ -285,9 +286,9 @@ void backlight_enable_region(uint8_t region)
 
 void backlight_save_region_states()
 {
-	dprintf("save\n");
+    dprintf("save\n");
 
-	eeconfig_write_backlight_regions(regions);
+    eeconfig_write_backlight_regions(regions);
 
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {
@@ -308,9 +309,9 @@ void backlight_load_region_states()
 
 void backlight_set_regions_from_saved_state(void)
 {
-	set_region_mode(backlight_region_ALL, LedControlMode_disable_mask);
+    set_region_mode(backlight_region_ALL, LedControlMode_disable_mask);
 
-	dprintf("regions %u\n", regions);
+    dprintf("regions %u\n", regions);
 
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {

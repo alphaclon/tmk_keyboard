@@ -215,11 +215,11 @@ static void  init_cols(void)
     // Input with pull-up (DDR:0, PORT:1)
     // COL 1: PB5  5
     // COL 2: PB4  4
-    // COL 3: PE6         6
-    // COL 4: PD7      7
-    // COL 5: PC6    6
-    // COL 6: PD4      4
-    // COL 7: PD3      3
+    // COL 3: PE6  6
+    // COL 4: PD7  7
+    // COL 5: PC6  6
+    // COL 6: PD4  4
+    // COL 7: PD3  3
 
     DDRB &= ~(1<<5 | 1 << 4);
     PORTB |= (1<<5 | 1 << 4);

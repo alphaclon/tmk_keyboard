@@ -167,11 +167,16 @@ void Adafruit_IS31FL3731::setLEDEnableMask(uint8_t const ledEnableMask[ISSI_LED_
     //uint8_t cmd[1] = {0};
     //i2cMasterSendNI(_i2caddr, 1, cmd);
     //i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE, ledEnableMask);
-    uint8_t cmd[ISSI_LED_MASK_SIZE+1];
-    cmd[0] = 0;
-    memcpy(&cmd[1], ledEnableMask, ISSI_LED_MASK_SIZE);
-    i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE+1, cmd);
+    //uint8_t cmd[ISSI_LED_MASK_SIZE+1];
+    //cmd[0] = 0;
+    //memcpy(&cmd[1], ledEnableMask, ISSI_LED_MASK_SIZE);
+    //i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE+1, cmd);
     //i2cMasterSend(_i2caddr, ISSI_LED_MASK_SIZE+1, cmd);
+
+    i2c_command.parts.cmd = 0;
+    memcpy(i2c_command.parts.data, ledEnableMask, ISSI_LED_MASK_SIZE);
+    i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE + 1, i2c_command.raw);
+
 #else
     i2c_start_wait(_i2caddr + I2C_WRITE);
     i2c_write(0x0);
@@ -202,14 +207,14 @@ void Adafruit_IS31FL3731::setLEDPWM(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint
     selectBank(bank);
 
 #ifdef USE_BUFFERED_TWI
-    //uint8_t cmd[1] = {0x24};
-    //i2cMasterSendNI(_i2caddr, 1, cmd);
-    //i2cMasterSendNI(_i2caddr, ISSI_USED_CHANNELS, pwm);
-    uint8_t cmd[ISSI_USED_CHANNELS+1];
-    cmd[0] = 0x24;
-    memcpy(&cmd[1], pwm, ISSI_USED_CHANNELS);
-    i2cMasterSendNI(_i2caddr, ISSI_USED_CHANNELS + 1, cmd);
-    //i2cMasterSend(_i2caddr, ISSI_USED_CHANNELS + 1, cmd);
+    //uint8_t cmd[ISSI_USED_CHANNELS+1];
+    //cmd[0] = 0x24;
+    //memcpy(&cmd[1], pwm, ISSI_USED_CHANNELS);
+
+    i2c_command.parts.cmd = 0x24;
+    memcpy(i2c_command.parts.data, pwm, ISSI_USED_CHANNELS);
+    i2cMasterSendNI(_i2caddr, ISSI_USED_CHANNELS + 1, i2c_command.raw);
+
 #else
     i2c_start_wait(_i2caddr + I2C_WRITE);
     i2c_write(0x24);

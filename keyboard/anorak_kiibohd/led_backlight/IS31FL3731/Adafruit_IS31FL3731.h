@@ -43,6 +43,16 @@ public:
     void setSoftwareShutdown(uint8_t shutdown);
 
 protected:
+    typedef union _i2c_command
+    {
+        struct _data
+        {
+            uint8_t cmd;
+            uint8_t data[ISSI_USED_CHANNELS];
+        } parts;
+        uint8_t raw[ISSI_USED_CHANNELS + 1];
+    } i2c_command;
+
     void selectBank(uint8_t bank);
     void writeRegister8(uint8_t bank, uint8_t reg, uint8_t data);
     void writeRegister16(uint8_t bank, uint8_t reg, uint16_t data);

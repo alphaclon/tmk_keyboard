@@ -3,35 +3,39 @@
 #include "led_backlight/backlight_kiibohd.h"
 #include "config.h"
 
-/* Keymaps
- *
- * Default keympa
- *
- * ,-------------------------.
- * |Esc  |   1|  2|  3|  4|  5|
- * |--------------------------|
- * |Tab  |   Q|  W|  E|  R|  T|
- * |--------------------------|
- * |    M|   A|  S|  D|  F|  G|
- * |--------------------------|
- * |Shift|   Z|  X|  C|  V|  B|
- * |--------------------------|
- * |LCtrl|FN0|FN14|LAlt|FN2|FN3|SPC|
- * `-------------------------------'
+#include "led_backlight/control.h"
+
+/*
+ *  Keymaps
  *
  */
 
-#define LAYER_FN0_BACKGROURND  5
-#define LAYER_FN2_TF2FKEYS     4
-#define LAYER_F14_SELECT_LAYER 3
+#define KBLAYER_COUNT         3
 
 #define KBLAYER_DEFAULT       0
 #define KBLAYER_SPC_ENT       1
 #define KBLAYER_SHIFTED_TQWER 2
 
+#define LAYER_FN0_BACKGROURND  KBLAYER_COUNT + 2
+#define LAYER_FN2_TF2FKEYS     KBLAYER_COUNT + 1
+#define LAYER_F14_SELECT_LAYER KBLAYER_COUNT
+
+
 const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /*
      * 0: Default layer (QWERT)
+     *
+     * ,-------------------------.
+     * |Esc  |   1|  2|  3|  4|  5|
+     * |--------------------------|
+     * |Tab  |   Q|  W|  E|  R|  T|
+     * |--------------------------|
+     * |    M|   A|  S|  D|  F|  G|
+     * |--------------------------|
+     * |Shift|   Z|  X|  C|  V|  B|
+     * |--------------------------|
+     * |LCtrl|FN0|FN14|LAlt|FN2|FN3|SPC|
+     * `-------------------------------'
      *
      */
     KEYMAP_KIIBOHD(
@@ -40,44 +44,53 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
          FN1,    A,    S,    D,    F,    G, \
         LSFT,    Z,    X,    C,    V,    B, \
         LCTL,  FN0, FN14, LALT,  FN2,  FN3, SPC),
-	/*
-	 * 1: layer 1, QWERT,
-	 *    normal space on middle thumb key, enter on left thumb key
-	 *    toggled by FN14-layer: FN16
-	 *
-	 */
-	KEYMAP_KIIBOHD(
-		 ESC,    1,    2,    3,    4,  F12, \
-		 TAB,    Q,    W,    E,    R,    T, \
-		 FN1,    A,    S,    D,    F,    G, \
-		LSFT,    Z,    X,    C,    V,    B, \
-		LCTL,  FN0, FN14, LALT,  FN2,  SPC, ENT),
-	/*
-	 * 2: shifted layer (TQWER)
-	 *    toggled by FN14-layer: FN17
-	 *
-	 * Keymap
-	 *
-	 *
-	 * ,-------------------------.
-	 * |Esc  |   1|  2|  3|  4|  5|
-	 * |--------------------------|
-	 * |Tab  |   T|  Q|  W|  E|  R|
-	 * |--------------------------|
-	 * |RCtrl|   G|  A|  S|  D|  F|
-	 * |--------------------------|
-	 * |Shift|   B|  Z|  X|  C|  V|
-	 * |--------------------------|
-	 * |LCtrl|FN0|Meta|LAlt|FN9|DuckJump FN7|Jump|
-	 * `---------------------------------------'
-	 *
-	 */
-	KEYMAP_KIIBOHD(
-		 ESC,    1,    2,    3,    4,  F12, \
-		 TAB,    T,    Q,    W,    E,    R, \
-		 FN1,    G,    A,    S,    D,    F, \
-		LSFT,    B,    Z,    X,    C,    V, \
-		LCTL,  FN0, FN14, LALT,  FN2,  FN3, SPC),
+    /*
+     * 1: layer 1, QWERT,
+     *    normal space on middle thumb key, enter on left thumb key
+     *    toggled by FN14-layer: FN16
+     *
+     * ,-------------------------.
+     * |Esc  |   1|  2|  3|  4|  5|
+     * |--------------------------|
+     * |Tab  |   Q|  W|  E|  R|  T|
+     * |--------------------------|
+     * |    M|   A|  S|  D|  F|  G|
+     * |--------------------------|
+     * |Shift|   Z|  X|  C|  V|  B|
+     * |--------------------------|
+     * |LCtrl|FN0|FN14|LAlt|FN2|SPC|ENT|
+     * `-------------------------------'
+     *
+     */
+    KEYMAP_KIIBOHD(
+         ESC,    1,    2,    3,    4,  F12, \
+         TAB,    Q,    W,    E,    R,    T, \
+         FN1,    A,    S,    D,    F,    G, \
+        LSFT,    Z,    X,    C,    V,    B, \
+        LCTL,  FN0, FN14, LALT,  FN2,  SPC, ENT),
+    /*
+     * 2: shifted layer (TQWER)
+     *    toggled by FN14-layer: FN17
+     *
+     * ,-------------------------.
+     * |Esc  |   1|  2|  3|  4|  5|
+     * |--------------------------|
+     * |Tab  |   T|  Q|  W|  E|  R|
+     * |--------------------------|
+     * |RCtrl|   G|  A|  S|  D|  F|
+     * |--------------------------|
+     * |Shift|   B|  Z|  X|  C|  V|
+     * |--------------------------|
+     * |LCtrl|FN0|Meta|LAlt|FN9|DuckJump FN7|Jump|
+     * `---------------------------------------'
+     *
+     */
+    KEYMAP_KIIBOHD(
+         ESC,    1,    2,    3,    4,  F12, \
+         TAB,    T,    Q,    W,    E,    R, \
+         FN1,    G,    A,    S,    D,    F, \
+        LSFT,    B,    Z,    X,    C,    V, \
+        LCTL,  FN0, FN14, LALT,  FN2,  FN3, SPC),
     /*
      * 3: layer 3, the layer selection layer
      *    activated by FN14
@@ -89,17 +102,17 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, FN14, TRNS, TRNS, TRNS, TRNS),
-	/*
-	 * 4: layer 4, TF2 F-key layer,
-	 *    activated by FN2 (leftmost thumb key)
-	 *
-	 */
-	KEYMAP_KIIBOHD(
-		TRNS,   F1,   F2,   F5,   F6, TRNS, \
-		  F1,   F2,   F3,   F4,   F5,   F6, \
-		  F7,   F8,   F9,  F10,  F11,  F12, \
-		   0,    5,    6,    7,    8,    9, \
-		TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS),
+    /*
+     * 4: layer 4, TF2 F-key layer,
+     *    activated by FN2 (leftmost thumb key)
+     *
+     */
+    KEYMAP_KIIBOHD(
+        TRNS,   F1,   F2,   F5,   F6, TRNS, \
+          F1,   F2,   F3,   F4,   F5,   F6, \
+          F7,   F8,   F9,  F10,  F11,  F12, \
+           0,    5,    6,    7,    8,    9, \
+        TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS),
     /*
      * 5: layer 5, media and backlight layer,
      *    activated by FN0
@@ -121,10 +134,10 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      */
     KEYMAP_KIIBOHD(
         PAUS, TRNS, TRNS, TRNS, TRNS, TRNS, \
-		TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
-		 FN5,  FN7,  FN8,  FN9, FN10, FN11, \
-		 FN6, VOLD, VOLU, MUTE, TRNS, TRNS, \
-		 FN4, TRNS, TRNS, FN16, FN12, FN13, FN15)
+        TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
+         FN5,  FN7,  FN8,  FN9, FN10, FN11, \
+         FN6, VOLD, VOLU, MUTE, TRNS, TRNS, \
+         FN4, TRNS, TRNS, FN16, FN12, FN13, FN15)
 };
 
 /*
@@ -136,17 +149,20 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 
 /* id for user defined function/macro */
-enum function_id {
+enum function_id
+{
     KIIBOHD_FUNCTION_Backlight_Toggle_Region,
     KIIBOHD_FUNCTION_Backlight_Select_Region,
     KIIBOHD_FUNCTION_Backlight_Increase_All,
     KIIBOHD_FUNCTION_Backlight_Decrease_All,
     KIIBOHD_FUNCTION_Backlight_Increase_Region,
     KIIBOHD_FUNCTION_Backlight_Decrease_Region,
-    KIIBOHD_FUNCTION_Backlight_Save_Current_State
+    KIIBOHD_FUNCTION_Backlight_Save_Current_State,
+    KIIBOHD_FUNCTION_Backlight_Test
 };
 
-enum macro_id {
+enum macro_id
+{
     KIIBOHD_MACRO_DUCK_JUMP,
 };
 
@@ -175,6 +191,8 @@ const uint16_t PROGMEM fn_actions[] =
    [17] = ACTION_DEFAULT_LAYER_SET(KBLAYER_DEFAULT),
    [18] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SPC_ENT),
    [19] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SHIFTED_TQWER),
+   [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Test),
+   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Test)
 };
 
 
@@ -230,6 +248,10 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             break;
         case KIIBOHD_FUNCTION_Backlight_Save_Current_State:
             backlight_save_region_states();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Test:
+            testInterruptDrivenI2C();
+            break;
         }
     }
 }

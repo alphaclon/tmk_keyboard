@@ -63,6 +63,8 @@ SRC += \
 	led_backlight/gfx/Print.cpp \
 	led_backlight/IS31FL3731/Adafruit_IS31FL3731.cpp \
 	led_backlight/backlight_kiibohd.c \
+	led_backlight/control.cpp \
+	led_backlight/led_control.cpp \
 	led_backlight/pwm_control.cpp \
 	led_backlight/led_masks.cpp
 

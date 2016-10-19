@@ -31,25 +31,7 @@ typedef struct _tLedPWMControlCommand
     uint8_t mask[ISSI_LED_MASK_SIZE];
 } tLedPWMControlCommand;
 
-// Basic LED Region Control Capability
-typedef enum _tLedRegionControlMode
-{
-    // Region support
-    LedControlMode_enable_mask,
-    LedControlMode_disable_mask,
-    LedControlMode_xor_mask,
-} tLedRegionControlMode;
-
-typedef struct _tLedRegionControlCommand
-{
-    tLedRegionControlMode mode;
-    uint8_t mask[ISSI_LED_MASK_SIZE];
-} tLedRegionControlCommand;
-
-void IS31FL3731_init();
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control);
-void IS31FL3731_region_control(tLedRegionControlCommand *control);
-
 void IS31FL3731_set_maximum_power_consumption(uint16_t value);
 
 #endif

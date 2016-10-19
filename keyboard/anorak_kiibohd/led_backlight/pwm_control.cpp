@@ -1,33 +1,20 @@
 
-#include "pwm_control.h"
-#include "led_masks.h"
+#include "../backlight/pwm_control.h"
+
+#include "../backlight/led_masks.h"
 
 extern "C" {
 #ifdef USE_BUFFERED_TWI
-#include "twi/twi_master.h"
+#include "../backlight/twi/twi_master.h"
 #else
-#include "i2cmaster/i2cmaster.h"
+#include "../backlight/i2cmaster/i2cmaster.h"
 #endif
 #include "debug.h"
 }
 
 uint8_t currentBank = 0;
-uint8_t LedMask[ISSI_LED_MASK_SIZE] = {0};
-uint8_t LedPWMPageBuffer[ISSI_TOTAL_CHANNELS] = {0};
+uint8_t LedPWMPageBuffer[ISSI_USED_CHANNELS] = {0};
 uint16_t maximum_total_pwm = ISSI_TOTAL_CHANNELS * 255;
-
-Adafruit_IS31FL3731 issi;
-
-void IS31FL3731_init()
-{
-#ifdef USE_BUFFERED_TWI
-    i2cInit();
-    i2cSetBitrate(400);
-#else
-    i2c_init();
-#endif
-    issi.begin();
-}
 
 void IS31FL3731_set_maximum_power_consumption(uint16_t value)
 {
@@ -75,7 +62,7 @@ uint16_t get_pwm_summed_up()
 {
     uint16_t sum = 0; // Maximum is 255 * ISSI_TOTAL_CHANNELS
 
-    for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+    for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         sum += LedPWMPageBuffer[channel];
 
     return sum;
@@ -94,7 +81,7 @@ void fix_max_pwm()
     {
         sum = 0;
 
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             if (LedPWMPageBuffer[channel] > 5)
                 LedPWMPageBuffer[channel] -= 5;
@@ -132,14 +119,14 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
 
     case LedControlMode_brightness_set_all:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             LedPWMPageBuffer[channel] = control->amount;
         }
         break;
 
     case LedControlMode_brightness_set_by_mask:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             if (channel_enabled_by_mask(channel, control))
                 LedPWMPageBuffer[channel] = control->amount;
@@ -147,7 +134,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
 
     case LedControlMode_brightness_set_all_masked:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             if (channel_enabled_masked(channel))
                 LedPWMPageBuffer[channel] = control->amount;
@@ -155,21 +142,21 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
 
     case LedControlMode_brightness_decrease_all:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             LedPWMPageBuffer[channel] -= control->amount;
         }
         break;
 
     case LedControlMode_brightness_increase_all:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             LedPWMPageBuffer[channel] += control->amount;
         }
         break;
 
     case LedControlMode_brightness_decrease_all_masked:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             if (channel_enabled_masked(channel))
                 LedPWMPageBuffer[channel] += control->amount;
@@ -177,7 +164,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
 
     case LedControlMode_brightness_increase_all_masked:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             if (channel_enabled_masked(channel))
                 LedPWMPageBuffer[channel] += control->amount;
@@ -185,7 +172,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
 
     case LedControlMode_brightness_decrease_by_mask:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             if (channel_enabled_by_mask(channel, control))
                 LedPWMPageBuffer[channel] += control->amount;
@@ -193,7 +180,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
 
     case LedControlMode_brightness_increase_by_mask:
-        for (uint8_t channel = 0; channel < ISSI_TOTAL_CHANNELS; channel++)
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
         {
             if (channel_enabled_by_mask(channel, control))
                 LedPWMPageBuffer[channel] += control->amount;
@@ -218,38 +205,3 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
     issi.setLEDPWM(LedPWMPageBuffer, currentBank);
     //issi.displayFrame(currentBank);
 }
-
-void IS31FL3731_region_control(tLedRegionControlCommand *control)
-{
-    //dprintf("IS_region_control: %d\n", control->mode);
-
-    //select_next_bank();
-
-    switch (control->mode)
-    {
-    case LedControlMode_enable_mask:
-        for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
-        {
-            LedMask[i] |= control->mask[i];
-        }
-        break;
-
-    case LedControlMode_disable_mask:
-        for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
-        {
-            LedMask[i] &= ~(control->mask[i]);
-        }
-        break;
-
-    case LedControlMode_xor_mask:
-        for (uint8_t i = 0; i < ISSI_LED_MASK_SIZE; i++)
-        {
-            LedMask[i] ^= control->mask[i];
-        }
-        break;
-    }
-
-    issi.setLEDEnableMask(LedMask, currentBank);
-    //issi.displayFrame(currentBank);
-}
-

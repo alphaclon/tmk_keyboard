@@ -21,6 +21,10 @@ extern "C" {
 
 #define ISSI_REG_PICTUREFRAME 0x01
 
+#define ISSI_REG_AUTOPLAY_1 0x02
+#define ISSI_REG_AUTOPLAY_2 0x03
+#define ISSI_REG_BREATH_1 0x08
+#define ISSI_REG_BREATH_2 0x09
 #define ISSI_REG_SHUTDOWN 0x0A
 #define ISSI_REG_AUDIOSYNC 0x06
 
@@ -86,6 +90,57 @@ void Adafruit_IS31FL3731::setSoftwareShutdown(uint8_t shutdown)
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, shutdown ? 0x00 : 0x01);
 }
 
+void Adafruit_IS31FL3731::setPictureMode()
+{
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_PICTUREMODE);
+}
+
+void Adafruit_IS31FL3731::setAutoFramePlayMode(uint8_t frame_start)
+{
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_AUTOPLAYMODE & (frame_start & 0x07));
+}
+
+void Adafruit_IS31FL3731::setAutoFramePlayConfig(uint8_t loops, uint8_t frames, uint8_t delay_ms_x_11)
+{
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_1, ((loops & 0x7)<< 4) & (frames & 0x7) );
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_2, delay_ms_x_11 & 0x3f );
+}
+
+void Adafruit_IS31FL3731::setBreathMode(uint8_t enable)
+{
+    uint8_t bcr2 = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2);
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2, bcr2);
+}
+
+void Adafruit_IS31FL3731::setBreathConfig(uint8_t fade_in, uint8_t fade_out, uint8_t extinguish)
+{
+    uint8_t bcr2 = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2);
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_1, ((fade_out & 0x7)<< 4) & (fade_in & 0x7) );
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2, bcr2 & (extinguish & 0x7) );
+}
+
+void Adafruit_IS31FL3731::setFrame(uint8_t frame)
+{
+    _frame = frame;
+}
+
+void Adafruit_IS31FL3731::displayFrame(uint8_t frame)
+{
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_PICTUREFRAME, frame & 0x07);
+}
+
+void Adafruit_IS31FL3731::audioSync(bool sync)
+{
+    if (sync)
+    {
+        writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUDIOSYNC, 0x1);
+    }
+    else
+    {
+        writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUDIOSYNC, 0x0);
+    }
+}
+
 void Adafruit_IS31FL3731::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
     // check rotation, move pixel around if necessary
@@ -113,30 +168,6 @@ void Adafruit_IS31FL3731::drawPixel(int16_t x, int16_t y, uint16_t color)
         color = 255; // PWM 8bit max
 
     setLEDPWM(x + y * 16, color, _frame);
-}
-
-void Adafruit_IS31FL3731::setFrame(uint8_t f)
-{
-    _frame = f;
-}
-
-void Adafruit_IS31FL3731::displayFrame(uint8_t f)
-{
-    if (f > 7)
-        f = 0;
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_PICTUREFRAME, f);
-}
-
-void Adafruit_IS31FL3731::audioSync(bool sync)
-{
-    if (sync)
-    {
-        writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUDIOSYNC, 0x1);
-    }
-    else
-    {
-        writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUDIOSYNC, 0x0);
-    }
 }
 
 void Adafruit_IS31FL3731::setLEDEnable(uint8_t lednum, uint8_t enable, uint8_t bank)

@@ -39,6 +39,11 @@ public:
     void displayFrame(uint8_t frame);
 
     void audioSync(bool sync);
+    void setPictureMode();
+    void setAutoFramePlayMode(uint8_t frame_start);
+    void setAutoFramePlayConfig(uint8_t loops, uint8_t frames, uint8_t delay_ms_x_11);
+    void setBreathMode(uint8_t enable);
+    void setBreathConfig(uint8_t fade_in, uint8_t fade_out, uint8_t extinguish);
 
     void setSoftwareShutdown(uint8_t shutdown);
 

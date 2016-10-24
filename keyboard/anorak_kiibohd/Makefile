@@ -66,7 +66,8 @@ SRC += \
 	led_backlight/control.cpp \
 	led_backlight/led_control.cpp \
 	led_backlight/pwm_control.cpp \
-	led_backlight/led_masks.cpp
+	led_backlight/led_masks.cpp \
+	led_backlight/sleep_led.cpp
 
 #	led_backlight/i2cmaster/twimaster.c \
 
@@ -137,7 +138,7 @@ CONSOLE_ENABLE = yes		# Console for debug
 COMMAND_ENABLE = yes    	# Commands for debug and configuration
 BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
 NKRO_ENABLE = yes		    # USB Nkey Rollover
-#SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER

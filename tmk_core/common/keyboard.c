@@ -61,12 +61,17 @@ static bool has_ghost_in_row(uint8_t row)
 }
 #endif
 
+__attribute__((weak)) void matrix_setup(void)
+{
+}
 
-__attribute__ ((weak)) void matrix_setup(void) {}
-__attribute__ ((weak)) void backlight_setup(void) {}
+__attribute__((weak)) void backlight_setup(void)
+{
+}
+
 void keyboard_setup(void)
 {
-	backlight_setup();
+    backlight_setup();
     matrix_setup();
 }
 

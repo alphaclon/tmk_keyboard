@@ -18,6 +18,7 @@
  */
 #define SLEEP_LED_TIMER_TOP F_CPU/(256*64)
 
+void sleep_led_init(void)  __attribute__ ((weak));
 void sleep_led_init(void)
 {
     /* Timer1 setup */
@@ -33,18 +34,21 @@ void sleep_led_init(void)
     SREG = sreg;
 }
 
+void sleep_led_enable(void)  __attribute__ ((weak));
 void sleep_led_enable(void)
 {
     /* Enable Compare Match Interrupt */
     TIMSK1 |= _BV(OCIE1A);
 }
 
+void sleep_led_disable(void)  __attribute__ ((weak));
 void sleep_led_disable(void)
 {
     /* Disable Compare Match Interrupt */
     TIMSK1 &= ~_BV(OCIE1A);
 }
 
+void sleep_led_toggle(void)  __attribute__ ((weak));
 void sleep_led_toggle(void)
 {
     /* Disable Compare Match Interrupt */
@@ -83,7 +87,7 @@ ISR(TIMER1_COMPA_vect)
     } timer = { .row = 0 };
 
     timer.row++;
-    
+
     // LED on
     if (timer.pwm.count == 0) {
         led_set(1<<USB_LED_CAPS_LOCK);

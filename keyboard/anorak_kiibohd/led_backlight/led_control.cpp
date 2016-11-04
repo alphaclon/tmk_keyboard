@@ -3,11 +3,6 @@
 #include "led_masks.h"
 
 extern "C" {
-#ifdef USE_BUFFERED_TWI
-#include "twi/twi_master.h"
-#else
-#include "i2cmaster/i2cmaster.h"
-#endif
 #include "debug.h"
 }
 
@@ -17,7 +12,6 @@ uint8_t LedMask[ISSI_LED_MASK_SIZE] = {0};
 void IS31FL3731_region_control(tLedRegionControlCommand *control)
 {
     //dprintf("IS_region_control: %d\n", control->mode);
-
     //select_next_bank();
 
     switch (control->mode)
@@ -44,7 +38,7 @@ void IS31FL3731_region_control(tLedRegionControlCommand *control)
         break;
     }
 
-    issi.setLEDEnableMask(LedMask, currentBank);
+    issi.enableLeds(LedMask, currentBank);
     //issi.displayFrame(currentBank);
 }
 

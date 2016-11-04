@@ -1,14 +1,8 @@
 
-#include "../backlight/pwm_control.h"
-
-#include "../backlight/led_masks.h"
+#include "pwm_control.h"
+#include "led_masks.h"
 
 extern "C" {
-#ifdef USE_BUFFERED_TWI
-#include "../backlight/twi/twi_master.h"
-#else
-#include "../backlight/i2cmaster/i2cmaster.h"
-#endif
 #include "debug.h"
 }
 
@@ -202,6 +196,6 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
     }
     */
 
-    issi.setLEDPWM(LedPWMPageBuffer, currentBank);
+    issi.setLedsBrightness(LedPWMPageBuffer, currentBank);
     //issi.displayFrame(currentBank);
 }

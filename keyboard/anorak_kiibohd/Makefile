@@ -27,6 +27,9 @@
 # make flip-ee = Download the eeprom file to the device, using Atmel FLIP
 #                (must have Atmel FLIP installed).
 #
+# make dfu-start = Restart using dfu-programmer
+#                  (must have dfu-programmer installed).
+#
 # make debug = Start either simulavr or avarice as specified for debugging, 
 #              with avr-gdb or avr-insight as the front end for debugging.
 #
@@ -56,20 +59,21 @@ SRC += \
 	matrix.c \
 	keymap_common.c \
 	led_backlight/twi/twi_master.c \
+	led_backlight/avr315/TWI_Master.c \
+	led_backlight/i2cmaster/twimaster.c \	
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
 	led_backlight/gfx/WString.cpp \
 	led_backlight/gfx/Print.cpp \
-	led_backlight/IS31FL3731/Adafruit_IS31FL3731.cpp \
+	led_backlight/IS31FL3731/IS31FL3731.cpp \
+	led_backlight/IS31FL3731/IS31FL3731_buffered.cpp \
 	led_backlight/backlight_kiibohd.c \
 	led_backlight/control.cpp \
 	led_backlight/led_control.cpp \
 	led_backlight/pwm_control.cpp \
 	led_backlight/led_masks.cpp \
 	led_backlight/sleep_led.cpp
-
-#	led_backlight/i2cmaster/twimaster.c \
 
 
 PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex

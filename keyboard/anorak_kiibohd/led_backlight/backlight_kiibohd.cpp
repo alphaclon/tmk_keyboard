@@ -34,9 +34,6 @@ extern "C" {
 
 extern "C" {
 
-#define GAMMA_STEPS 8
-uint8_t gamma_correction_table[GAMMA_STEPS] = { 4, 18, 39, 69, 106, 149, 212, 255 };
-
 uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
 uint8_t current_region = backlight_region_ALL;

@@ -1,13 +1,11 @@
 #ifndef _CONTROL_H_
 #define _CONTROL_H_
 
-#include "IS31FL3731/Adafruit_IS31FL3731.h"
+#include "IS31FL3731/IS31FL3731_buffered.h"
 
-extern Adafruit_IS31FL3731 issi;
+extern IS31FL3731Buffered issi;
 
 void IS31FL3731_init(void);
-
-
 
 void testInterruptDrivenI2C(void);
 

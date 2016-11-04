@@ -2,24 +2,35 @@
 #include "control.h"
 
 extern "C" {
-#ifdef USE_BUFFERED_TWI
-#include "twi/twi_master.h"
+#if TWILIB == AVR315
+#include "../avr315/TWI_Master.h"
+#elif TWILIB == BUFFTW
+#include "../twi/twi_master.h"
 #else
-#include "i2cmaster/i2cmaster.h"
+#include "../i2cmaster/i2cmaster.h"
 #endif
 #include "debug.h"
 }
 
-Adafruit_IS31FL3731 issi;
+IS31FL3731Buffered issi;
 
 void IS31FL3731_init()
 {
-#ifdef USE_BUFFERED_TWI
+#if TWILIB == AVR315
+
+	TWI_Master_Initialise();
+
+#elif TWILIB == BUFFTW
+
     i2cInit();
     i2cSetBitrate(400);
+
 #else
+
     i2c_init();
+
 #endif
+
     issi.begin();
 }
 

@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <util/delay.h>
 #include "led_backlight/backlight_kiibohd.h"
 #include "util.h"
+#include "timer.h"
 #include "matrix.h"
 #include "config.h"
 #include "print.h"
@@ -34,7 +35,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DEBOUNCE
 #   define DEBOUNCE	5
 #endif
+
 static uint8_t debouncing = DEBOUNCE;
+static uint16_t debouncing_time = 0;
 
 /* matrix state(1:on, 0:off) */
 static matrix_row_t matrix[MATRIX_ROWS];
@@ -44,7 +47,6 @@ static matrix_row_t read_cols(void);
 static void init_cols(void);
 static void unselect_rows(void);
 static void select_row(uint8_t row);
-
 
 /*
  * PD5 -> grüne LED, active low
@@ -143,11 +145,25 @@ uint8_t matrix_scan(void)
             {
                 debug("bounce!: ");
                 debug_hex(debouncing);debug("\n");
+
+                //debouncing_time = timer_read();
             }
             debouncing = DEBOUNCE;
         }
         unselect_rows();
     }
+
+    /*
+
+    if (debouncing && timer_elapsed(debouncing_time) > DEBOUNCE) {
+        for (int i = 0; i < MATRIX_ROWS; i++) {
+            matrix[i] = matrix_debouncing[i];
+        }
+        debouncing = false;
+    }
+
+    */
+
 
     if (debouncing)
     {

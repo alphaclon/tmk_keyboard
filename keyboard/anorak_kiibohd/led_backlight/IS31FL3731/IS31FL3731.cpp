@@ -1,9 +1,11 @@
 
-#include "Adafruit_IS31FL3731.h"
 #include <util/delay.h>
+#include "IS31FL3731.h"
 
 extern "C" {
-#ifdef USE_BUFFERED_TWI
+#if TWILIB == AVR315
+#include "../avr315/TWI_Master.h"
+#elif TWILIB == BUFFTW
 #include "../twi/twi_master.h"
 #else
 #include "../i2cmaster/i2cmaster.h"
@@ -40,23 +42,25 @@ extern "C" {
     }
 #endif
 
-Adafruit_IS31FL3731::Adafruit_IS31FL3731(uint8_t x, uint8_t y) : Adafruit_GFX(x, y)
+uint8_t gamma_correction_table[GAMMA_STEPS] = { 4, 18, 39, 69, 106, 149, 212, 255 };
+
+IS31FL3731::IS31FL3731(uint8_t x, uint8_t y) : Adafruit_GFX(x, y)
 {
-    _i2caddr = 0;
+    _issi_address = 0;
     _frame = 0;
 }
 
-Adafruit_IS31FL3731::~Adafruit_IS31FL3731()
+IS31FL3731::~IS31FL3731()
 {
 }
 
-bool Adafruit_IS31FL3731::begin(uint8_t addr)
+bool IS31FL3731::begin(uint8_t issi_slave_address)
 {
-    _i2caddr = (addr << 1);
+    _issi_address = (issi_slave_address << 1);
     _frame = 0;
 
     // shutdown
-    setSoftwareShutdown(1);
+    enableSoftwareShutdown(1);
 
     _delay_ms(1);
 
@@ -76,60 +80,66 @@ bool Adafruit_IS31FL3731::begin(uint8_t addr)
     for (uint8_t f = 0; f < ISSI_TOTAL_FRAMES; f++)
     {
         for (uint8_t led = 0; led < ISSI_TOTAL_CHANNELS; led++)
-            setLEDPWM(led, 0, 0); // set each led to the default PWM
+            setLedBrightness(led, 0, 0); // set each led to the default PWM
     }
 
     // out of shutdown
-    setSoftwareShutdown(0);
+    enableSoftwareShutdown(0);
 
     return true;
 }
 
-void Adafruit_IS31FL3731::setSoftwareShutdown(uint8_t shutdown)
+void IS31FL3731::enableSoftwareShutdown(bool enabled)
 {
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, shutdown ? 0x00 : 0x01);
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, enabled ? 0x00 : 0x01);
 }
 
-void Adafruit_IS31FL3731::setPictureMode()
+void IS31FL3731::setPictureMode()
 {
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_PICTUREMODE);
 }
 
-void Adafruit_IS31FL3731::setAutoFramePlayMode(uint8_t frame_start)
+void IS31FL3731::setAutoFramePlayMode(uint8_t frame_start)
 {
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_AUTOPLAYMODE & (frame_start & 0x07));
 }
 
-void Adafruit_IS31FL3731::setAutoFramePlayConfig(uint8_t loops, uint8_t frames, uint8_t delay_ms_x_11)
+void IS31FL3731::setAutoFramePlayConfig(uint8_t loops, uint8_t frames, uint8_t delay_ms_x_11)
 {
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_1, ((loops & 0x7)<< 4) & (frames & 0x7) );
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_2, delay_ms_x_11 & 0x3f );
 }
 
-void Adafruit_IS31FL3731::setBreathMode(uint8_t enable)
+void IS31FL3731::setBreathMode(bool enable)
 {
     uint8_t bcr2 = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2);
+
+    if (enable)
+        bcr2 |= (1 << 4);
+    else
+        bcr2 &= ~(1 << 4);
+
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2, bcr2);
 }
 
-void Adafruit_IS31FL3731::setBreathConfig(uint8_t fade_in, uint8_t fade_out, uint8_t extinguish)
+void IS31FL3731::setBreathConfig(uint8_t fade_in, uint8_t fade_out, uint8_t extinguish)
 {
     uint8_t bcr2 = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2);
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_1, ((fade_out & 0x7)<< 4) & (fade_in & 0x7) );
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2, bcr2 & (extinguish & 0x7) );
 }
 
-void Adafruit_IS31FL3731::setFrame(uint8_t frame)
+void IS31FL3731::setFrame(uint8_t frame)
 {
     _frame = frame;
 }
 
-void Adafruit_IS31FL3731::displayFrame(uint8_t frame)
+void IS31FL3731::displayFrame(uint8_t frame)
 {
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_PICTUREFRAME, frame & 0x07);
 }
 
-void Adafruit_IS31FL3731::audioSync(bool sync)
+void IS31FL3731::audioSync(bool sync)
 {
     if (sync)
     {
@@ -141,7 +151,7 @@ void Adafruit_IS31FL3731::audioSync(bool sync)
     }
 }
 
-void Adafruit_IS31FL3731::drawPixel(int16_t x, int16_t y, uint16_t color)
+void IS31FL3731::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
     // check rotation, move pixel around if necessary
     switch (getRotation())
@@ -160,17 +170,19 @@ void Adafruit_IS31FL3731::drawPixel(int16_t x, int16_t y, uint16_t color)
         break;
     }
 
+#ifdef IS31FL3731_DO_CHECKS
     if ((x < 0) || (x >= 16))
         return;
     if ((y < 0) || (y >= 9))
         return;
     if (color > 255)
         color = 255; // PWM 8bit max
+#endif
 
-    setLEDPWM(x + y * 16, color, _frame);
+    setLedBrightness(x + y * 16, color, _frame);
 }
 
-void Adafruit_IS31FL3731::setLEDEnable(uint8_t lednum, uint8_t enable, uint8_t bank)
+void IS31FL3731::enableLed(uint8_t lednum, uint8_t enable, uint8_t bank)
 {
     if (lednum >= 144)
         return;
@@ -190,42 +202,32 @@ void Adafruit_IS31FL3731::setLEDEnable(uint8_t lednum, uint8_t enable, uint8_t b
     writeRegister8(bank, ledreg, leddata);
 }
 
-void Adafruit_IS31FL3731::setLEDEnableMask(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank)
+void IS31FL3731::enableLeds(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uint8_t bank)
 {
     selectBank(bank);
 
-#ifdef USE_BUFFERED_TWI
-    //uint8_t cmd[1] = {0};
-    //i2cMasterSendNI(_i2caddr, 1, cmd);
-    //i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE, ledEnableMask);
-    //uint8_t cmd[ISSI_LED_MASK_SIZE+1];
-    //cmd[0] = 0;
-    //memcpy(&cmd[1], ledEnableMask, ISSI_LED_MASK_SIZE);
-    //i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE+1, cmd);
-    //i2cMasterSend(_i2caddr, ISSI_LED_MASK_SIZE+1, cmd);
+#if TWILIB == AVR315
+
+    TWI_Start_Transceiver_With_Data(_issi_address, 0, ledEnableMask, ISSI_LED_MASK_SIZE);
+
+#elif TWILIB == BUFFTW
 
     i2c_command.parts.cmd = 0;
     memcpy(i2c_command.parts.data, ledEnableMask, ISSI_LED_MASK_SIZE);
-    i2cMasterSendNI(_i2caddr, ISSI_LED_MASK_SIZE + 1, i2c_command.raw);
+    i2cMasterSendNI(_issi_address, ISSI_LED_MASK_SIZE + 1, i2c_command.raw);
 
 #else
-    i2c_start_wait(_i2caddr + I2C_WRITE);
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
     i2c_write(0x0);
     for (uint8_t p = 0; p < ISSI_LED_MASK_SIZE; ++p)
         i2c_write(ledEnableMask[p]);
     i2c_stop();
+
 #endif
 }
 
-void Adafruit_IS31FL3731::setLEDEnableMaskForAllBanks(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE])
-{
-    for (uint8_t b = 0; b < 8; ++b)
-    {
-        setLEDEnableMask(ledEnableMask, b);
-    }
-}
-
-void Adafruit_IS31FL3731::setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank)
+void IS31FL3731::setLedBrightness(uint8_t lednum, uint8_t pwm, uint8_t bank)
 {
     if (lednum >= 144)
         return;
@@ -233,111 +235,127 @@ void Adafruit_IS31FL3731::setLEDPWM(uint8_t lednum, uint8_t pwm, uint8_t bank)
     writeRegister8(bank, 0x24 + lednum, pwm);
 }
 
-void Adafruit_IS31FL3731::setLEDPWM(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8_t bank)
+void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8_t bank)
 {
     selectBank(bank);
 
-#ifdef USE_BUFFERED_TWI
-    //uint8_t cmd[ISSI_USED_CHANNELS+1];
-    //cmd[0] = 0x24;
-    //memcpy(&cmd[1], pwm, ISSI_USED_CHANNELS);
+#if TWILIB == AVR315
+
+    TWI_Start_Transceiver_With_Data(_issi_address, 0x24, pwm, ISSI_TOTAL_CHANNELS);
+
+#elif TWILIB == BUFFTW
 
     i2c_command.parts.cmd = 0x24;
     memcpy(i2c_command.parts.data, pwm, ISSI_USED_CHANNELS);
-    i2cMasterSendNI(_i2caddr, ISSI_USED_CHANNELS + 1, i2c_command.raw);
+    i2cMasterSendNI(_issi_address, ISSI_USED_CHANNELS + 1, i2c_command.raw);
 
 #else
-    i2c_start_wait(_i2caddr + I2C_WRITE);
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
     i2c_write(0x24);
     for (uint8_t p = 0; p < ISSI_USED_CHANNELS; ++p)
         i2c_write(pwm[p]);
     i2c_stop();
+
 #endif
 }
 
 /*************/
 
-void Adafruit_IS31FL3731::selectBank(uint8_t bank)
+void IS31FL3731::selectBank(uint8_t bank)
 {
-#ifdef USE_BUFFERED_TWI
+#if TWILIB == AVR315
+
+    TWI_Start_Transceiver_With_Data(_issi_address, ISSI_COMMANDREGISTER, bank);
+
+#elif TWILIB == BUFFTW
+
     uint8_t cmd[2] = {ISSI_COMMANDREGISTER, bank};
-    i2cMasterSendNI(_i2caddr, 2, cmd);
+    i2cMasterSendNI(_issi_address, 2, cmd);
+
 #else
-    i2c_start_wait(_i2caddr + I2C_WRITE);
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
     i2c_write(ISSI_COMMANDREGISTER);
     i2c_write(bank);
     i2c_stop();
-#endif
 
-    /*
-     Wire.beginTransmission(_i2caddr);
-     Wire.write((byte)ISSI_COMMANDREGISTER);
-     Wire.write(bank);
-     Wire.endTransmission();
-     */
+#endif
 }
 
-void Adafruit_IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
+void IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 {
     selectBank(b);
 
-#ifdef USE_BUFFERED_TWI
+#if TWILIB == AVR315
+
+    TWI_Start_Transceiver_With_Data(_issi_address, ISSI_COMMANDREGISTER, data);
+
+#elif TWILIB == BUFFTW
+
     uint8_t cmd[2] = {reg, data};
-    i2cMasterSendNI(_i2caddr, 2, cmd);
+    i2cMasterSendNI(_issi_address, 2, cmd);
+
 #else
-    i2c_start_wait(_i2caddr + I2C_WRITE);
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
     i2c_write(reg);
     i2c_write(data);
     i2c_stop();
+
 #endif
 }
 
-void Adafruit_IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
+void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 {
     selectBank(b);
 
-#ifdef USE_BUFFERED_TWI
+#if TWILIB == AVR315
+
+    TWI_Start_Transceiver_With_Data(_issi_address, reg, (unsigned char *)&data, 2);
+
+#elif TWILIB == BUFFTW
+
     uint8_t cmd[3] = {reg, data >> 8, data & 0xFF};
-    i2cMasterSendNI(_i2caddr, 3, cmd);
+    i2cMasterSendNI(_issi_address, 3, cmd);
+
 #else
-    i2c_start_wait(_i2caddr + I2C_WRITE);
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
     i2c_write(reg);
     i2c_write(data >> 8);
     i2c_write(data & 0xFF);
     i2c_stop();
+
 #endif
 }
 
-uint8_t Adafruit_IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
+uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 {
     selectBank(bank);
 
     uint8_t data;
 
-#ifdef USE_BUFFERED_TWI
+#if TWILIB == AVR315
+
+    TWI_Start_Transceiver_With_Data(_issi_address | (1 << TWI_READ_BIT), reg, &data, 1);
+    TWI_Get_Data_From_Transceiver(&data, 1);
+
+#elif TWILIB == BUFFTW
+
     uint8_t cmd[1] = {reg};
-    i2cMasterSendNI(_i2caddr, 1, cmd);
-    i2cMasterReceiveNI(_i2caddr, 1, &data);
+    i2cMasterSendNI(_issi_address, 1, cmd);
+    i2cMasterReceiveNI(_issi_address, 1, &data);
+
 #else
-    i2c_start_wait(_i2caddr + I2C_WRITE);
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
     i2c_write(reg);
-    i2c_rep_start(_i2caddr + I2C_READ);
+    i2c_rep_start(_issi_address + I2C_READ);
     data = i2c_readNak();
     i2c_stop();
+
 #endif
 
     return data;
-
-    /*
-
-    Wire.beginTransmission(_i2caddr);
-    Wire.write((byte) reg);
-    Wire.endTransmission();
-
-    Wire.beginTransmission(_i2caddr);
-    Wire.requestFrom(_i2caddr, (byte) 1);
-    x = Wire.read();
-    Wire.endTransmission();
-            return x;
-    */
 }

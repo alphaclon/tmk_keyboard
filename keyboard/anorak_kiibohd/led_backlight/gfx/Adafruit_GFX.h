@@ -102,7 +102,6 @@ private:
 
 class GFXCanvas_MAX6960_2BPP : public Adafruit_GFX
 {
-
 public:
     GFXCanvas_MAX6960_2BPP(uint16_t w, uint16_t h);
     ~GFXCanvas_MAX6960_2BPP(void);

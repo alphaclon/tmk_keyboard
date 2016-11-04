@@ -1,7 +1,7 @@
 #ifndef _PWM_CONTROL_H_
 #define _PWM_CONTROL_H_
 
-#include "IS31FL3731/Adafruit_IS31FL3731.h"
+#include "IS31FL3731/IS31FL3731.h"
 
 // Basic LED PWM Control Capability
 typedef enum _tLedPWMControlMode

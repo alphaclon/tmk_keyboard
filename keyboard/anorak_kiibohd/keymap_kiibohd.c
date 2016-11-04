@@ -3,6 +3,7 @@
 #include "led_backlight/backlight_kiibohd.h"
 #include "config.h"
 
+#include "sleep_led.h"
 #include "led_backlight/control.h"
 
 /*
@@ -158,7 +159,8 @@ enum function_id
     KIIBOHD_FUNCTION_Backlight_Increase_Region,
     KIIBOHD_FUNCTION_Backlight_Decrease_Region,
     KIIBOHD_FUNCTION_Backlight_Save_Current_State,
-    KIIBOHD_FUNCTION_Backlight_Test
+    KIIBOHD_FUNCTION_Backlight_Breath,
+	KIIBOHD_FUNCTION_Backlight_Animate,
 };
 
 enum macro_id
@@ -191,8 +193,8 @@ const uint16_t PROGMEM fn_actions[] =
    [17] = ACTION_DEFAULT_LAYER_SET(KBLAYER_DEFAULT),
    [18] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SPC_ENT),
    [19] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SHIFTED_TQWER),
-   [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Test),
-   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Test)
+   [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Breath),
+   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate)
 };
 
 
@@ -249,9 +251,13 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         case KIIBOHD_FUNCTION_Backlight_Save_Current_State:
             backlight_save_region_states();
             break;
-        case KIIBOHD_FUNCTION_Backlight_Test:
-            testInterruptDrivenI2C();
+        case KIIBOHD_FUNCTION_Backlight_Breath:
+        	sleep_led_toggle();
             break;
+        case KIIBOHD_FUNCTION_Backlight_Animate:
+
+            break;
+
         }
     }
 }

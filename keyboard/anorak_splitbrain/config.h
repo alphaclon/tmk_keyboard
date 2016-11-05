@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-
 #define VENDOR_ID       0xBADE
 #define PRODUCT_ID      0xAFFE
 #define DEVICE_VER      0x0100
@@ -28,13 +27,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 /* matrix size */
-#define MATRIX_ROWS 17
-#define MATRIX_COLS 6
+#define MATRIX_ROWS 6
+#define MATRIX_COLS 18
 
+#define BACKLIGHT_LEVELS 8
 
 /* key combination for command */
 #define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_LCTRL)))
-
 
 /* period of tapping(ms) */
 #define TAPPING_TERM    300
@@ -45,6 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /* Boot Magic salt key: Space */
 #define BOOTMAGIC_KEY_SALT      KC_SPACE
+
+#define LAYOUT_ISO_CURSORKEYS_RIGHT
 
 /*
  * Feature disable options

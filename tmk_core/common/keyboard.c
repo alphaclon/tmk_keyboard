@@ -61,17 +61,22 @@ static bool has_ghost_in_row(uint8_t row)
 }
 #endif
 
-__attribute__((weak)) void matrix_setup(void)
+__attribute__((weak)) void backlight_setup(void)
 {
 }
 
-__attribute__((weak)) void backlight_setup(void)
+__attribute__((weak)) void backlight_setup_finish(void)
+{
+}
+
+__attribute__((weak)) void matrix_setup(void)
 {
 }
 
 void keyboard_setup(void)
 {
     backlight_setup();
+    backlight_setup_finish();
     matrix_setup();
 }
 
@@ -79,16 +84,18 @@ void keyboard_init(void)
 {
     timer_init();
     matrix_init();
+
 #ifdef PS2_MOUSE_ENABLE
     ps2_mouse_init();
 #endif
+
 #ifdef SERIAL_MOUSE_ENABLE
     serial_mouse_init();
 #endif
+
 #ifdef ADB_MOUSE_ENABLE
     adb_mouse_init();
 #endif
-
 
 #ifdef BOOTMAGIC_ENABLE
     bootmagic();
@@ -96,6 +103,7 @@ void keyboard_init(void)
 
 #ifdef BACKLIGHT_ENABLE
     backlight_init();
+    backlight_setup_finish();
 #endif
 }
 
@@ -163,11 +171,11 @@ MATRIX_LOOP_END:
 #endif
 
 #ifdef SERIAL_MOUSE_ENABLE
-        serial_mouse_task();
+	serial_mouse_task();
 #endif
 
 #ifdef ADB_MOUSE_ENABLE
-        adb_mouse_task();
+	adb_mouse_task();
 #endif
 
     // update LED

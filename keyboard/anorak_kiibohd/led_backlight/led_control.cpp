@@ -6,7 +6,7 @@ extern "C" {
 #include "debug.h"
 }
 
-uint8_t currentBank = 0;
+uint8_t current_led_bank = 0;
 uint8_t LedMask[ISSI_LED_MASK_SIZE] = {0};
 
 void IS31FL3731_region_control(tLedRegionControlCommand *control)
@@ -38,7 +38,7 @@ void IS31FL3731_region_control(tLedRegionControlCommand *control)
         break;
     }
 
-    issi.enableLeds(LedMask, currentBank);
+    issi.enableLeds(LedMask, current_led_bank);
     //issi.displayFrame(currentBank);
 }
 

@@ -1,13 +1,14 @@
 
 #include "control.h"
+#include <avr/interrupt.h>
 
 extern "C" {
 #if TWILIB == AVR315
-#include "../avr315/TWI_Master.h"
+#include "avr315/TWI_Master.h"
 #elif TWILIB == BUFFTW
-#include "../twi/twi_master.h"
+#include "twi/twi_master.h"
 #else
-#include "../i2cmaster/i2cmaster.h"
+#include "i2cmaster/i2cmaster.h"
 #endif
 #include "debug.h"
 }
@@ -34,11 +35,33 @@ void IS31FL3731_init()
     issi.begin();
 }
 
+extern "C" {
+#if TWILIB == AVR315
 void testInterruptDrivenI2C()
 {
-    uint8_t cmd[ISSI_USED_CHANNELS + 1];
-    cmd[0] = 0x24;
-    memset(&cmd[1], 128, ISSI_USED_CHANNELS);
-    i2cMasterSend((ISSI_ADDR_DEFAULT << 1), ISSI_USED_CHANNELS + 1, cmd);
-}
 
+}
+#elif TWILIB == BUFFTW
+void testInterruptDrivenI2C()
+{
+	dprintf("I2C: test\r\n");
+
+	/*
+	uint8_t cmd1[2] = {0xFD, 0};
+	i2cMasterSend((ISSI_ADDR_DEFAULT << 1), 2, cmd1);
+
+    uint8_t cmd2[ISSI_USED_CHANNELS + 1] = { 64 };
+    cmd2[0] = 0x24;
+    i2cMasterSend((ISSI_ADDR_DEFAULT << 1), ISSI_USED_CHANNELS + 1, cmd2);
+    */
+
+	/*
+	uint8_t cmd[ISSI_USED_CHANNELS] = { 64 };
+
+	TWI_Master_Initialise();
+	TWI_Start_Transceiver_With_Data_1((ISSI_ADDR_DEFAULT << 1), 0xFD, 0);
+	TWI_Start_Transceiver_With_Data_2((ISSI_ADDR_DEFAULT << 1), 0x24, cmd, ISSI_USED_CHANNELS);
+	*/
+}
+#endif
+}

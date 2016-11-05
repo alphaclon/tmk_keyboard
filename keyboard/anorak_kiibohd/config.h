@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PRODUCT_ID      0xBEEF
 #define DEVICE_VER      0x0202
 #define MANUFACTURER    Anorak
-#define PRODUCT         gaming kiibohd
+#define PRODUCT         kiibohd
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
 
 /* matrix size */
@@ -43,13 +43,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* Boot Magic salt key: Space */
 #define BOOTMAGIC_KEY_SALT      KC_SPACE
 
+
 /*
  * Feature disable options
  *  These options are also useful to firmware size reduction.
  */
 /* disable debug print */
 //#define NO_DEBUG
-#define NO_DEBUG_LEDS
+//#define NO_DEBUG_LEDS
 
 /* disable print */
 //#define NO_PRINT

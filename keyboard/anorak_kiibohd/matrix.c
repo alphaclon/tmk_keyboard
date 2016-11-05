@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * scan matrix
  */
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <avr/io.h>
@@ -29,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "matrix.h"
 #include "config.h"
 #include "print.h"
+#include "nfo_led.h"
 #include "debug.h"
-
 
 #ifndef DEBOUNCE
 #   define DEBOUNCE	5
@@ -47,39 +48,6 @@ static matrix_row_t read_cols(void);
 static void init_cols(void);
 static void unselect_rows(void);
 static void select_row(uint8_t row);
-
-/*
- * PD5 -> grüne LED, active low
- * PC7 -> gelbe LED, active high
- *
- * #define LED_CONFIG      (DDRD |= (1<<6))
- * #define LED_ON          (PORTD &= ~(1<<6))
- * #define LED_OFF         (PORTD |= (1<<6))
- *
- *
- */
-
-#ifndef NO_DEBUG_LEDS
-#define LED_GREEN_INIT()  do { DDRD |= (1<<5); PORTD |= (1<<5); } while (0)
-#define LED_GREEN_ON()    do { PORTD &= ~(1<<5); } while (0)
-#define LED_GREEN_OFF()   do { PORTD |= (1<<5); } while (0)
-#define LED_GREEN_TGL()   do { PIND |= (1<<5); } while (0)
-
-#define LED_YELLOW_INIT()  do { DDRC |= (1<<7); PORTC &= ~(1<<7);} while (0)
-#define LED_YELLOW_ON()    do { PORTC |= (1<<7);} while (0)
-#define LED_YELLOW_OFF()   do { PORTC &= ~(1<<7); } while (0)
-#define LED_YELLOW_TGL()   do { PIND |= (1<<7); } while (0)
-#else
-#define LED_GREEN_INIT()  do { } while (0)
-#define LED_GREEN_ON()    do { } while (0)
-#define LED_GREEN_OFF()   do { } while (0)
-#define LED_GREEN_TGL()   do { } while (0)
-
-#define LED_YELLOW_INIT()  do { } while (0)
-#define LED_YELLOW_ON()    do { } while (0)
-#define LED_YELLOW_OFF()   do { } while (0)
-#define LED_YELLOW_TGL()   do { } while (0)
-#endif
 
 inline
 uint8_t matrix_rows(void)
@@ -111,8 +79,6 @@ void matrix_setup(void)
 
 void matrix_init(void)
 {
-    backlight_initialize_regions();
-
     // initialize row and col
     unselect_rows();
     init_cols();
@@ -135,36 +101,40 @@ uint8_t matrix_scan(void)
         _delay_us(30);  // without this wait read unstable value.
         matrix_row_t cols = read_cols();
 
-        if (cols) LED_YELLOW_ON();
-        else LED_YELLOW_OFF();
+		if (cols)
+			LED_YELLOW_ON();
+		else
+			LED_YELLOW_OFF();
 
         if (matrix_debouncing[i] != cols)
         {
             matrix_debouncing[i] = cols;
-            if (debouncing)
-            {
-                debug("bounce!: ");
-                debug_hex(debouncing);debug("\n");
-
-                //debouncing_time = timer_read();
-            }
+            debouncing_time = timer_read();
             debouncing = DEBOUNCE;
         }
         unselect_rows();
     }
 
-    /*
+    if (debouncing)
+    {
+        LED_GREEN_ON();
 
-    if (debouncing && timer_elapsed(debouncing_time) > DEBOUNCE) {
-        for (int i = 0; i < MATRIX_ROWS; i++) {
-            matrix[i] = matrix_debouncing[i];
-        }
-        debouncing = false;
+    	if (timer_elapsed(debouncing_time) > DEBOUNCE)
+    	{
+			for (int i = 0; i < MATRIX_ROWS; i++)
+			{
+				matrix[i] = matrix_debouncing[i];
+			}
+
+			debouncing = false;
+    	}
+    }
+    else
+    {
+        LED_GREEN_OFF();
     }
 
-    */
-
-
+    /*
     if (debouncing)
     {
         LED_GREEN_ON();
@@ -184,6 +154,7 @@ uint8_t matrix_scan(void)
     {
         LED_GREEN_OFF();
     }
+    */
 
     return 1;
 }
@@ -225,7 +196,7 @@ uint8_t matrix_key_count(void)
     return count;
 }
 
-static void  init_cols(void)
+static void init_cols(void)
 {
     // Column pin configuration
     // Input with pull-up (DDR:0, PORT:1)
@@ -252,18 +223,6 @@ static void  init_cols(void)
 
 static matrix_row_t read_cols(void)
 {
-#if 0
-    matrix_row_t
-    cols = ( ((PINB&(1<<5)) ? 0 : (1<<0)) |
-             ((PINB&(1<<4)) ? 0 : (1<<1)) |
-             ((PINE&(1<<6)) ? 0 : (1<<2)) |
-             ((PIND&(1<<7)) ? 0 : (1<<3)) |
-             ((PINC&(1<<6)) ? 0 : (1<<4)) |
-             ((PIND&(1<<4)) ? 0 : (1<<5)) |
-             ((PIND&(1<<3)) ? 0 : (1<<6)) );
-
-    xprintf("cols %d ", cols);
-#endif
     return ( ((PINB&(1<<5)) ? 0 : (1<<0)) |
              ((PINB&(1<<4)) ? 0 : (1<<1)) |
              ((PINE&(1<<6)) ? 0 : (1<<2)) |
@@ -289,36 +248,36 @@ static void unselect_rows(void)
 
 static void select_row(uint8_t row)
 {
-    // Output low (DDR:1, PORT:0) to select
-    // ROW 1: PF7
-    // ROW 2: PF6
-    // ROW 3: PB6
-    // ROW 4: PB7
-    // ROW 5: PD6
+	// Output low (DDR:1, PORT:0) to select
+	// ROW 1: PF7
+	// ROW 2: PF6
+	// ROW 3: PB6
+	// ROW 4: PB7
+	// ROW 5: PD6
 
-    //xprintf("row %d ", row);
+	//xprintf("row %d ", row);
 
-    switch (row)
-    {
-    case 0:
-        DDRF |= (1 << 7);
-        PORTF &= ~(1 << 7);
-        break;
-    case 1:
-        DDRF |= (1 << 6);
-        PORTF &= ~(1 << 6);
-        break;
-    case 2:
-        DDRB |= (1 << 6);
-        PORTB &= ~(1 << 6);
-        break;
-    case 3:
-        DDRB |= (1 << 7);
-        PORTB &= ~(1 << 7);
-        break;
-    case 4:
-        DDRD |= (1 << 6);
-        PORTD &= ~(1 << 6);
-        break;
-    }
+	switch (row)
+	{
+	case 0:
+		DDRF |= (1 << 7);
+		PORTF &= ~(1 << 7);
+		break;
+	case 1:
+		DDRF |= (1 << 6);
+		PORTF &= ~(1 << 6);
+		break;
+	case 2:
+		DDRB |= (1 << 6);
+		PORTB &= ~(1 << 6);
+		break;
+	case 3:
+		DDRB |= (1 << 7);
+		PORTB &= ~(1 << 7);
+		break;
+	case 4:
+		DDRD |= (1 << 6);
+		PORTD &= ~(1 << 6);
+		break;
+	}
 }

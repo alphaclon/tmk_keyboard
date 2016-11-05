@@ -26,6 +26,8 @@
 #
 # make flip-ee = Download the eeprom file to the device, using Atmel FLIP
 #                (must have Atmel FLIP installed).
+# make dfu-start = Restart using dfu-programmer
+#                  (must have dfu-programmer installed).
 #
 # make debug = Start either simulavr or avarice as specified for debugging, 
 #              with avr-gdb or avr-insight as the front end for debugging.
@@ -50,18 +52,39 @@ TARGET_DIR = .
 PROGRAM_CMD = avrdude -v -c avr109 -p at90usb646 -P /dev/ttyACM0 -U flash:w:anorak_splitbrain_lufa.hex
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC +=	keymap_common.c \
+SRC += \
+	led.c \
 	matrix.c \
-	led.c
+	keymap_common.c \
+	splitbrain.c \
+	uart/uart.c \
+	backlight/twi/twi_master.c \
+	backlight/gfx/new.cpp \
+	backlight/gfx/glcdfont.c \
+	backlight/gfx/Adafruit_GFX.cpp \
+	backlight/gfx/WString.cpp \
+	backlight/gfx/Print.cpp \
+	backlight/IS31FL3731/IS31FL3731.cpp \
+	backlight/IS31FL3731/IS31FL3731_buffered.cpp \
+	backlight/backlight_kiibohd.c \
+	backlight/control.cpp \
+	backlight/led_control.cpp \
+	backlight/pwm_control.cpp \
+	backlight/led_masks.cpp \
+	backlight/sleep_led.cpp
+
+#	backlight/twi/twi_master.c \
+#	backlight/i2cmaster/twimaster.c \
+#	backlight/avr315/TWI_Master.c \
 
 CONFIG_H = config.h
 
 
 # MCU name
 # PJRC Teensy++ 2.0
-#MCU = at90usb1286
+# MCU = at90usb1286
 # TMK Alt Controller or PJRC Teensy 2.0
-MCU = at90usb646
+MCU = at90usb1286
 
 # Processor frequency.
 #     This will define a symbol, F_CPU, in all source code files equal to the
@@ -96,9 +119,8 @@ ARCH = AVR8
 #     CPU clock adjust registers or the clock division fuses), this will be equal to F_CPU.
 F_USB = $(F_CPU)
 
-# Interrupt driven control endpoint task
-#OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
-
+# Interrupt driven control endpoint task(+60)
+OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 
 # Boot Section Size in *bytes*
 #   Teensy halfKay   512
@@ -117,15 +139,14 @@ BOOTMAGIC_ENABLE = yes      # Virtual DIP switch configuration(+1000)
 EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
 CONSOLE_ENABLE = yes        # Console for debug(+400)
 COMMAND_ENABLE = yes        # Commands for debug and configuration
-SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
-#NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
+NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
 #BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
-#KEYMAP_SECTION_ENABLE = yes	# fixed address keymap for keymap editor
-
+#SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
 #OPT_DEFS += -DNO_ACTION_MACRO
+
 
 # Search Path
 VPATH += $(TARGET_DIR)

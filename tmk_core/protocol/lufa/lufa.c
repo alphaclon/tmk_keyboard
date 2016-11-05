@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2012 Jun Wako <wakojun@gmail.com>
  * This file is based on:
  *     LUFA-120219/Demos/Device/Lowlevel/KeyboardMouse
@@ -99,10 +99,10 @@ static void Console_Task(void)
         {
             /* Create a temporary buffer to hold the read in report from the host */
             uint8_t ConsoleData[CONSOLE_EPSIZE];
- 
+
             /* Read Console Report Data */
             Endpoint_Read_Stream_LE(&ConsoleData, sizeof(ConsoleData), NULL);
- 
+
             /* Process Console Report Data */
             //ProcessConsoleHIDReport(ConsoleData);
         }
@@ -163,7 +163,7 @@ void EVENT_USB_Device_Disconnect(void)
     print("[D]");
     /* For battery powered device */
     USB_IsInitialized = false;
-/* TODO: This doesn't work. After several plug in/outs can not be enumerated. 
+/* TODO: This doesn't work. After several plug in/outs can not be enumerated.
     if (USB_IsInitialized) {
         USB_Disable();  // Disable all interrupts
 	USB_Controller_Enable();
@@ -381,7 +381,7 @@ void EVENT_USB_Device_ControlRequest(void)
 }
 
 /*******************************************************************************
- * Host driver 
+ * Host driver
  ******************************************************************************/
 static uint8_t keyboard_leds(void)
 {
@@ -579,7 +579,7 @@ static void setup_mcu(void)
 static void setup_usb(void)
 {
     // Leonardo needs. Without this USB device is not recognized.
-    USB_Disable();
+    //USB_Disable();
 
     USB_Init();
 
@@ -592,7 +592,9 @@ int main(void)  __attribute__ ((weak));
 int main(void)
 {
     setup_mcu();
+    sei();
     keyboard_setup();
+    cli();
     setup_usb();
     sei();
 

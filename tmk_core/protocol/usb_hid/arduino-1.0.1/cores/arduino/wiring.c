@@ -186,7 +186,7 @@ void delayMicroseconds(unsigned int us)
 	);
 }
 
-void init()
+void initialize_honode()
 {
 	// this needs to be called before setup() or some functions won't
 	// work there

@@ -64,7 +64,7 @@
 // 100KHz for slow speed
 // 400KHz for high speed
 
-#define I2C_DEBUG
+//#define I2C_DEBUG
 
 // I2C state and address variables
 static volatile eI2cStateType I2cState;
@@ -83,9 +83,6 @@ uint8_t GenCal_Flag;
 void i2cInit(void)
 {
     GenCal_Flag = 1;
-    // clear SlaveReceive and SlaveTransmit handler to null
-    i2cSlaveReceive = 0;
-    i2cSlaveTransmit = 0;
     // set i2c bit rate to 100KHz
     i2cSetBitrate(100);
     // enable TWI (two-wire interface)
@@ -187,16 +184,21 @@ inline uint8_t i2cGetStatus(void)
 
 void i2cMasterSend(uint8_t deviceAddr, uint8_t length, uint8_t const *data)
 {
+#ifdef I2C_DEBUG
+    dprintf("I2C: send1\r\n");
+#endif
+
     // wait for interface to be ready
     while (I2cState)
         ;
+
     // set state
     I2cState = I2C_MASTER_TX;
     // save data
     I2cDeviceAddrRW = (deviceAddr & 0xFE); // RW cleared: write operation
-    memcpy(I2cSendData, data, length);
-    //for (uint8_t i = 0; i < length; i++)
-    //    I2cSendData[i] = *data++;
+    //memcpy(I2cSendData, data, length);
+    for (uint8_t i = 0; i < length; i++)
+        I2cSendData[i] = *data++;
     I2cSendDataIndex = 0;
     I2cSendDataLength = length;
     // send start condition
@@ -220,9 +222,9 @@ void i2cMasterReceive(uint8_t deviceAddr, uint8_t length, uint8_t *data)
     while (I2cState)
         ;
     // return data
-    memcpy(data, I2cReceiveData, length);
-    //for (uint8_t i = 0; i < length; i++)
-    //    *data++ = I2cReceiveData[i];
+    //memcpy(data, I2cReceiveData, length);
+    for (uint8_t i = 0; i < length; i++)
+        *data++ = I2cReceiveData[i];
 }
 
 uint8_t i2cMasterSendNI(uint8_t deviceAddr, uint8_t length, uint8_t const *data)

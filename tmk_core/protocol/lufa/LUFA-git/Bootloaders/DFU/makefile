@@ -11,10 +11,10 @@
 
 # Run "make help" for target help.
 
-MCU          = at90usb1287
+MCU          = at90usb1286
 ARCH         = AVR8
-BOARD        = USBKEY
-F_CPU        = 8000000
+BOARD        = SPLITBRAIN
+F_CPU        = 16000000
 F_USB        = $(F_CPU)
 OPTIMIZATION = s
 TARGET       = BootloaderDFU

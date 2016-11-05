@@ -4,11 +4,12 @@
 #include "config.h"
 #include <avr/pgmspace.h>
 
-#define KBLAYER_COUNT         1
+#define KBLAYER_COUNT          1
 
-#define KBLAYER_DEFAULT       0
+#define KBLAYER_DEFAULT        0
 
-#define LAYER_FN0_MEDIA  KBLAYER_COUNT + 1
+#define LAYER_FN0_MEDIA        KBLAYER_COUNT
+#define LAYER_FN1_SELECT_LAYER KBLAYER_COUNT + 1
 
 /*
  * Tenkeyless keyboard default layout, ISO & ANSI (ISO is between Left Shift

@@ -23,7 +23,7 @@ void delayMicroseconds(unsigned int us)
 {
     _delay_us(us);
 }
-void init()
+void initialize_honode()
 {
     timer_init();
 }

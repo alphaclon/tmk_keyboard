@@ -47,6 +47,7 @@
 #include "TWI_Master.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include "debug.h"
 
 static unsigned char TWI_buf[TWI_BUFFER_SIZE]; // Transceiver buffer
 static unsigned char TWI_data_length;          // Number of bytes to be transmitted.
@@ -95,9 +96,9 @@ from the slave. Also include how many bytes that should be sent/read including t
 The function will hold execution (loop) until the TWI_ISR has completed with the previous operation,
 then initialize the next operation and return.
 ****************************************************************************/
-void TWI_Start_Transceiver_With_Data(unsigned char slave_address, unsigned char register_address, unsigned char data)
+void TWI_Start_Transceiver_With_Data_1(unsigned char slave_address, unsigned char register_address, unsigned char data)
 {
-    unsigned char temp;
+	dprintf("I2C: Data_1\r\n");
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
@@ -121,9 +122,11 @@ from the slave. Also include how many bytes that should be sent/read including t
 The function will hold execution (loop) until the TWI_ISR has completed with the previous operation,
 then initialize the next operation and return.
 ****************************************************************************/
-void TWI_Start_Transceiver_With_Data(unsigned char slave_address, unsigned char register_address, const unsigned char *data,
+void TWI_Start_Transceiver_With_Data_2(unsigned char slave_address, unsigned char register_address, const unsigned char *data,
                                      unsigned char data_length)
 {
+	dprintf("I2C: Data_2\r\n");
+
     unsigned char temp;
 
     while (TWI_Transceiver_Busy())
@@ -151,6 +154,8 @@ then initialize the next operation and return.
 ****************************************************************************/
 void TWI_Start_Transceiver_With_Data(const unsigned char *data, unsigned char data_length)
 {
+	dprintf("I2C: Data\r\n");
+
     unsigned char temp;
 
     while (TWI_Transceiver_Busy())
@@ -232,7 +237,7 @@ ISR(TWI_vect)
         TWI_bufPtr = 0;    // Set buffer pointer to the TWI Address location
     case TWI_MTX_ADR_ACK:  // SLA+W has been transmitted and ACK received
     case TWI_MTX_DATA_ACK: // Data byte has been transmitted and ACK received
-        if (TWI_bufPtr < TWI_msgSize)
+        if (TWI_bufPtr < TWI_data_length)
         {
             TWDR = TWI_buf[TWI_bufPtr++];
             TWCR = (1 << TWEN) |                               // TWI Interface enabled
@@ -252,7 +257,7 @@ ISR(TWI_vect)
     case TWI_MRX_DATA_ACK: // Data byte has been received and ACK transmitted
         TWI_buf[TWI_bufPtr++] = TWDR;
     case TWI_MRX_ADR_ACK:                   // SLA+R has been transmitted and ACK received
-        if (TWI_bufPtr < (TWI_msgSize - 1)) // Detect the last byte to NACK it.
+        if (TWI_bufPtr < (TWI_data_length - 1)) // Detect the last byte to NACK it.
         {
             TWCR = (1 << TWEN) |                // TWI Interface enabled
                    (1 << TWIE) | (1 << TWINT) | // Enable TWI Interrupt and clear the flag to read next byte

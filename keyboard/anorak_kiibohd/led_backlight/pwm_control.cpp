@@ -1,25 +1,26 @@
 
 #include "pwm_control.h"
 #include "led_masks.h"
+#include "led_control.h"
 
 extern "C" {
 #include "debug.h"
 }
 
-uint8_t currentBank = 0;
+uint8_t current_pwm_bank = 0;
 uint8_t LedPWMPageBuffer[ISSI_USED_CHANNELS] = {0};
 uint16_t maximum_total_pwm = ISSI_TOTAL_CHANNELS * 255;
 
-void IS31FL3731_set_maximum_power_consumption(uint16_t value)
+void IS31FL3731_set_power_target(uint16_t value)
 {
     maximum_total_pwm = value;
 }
 
 void select_next_bank()
 {
-    ++currentBank;
-    if (currentBank >= ISSI_TOTAL_FRAMES)
-        currentBank = 0;
+    ++current_pwm_bank;
+    if (current_pwm_bank >= ISSI_TOTAL_FRAMES)
+        current_pwm_bank = 0;
 }
 
 uint8_t channel_enabled_by_mask(uint16_t channel, tLedPWMControlCommand *control)
@@ -196,6 +197,6 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
     }
     */
 
-    issi.setLedsBrightness(LedPWMPageBuffer, currentBank);
+    issi.setLedsBrightness(LedPWMPageBuffer, current_pwm_bank);
     //issi.displayFrame(currentBank);
 }

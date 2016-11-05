@@ -2,9 +2,7 @@
 #include <avr/pgmspace.h>
 #include "led_backlight/backlight_kiibohd.h"
 #include "config.h"
-
 #include "sleep_led.h"
-#include "led_backlight/control.h"
 
 /*
  *  Keymaps
@@ -42,7 +40,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP_KIIBOHD(
          ESC,    1,    2,    3,    4,  F12, \
          TAB,    Q,    W,    E,    R,    T, \
-         FN1,    A,    S,    D,    F,    G, \
+		   M,    A,    S,    D,    F,    G, \
         LSFT,    Z,    X,    C,    V,    B, \
         LCTL,  FN0, FN14, LALT,  FN2,  FN3, SPC),
     /*
@@ -66,7 +64,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP_KIIBOHD(
          ESC,    1,    2,    3,    4,  F12, \
          TAB,    Q,    W,    E,    R,    T, \
-         FN1,    A,    S,    D,    F,    G, \
+           M,    A,    S,    D,    F,    G, \
         LSFT,    Z,    X,    C,    V,    B, \
         LCTL,  FN0, FN14, LALT,  FN2,  SPC, ENT),
     /*
@@ -78,7 +76,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * |--------------------------|
      * |Tab  |   T|  Q|  W|  E|  R|
      * |--------------------------|
-     * |RCtrl|   G|  A|  S|  D|  F|
+     * |    M|   G|  A|  S|  D|  F|
      * |--------------------------|
      * |Shift|   B|  Z|  X|  C|  V|
      * |--------------------------|
@@ -89,7 +87,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP_KIIBOHD(
          ESC,    1,    2,    3,    4,  F12, \
          TAB,    T,    Q,    W,    E,    R, \
-         FN1,    G,    A,    S,    D,    F, \
+           M,    G,    A,    S,    D,    F, \
         LSFT,    B,    Z,    X,    C,    V, \
         LCTL,  FN0, FN14, LALT,  FN2,  FN3, SPC),
     /*
@@ -160,7 +158,7 @@ enum function_id
     KIIBOHD_FUNCTION_Backlight_Decrease_Region,
     KIIBOHD_FUNCTION_Backlight_Save_Current_State,
     KIIBOHD_FUNCTION_Backlight_Breath,
-	KIIBOHD_FUNCTION_Backlight_Animate,
+	KIIBOHD_FUNCTION_Backlight_Animate
 };
 
 enum macro_id
@@ -255,9 +253,8 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         	sleep_led_toggle();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
-
+        	backlight_test();
             break;
-
         }
     }
 }

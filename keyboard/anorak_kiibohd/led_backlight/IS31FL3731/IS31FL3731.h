@@ -93,7 +93,7 @@ public:
 
 protected:
 #if TWILIB == BUFFTW
-    typedef union _i2c_command
+    union _i2c_command
     {
         struct _data
         {

@@ -2,6 +2,7 @@
 #define _PWM_CONTROL_H_
 
 #include "IS31FL3731/IS31FL3731.h"
+#include "control.h"
 
 // Basic LED PWM Control Capability
 typedef enum _tLedPWMControlMode
@@ -32,6 +33,6 @@ typedef struct _tLedPWMControlCommand
 } tLedPWMControlCommand;
 
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control);
-void IS31FL3731_set_maximum_power_consumption(uint16_t value);
+void IS31FL3731_set_power_target(uint16_t value);
 
 #endif

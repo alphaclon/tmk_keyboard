@@ -7,6 +7,7 @@ extern IS31FL3731Buffered issi;
 
 void IS31FL3731_init(void);
 
+extern "C" {
 void testInterruptDrivenI2C(void);
-
+}
 #endif

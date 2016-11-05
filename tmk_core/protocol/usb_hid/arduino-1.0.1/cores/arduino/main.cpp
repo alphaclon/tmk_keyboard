@@ -2,7 +2,7 @@
 
 int main(void)
 {
-	init();
+	initialize_honode();
 
 #if defined(USBCON)
 	USBDevice.attach();

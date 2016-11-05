@@ -12,26 +12,28 @@ extern "C" {
 #endif
 }
 
-#define ISSI_REG_CONFIG 0x00
-#define ISSI_REG_CONFIG_PICTUREMODE 0x00
-#define ISSI_REG_CONFIG_AUTOPLAYMODE 0x08
-#define ISSI_REG_CONFIG_AUDIOPLAYMODE 0x18
+#define ISSI_PICTUREMODE 0x00
+#define ISSI_AUTOPLAYMODE 0x08
+#define ISSI_AUDIOPLAYMODE 0x18
 
-#define ISSI_CONF_PICTUREMODE 0x00
-#define ISSI_CONF_AUTOFRAMEMODE 0x04
-#define ISSI_CONF_AUDIOMODE 0x08
-
+#define ISSI_REG_MODE 0x00
 #define ISSI_REG_PICTUREFRAME 0x01
-
 #define ISSI_REG_AUTOPLAY_1 0x02
 #define ISSI_REG_AUTOPLAY_2 0x03
+#define ISSI_REG_BLINK 0x05
+#define ISSI_REG_AUDIOSYNC 0x06
 #define ISSI_REG_BREATH_1 0x08
 #define ISSI_REG_BREATH_2 0x09
 #define ISSI_REG_SHUTDOWN 0x0A
-#define ISSI_REG_AUDIOSYNC 0x06
+#define ISSI_REG_GAIN_REGISTER 0x0B
+#define ISSI_REG_ADC_REGISTER 0x0C
 
 #define ISSI_COMMANDREGISTER 0xFD
 #define ISSI_BANK_FUNCTIONREG 0x0B // helpfully called 'page nine'
+
+#define ISSI__ENABLE_OFFSET 0x00
+#define ISSI__BLINK_OFFSET 0x12
+#define ISSI__COLOR_OFFSET 0x24
 
 #ifndef _swap_int16_t
 #define _swap_int16_t(a, b)                                                                                            \
@@ -64,9 +66,7 @@ bool IS31FL3731::begin(uint8_t issi_slave_address)
 
     _delay_ms(1);
 
-    // picture mode
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_PICTUREMODE);
-
+    setPictureMode();
     displayFrame(_frame);
     audioSync(false);
 
@@ -96,18 +96,18 @@ void IS31FL3731::enableSoftwareShutdown(bool enabled)
 
 void IS31FL3731::setPictureMode()
 {
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_PICTUREMODE);
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_MODE, ISSI_PICTUREMODE);
 }
 
 void IS31FL3731::setAutoFramePlayMode(uint8_t frame_start)
 {
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_CONFIG, ISSI_REG_CONFIG_AUTOPLAYMODE & (frame_start & 0x07));
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_MODE, ISSI_AUTOPLAYMODE | (frame_start & 0x07));
 }
 
-void IS31FL3731::setAutoFramePlayConfig(uint8_t loops, uint8_t frames, uint8_t delay_ms_x_11)
+void IS31FL3731::setAutoFramePlayConfig(uint8_t loops, uint8_t frames, uint8_t delay)
 {
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_1, ((loops & 0x7)<< 4) & (frames & 0x7) );
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_2, delay_ms_x_11 & 0x3f );
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_1, ((loops & 0x7)<< 4) | (frames & 0x7) );
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_AUTOPLAY_2, delay | 0x3f );
 }
 
 void IS31FL3731::setBreathMode(bool enable)
@@ -125,8 +125,8 @@ void IS31FL3731::setBreathMode(bool enable)
 void IS31FL3731::setBreathConfig(uint8_t fade_in, uint8_t fade_out, uint8_t extinguish)
 {
     uint8_t bcr2 = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2);
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_1, ((fade_out & 0x7)<< 4) & (fade_in & 0x7) );
-    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2, bcr2 & (extinguish & 0x7) );
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_1, ((fade_out & 0x7)<< 4) | (fade_in & 0x7) );
+    writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_BREATH_2, bcr2 | (extinguish & 0x7) );
 }
 
 void IS31FL3731::setFrame(uint8_t frame)
@@ -208,7 +208,7 @@ void IS31FL3731::enableLeds(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uin
 
 #if TWILIB == AVR315
 
-    TWI_Start_Transceiver_With_Data(_issi_address, 0, ledEnableMask, ISSI_LED_MASK_SIZE);
+    TWI_Start_Transceiver_With_Data_2(_issi_address, 0, ledEnableMask, ISSI_LED_MASK_SIZE);
 
 #elif TWILIB == BUFFTW
 
@@ -241,7 +241,7 @@ void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8
 
 #if TWILIB == AVR315
 
-    TWI_Start_Transceiver_With_Data(_issi_address, 0x24, pwm, ISSI_TOTAL_CHANNELS);
+    TWI_Start_Transceiver_With_Data_2(_issi_address, 0x24, pwm, ISSI_USED_CHANNELS);
 
 #elif TWILIB == BUFFTW
 
@@ -266,7 +266,7 @@ void IS31FL3731::selectBank(uint8_t bank)
 {
 #if TWILIB == AVR315
 
-    TWI_Start_Transceiver_With_Data(_issi_address, ISSI_COMMANDREGISTER, bank);
+    TWI_Start_Transceiver_With_Data_1(_issi_address, ISSI_COMMANDREGISTER, bank);
 
 #elif TWILIB == BUFFTW
 
@@ -289,7 +289,7 @@ void IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 
 #if TWILIB == AVR315
 
-    TWI_Start_Transceiver_With_Data(_issi_address, ISSI_COMMANDREGISTER, data);
+    TWI_Start_Transceiver_With_Data_1(_issi_address, ISSI_COMMANDREGISTER, data);
 
 #elif TWILIB == BUFFTW
 
@@ -312,7 +312,7 @@ void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 
 #if TWILIB == AVR315
 
-    TWI_Start_Transceiver_With_Data(_issi_address, reg, (unsigned char *)&data, 2);
+    TWI_Start_Transceiver_With_Data_2(_issi_address, reg, (unsigned char *)&data, 2);
 
 #elif TWILIB == BUFFTW
 
@@ -338,7 +338,7 @@ uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 
 #if TWILIB == AVR315
 
-    TWI_Start_Transceiver_With_Data(_issi_address | (1 << TWI_READ_BIT), reg, &data, 1);
+    TWI_Start_Transceiver_With_Data_2(_issi_address | (1 << TWI_READ_BIT), reg, &data, 1);
     TWI_Get_Data_From_Transceiver(&data, 1);
 
 #elif TWILIB == BUFFTW

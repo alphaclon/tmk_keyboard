@@ -43,7 +43,7 @@ static void LUFA_setup(void)
 static void HID_setup()
 {
     // Arduino Timer startup: wiring.c
-    init();
+    initialize_honode();
 
     if (usb_host.Init() == -1) {
         debug("HID init: failed\n");

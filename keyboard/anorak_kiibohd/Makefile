@@ -59,8 +59,6 @@ SRC += \
 	matrix.c \
 	keymap_common.c \
 	led_backlight/twi/twi_master.c \
-	led_backlight/avr315/TWI_Master.c \
-	led_backlight/i2cmaster/twimaster.c \	
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
@@ -75,6 +73,9 @@ SRC += \
 	led_backlight/led_masks.cpp \
 	led_backlight/sleep_led.cpp
 
+#	led_backlight/twi/twi_master.c \
+#	led_backlight/i2cmaster/twimaster.c \
+#	led_backlight/avr315/TWI_Master.c \
 
 PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
 	
@@ -83,7 +84,7 @@ CONFIG_H = config.h
 
 # MCU name
 # PJRC Teensy++ 2.0
-#MCU = at90usb1286
+# MCU = at90usb1286
 # TMK Alt Controller or PJRC Teensy 2.0
 MCU = atmega32u4
 
@@ -119,9 +120,8 @@ ARCH = AVR8
 #     CPU clock adjust registers or the clock division fuses), this will be equal to F_CPU.
 F_USB = $(F_CPU)
 
-# Interrupt driven control endpoint task
-#OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
-
+# Interrupt driven control endpoint task(+60)
+OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 
 # Boot Section Size in *bytes*
 #   Teensy halfKay   512

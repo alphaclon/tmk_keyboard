@@ -367,6 +367,7 @@ void backlight_initialize_regions(void)
 
 void backlight_setup()
 {
+/*
     LED_GREEN_INIT();
     LED_YELLOW_INIT();
 
@@ -383,6 +384,7 @@ void backlight_setup()
 
 	_delay_ms(500);
 	_delay_ms(500);
+*/
 
     IS31FL3731_init();
     //IS31FL3731_set_maximum_power_consumption(320);
@@ -406,6 +408,7 @@ void backlight_setup()
 
 void backlight_setup_finish()
 {
+/*
 	LED_GREEN_OFF();
 	LED_YELLOW_OFF();
 
@@ -414,7 +417,7 @@ void backlight_setup_finish()
 
     // wait for interface to be ready
 #if TWILIB == AVR315
-	while (TWI_Transceiver_Busy() /*i2cGetState()*/)
+	while (TWI_Transceiver_Busy())
 	{
 		LED_GREEN_OFF();
 		_delay_ms(100);
@@ -440,7 +443,7 @@ void backlight_setup_finish()
 
 	_delay_ms(500);
 	_delay_ms(500);
-
+*/
 }
 
 void backlight_test()

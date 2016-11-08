@@ -33,17 +33,15 @@
 #include "backlight/backlight_kiibohd.h"
 #include "splitbrain.h"
 
-
-#ifndef DEBOUNCE
-#define DEBOUNCE 5
+#ifndef DEBOUNCE_TIME
+#define DEBOUNCE_TIME 5
 #endif
-
-static uint8_t debouncing = DEBOUNCE;
-static uint16_t debouncing_time = 0;
 
 /* matrix state(1:on, 0:off) */
 static matrix_row_t matrix[MATRIX_ROWS];
 static matrix_row_t matrix_debouncing[MATRIX_ROWS];
+static uint16_t debouncing_times[MATRIX_ROWS];
+static bool debouncing[MATRIX_ROWS] = { false };
 
 static matrix_row_t read_cols(void);
 static void init_cols(void);
@@ -89,6 +87,8 @@ void matrix_init(void)
 	{
 		matrix[i] = 0;
 		matrix_debouncing[i] = 0;
+		debouncing_times[i] = 0;
+		debouncing[i] = false;
 	}
 
     LED_GREEN_OFF();
@@ -103,64 +103,46 @@ uint8_t matrix_scan(void)
 		_delay_us(30);  // without this wait read unstable value.
 		matrix_row_t cols = read_cols();
 
+#ifndef NO_DEBUG_LEDS
 		if (cols)
-		{
 			LED_YELLOW_ON();
-		}
 		else
-		{
 			LED_YELLOW_OFF();
-		}
+#endif
 
 		if (matrix_debouncing[i] != cols)
 		{
 			matrix_debouncing[i] = cols;
-			debouncing_time = timer_read();
-			debouncing = DEBOUNCE;
+			debouncing_times[i] = timer_read();
+			debouncing[i] = true;
 		}
+
 		unselect_rows();
 	}
 
-	if (debouncing)
+	for (int i = 0; i < MATRIX_ROWS; i++)
 	{
-		LED_GREEN_ON();
-
-		if (timer_elapsed(debouncing_time) > DEBOUNCE)
+		if (debouncing[i])
 		{
-			for (int i = 0; i < MATRIX_ROWS; i++)
+			LED_GREEN_ON();
+
+			if (timer_elapsed(debouncing_times[i]) > DEBOUNCE_TIME)
 			{
 				matrix[i] = matrix_debouncing[i];
-			}
+				debouncing[i] = false;
 
-			debouncing = false;
+				send_row_to_other_side(i, matrix[i]);
+			}
+		}
+		else
+		{
+			LED_GREEN_OFF();
 		}
 	}
-	else
-	{
-		LED_GREEN_OFF();
-	}
 
-	/*
-	 if (debouncing)
-	 {
-	 LED_GREEN_ON();
-	 if (--debouncing)
-	 {
-	 _delay_ms(1);
-	 }
-	 else
-	 {
-	 for (uint8_t i = 0; i < MATRIX_ROWS; i++)
-	 {
-	 matrix[i] = matrix_debouncing[i];
-	 }
-	 }
-	 }
-	 else
-	 {
-	 LED_GREEN_OFF();
-	 }
-	 */
+	receive_data_from_other_side();
+	send_ping_to_other_side();
+	validate_communication_to_other_side();
 
 	return 1;
 }
@@ -168,8 +150,9 @@ uint8_t matrix_scan(void)
 bool matrix_is_modified(void)
 {
 	// NOTE: no longer used
-	if (debouncing)
-		return false;
+	for (int i = 0; i < MATRIX_ROWS; i++)
+		if (debouncing[i])
+			return false;
 	return true;
 }
 
@@ -180,12 +163,12 @@ inline bool matrix_has_ghost(void)
 
 inline bool matrix_is_on(uint8_t row, uint8_t col)
 {
-	return (matrix[row] & ((matrix_row_t) 1 << col));
+	return ((matrix[row] | get_other_sides_row(row)) & ((matrix_row_t) 1 << col));
 }
 
 inline matrix_row_t matrix_get_row(uint8_t row)
 {
-	return matrix[row];
+	return (matrix[row] | get_other_sides_row(row));
 }
 
 void matrix_print(void)
@@ -205,7 +188,7 @@ uint8_t matrix_key_count(void)
 	uint8_t count = 0;
 	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
 	{
-		count += bitpop32(matrix[i]);
+		count += bitpop32(matrix_get_row(i));
 	}
 	return count;
 }

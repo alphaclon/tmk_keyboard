@@ -54,6 +54,7 @@ PROGRAM_CMD = avrdude -v -c avr109 -p at90usb646 -P /dev/ttyACM0 -U flash:w:anor
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
 	led.c \
+	crc8.c \
 	matrix.c \
 	keymap_common.c \
 	splitbrain.c \

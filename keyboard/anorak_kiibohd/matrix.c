@@ -34,10 +34,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "debug.h"
 
 #ifndef DEBOUNCE
-#   define DEBOUNCE	5
+#   define DEBOUNCE_TIME	5
 #endif
 
-static uint8_t debouncing = DEBOUNCE;
+static uint8_t debouncing = DEBOUNCE_TIME;
 static uint16_t debouncing_time = 0;
 
 /* matrix state(1:on, 0:off) */
@@ -110,7 +110,7 @@ uint8_t matrix_scan(void)
         {
             matrix_debouncing[i] = cols;
             debouncing_time = timer_read();
-            debouncing = DEBOUNCE;
+            debouncing = DEBOUNCE_TIME;
         }
         unselect_rows();
     }
@@ -119,7 +119,7 @@ uint8_t matrix_scan(void)
     {
         LED_GREEN_ON();
 
-    	if (timer_elapsed(debouncing_time) > DEBOUNCE)
+    	if (timer_elapsed(debouncing_time) > DEBOUNCE_TIME)
     	{
 			for (int i = 0; i < MATRIX_ROWS; i++)
 			{

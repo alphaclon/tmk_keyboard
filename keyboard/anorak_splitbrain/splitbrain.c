@@ -65,7 +65,7 @@ enum recvStatus
 	recvStatusFoundStart = 1
 };
 
-uint8_t recv_status = recvStatusIdle;
+enum recvStatus recv_status = recvStatusIdle;
 
 struct _row_datagram
 {

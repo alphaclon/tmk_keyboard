@@ -17,15 +17,14 @@
  *
  */
 
-#include <util/delay.h>
-#include <avr/io.h>
-#include "uart/uart.h"
 #include "config.h"
 #include "debug.h"
-#include "matrix.h"
 #include "timer.h"
 #include "crc8.h"
 #include "splitbrain.h"
+#include <util/delay.h>
+#include <avr/io.h>
+#include "uart/uart.h"
 
 
 #define BAUD 115200 // 9600 14400 19200 38400 57600 115200

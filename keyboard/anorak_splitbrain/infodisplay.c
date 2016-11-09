@@ -1,22 +1,23 @@
 #include "infodisplay.h"
 #include "twi_config.h"
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #if TWILIB == AVR315
-#include "../avr315/TWI_Master.h"
+#include "backlight/avr315/TWI_Master.h"
 #elif TWILIB == BUFFTW
-#include "../twi/twi_master.h"
+#include "backlight/twi/twi_master.h"
 #else
-#include "../i2cmaster/i2cmaster.h"
+#include "backlight/i2cmaster/i2cmaster.h"
 #endif
 #ifdef __cplusplus
 }
 #endif
 
 
-uint8_t cmd_buffer[TWI_mcpu_send_DATA_BUFFER_SIZE];
+uint8_t cmd_buffer[TWI_SEND_DATA_BUFFER_SIZE];
 
 
 void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length)
@@ -69,7 +70,7 @@ void mcpu_send_scroll_text(char const *msg, uint8_t speed, uint8_t direction)
 void mcpu_send_lock_state(uint8_t lock_state)
 {
 	cmd_lock_state *cmd = (cmd_lock_state *)cmd_buffer;
-	cmd->msg.lock_state = lock_state;
+	cmd->msg.locks = lock_state;
 
 	mcpu_send_command(MATRIX_CMD_SCROLL_TEXT, cmd_buffer, sizeof(cmd_lock_state));
 }
@@ -87,7 +88,7 @@ void mcpu_send_animation(uint8_t animation, uint8_t speed, uint8_t direction, ui
 
 void mcpu_send_animation_sweep(uint8_t speed, uint8_t direction, uint8_t duration)
 {
-	mcpu_send_animation(MATRIX_CMD_ANIMATE_SWEEP, speed, direction, animation);
+	mcpu_send_animation(MATRIX_CMD_ANIMATE_SWEEP, speed, direction, duration);
 }
 
 void mcpu_send_typematrix(uint8_t enable)

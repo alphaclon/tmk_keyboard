@@ -46,8 +46,6 @@ extern "C" {
 #endif
 }
 
-
-
 #define BRIGHTNESS_MAX_LEVEL 8
 
 extern "C" {
@@ -56,57 +54,59 @@ uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
 uint8_t current_region = backlight_region_ALL;
 
-uint8_t *LedMaskFull;
-uint8_t *LedMaskOthr;
-uint8_t *LedMaskWASD;
-uint8_t *LedMaskCtrl;
-uint8_t *LedMaskLogo;
-
-
-void initialize_region_masks_by_side(void)
-{
-	if (is_left_side_of_keyboard())
-	{
-		LedMaskFull = LedMaskFull_Left;
-		LedMaskOthr = LedMaskOthr_Left;
-		LedMaskWASD = LedMaskWASD_Left;
-		LedMaskCtrl = LedMaskCtrl_Left;
-		LedMaskLogo = LedMaskLogo_Left;
-	}
-	else
-	{
-		LedMaskFull = LedMaskFull_Right;
-		LedMaskOthr = LedMaskOthr_Right;
-		LedMaskWASD = LedMaskWASD_Right;
-		LedMaskCtrl = LedMaskCtrl_Right;
-		LedMaskLogo = LedMaskLogo_Right;
-	}
-}
 
 void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE])
 {
-    switch (region)
-    {
-    case backlight_region_WASD:
-        memcpy_P(mask, LedMaskWASD, ISSI_LED_MASK_SIZE);
-        break;
-    case backlight_region_controls:
-        memcpy_P(mask, LedMaskCtrl, ISSI_LED_MASK_SIZE);
-        break;
-    case backlight_region_logo:
-        memcpy_P(mask, LedMaskLogo, ISSI_LED_MASK_SIZE);
-        break;
-    case backlight_region_other:
-        memcpy_P(mask, LedMaskOthr, ISSI_LED_MASK_SIZE);
-        break;
-    case backlight_region_ALL:
-        memcpy_P(mask, LedMaskFull, ISSI_LED_MASK_SIZE);
-        break;
-    default:
-        memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
-        //dprintf("unknown region %d\n", region);
-        break;
-    }
+	if (is_left_side_of_keyboard())
+	{
+		switch (region)
+		{
+		case backlight_region_WASD:
+			memcpy_P(mask, LedMaskWASD_Left, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_controls:
+			memcpy_P(mask, LedMaskCtrl_Left, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_logo:
+			memcpy_P(mask, LedMaskLogo_Left, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_other:
+			memcpy_P(mask, LedMaskOthr_Left, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_ALL:
+			memcpy_P(mask, LedMaskFull_Left, ISSI_LED_MASK_SIZE);
+			break;
+		default:
+			memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
+			//dprintf("unknown region %d\n", region);
+			break;
+		}
+	}
+	else
+	{
+		switch (region)
+		{
+		case backlight_region_WASD:
+			memcpy_P(mask, LedMaskWASD_Right, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_controls:
+			memcpy_P(mask, LedMaskCtrl_Right, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_logo:
+			memcpy_P(mask, LedMaskLogo_Right, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_other:
+			memcpy_P(mask, LedMaskOthr_Right, ISSI_LED_MASK_SIZE);
+			break;
+		case backlight_region_ALL:
+			memcpy_P(mask, LedMaskFull_Right, ISSI_LED_MASK_SIZE);
+			break;
+		default:
+			memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
+			//dprintf("unknown region %d\n", region);
+			break;
+		}
+	}
 }
 
 uint8_t get_array_position_for_region(uint8_t region)
@@ -403,8 +403,6 @@ void backlight_setup()
 
 	_delay_ms(500);
 	_delay_ms(500);
-
-	initialize_region_masks_by_side();
 
     IS31FL3731_init();
     //IS31FL3731_set_maximum_power_consumption(320);

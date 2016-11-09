@@ -82,8 +82,10 @@ uint8_t i2cMasterSendNI(uint8_t deviceAddr, uint8_t length, uint8_t const *data)
 //! receive I2C data from a device on the bus (non-interrupt based)
 uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint8_t length, uint8_t *data);
 
+//! send I2C data to a device on the bus
+void i2cMasterSendCommand(uint8_t deviceAddr, uint8_t command, uint8_t length, uint8_t const *data);
 //! send I2C data to a device on the bus (non-interrupt based)
-uint8_t i2cMasterSendCommandNI(uint8_t deviceAddr, uint8_t cmd, uint8_t length, uint8_t const *data);
+uint8_t i2cMasterSendCommandNI(uint8_t deviceAddr, uint8_t command, uint8_t length, uint8_t const *data);
 
 //! Get the current high-level state of the I2C interface
 eI2cStateType i2cGetState(void);

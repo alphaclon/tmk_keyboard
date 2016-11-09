@@ -1,5 +1,6 @@
 #pragma once
 
+#include "matrix.h"
 #include <stdint.h>
 #include <stdbool.h>
 

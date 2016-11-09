@@ -330,7 +330,7 @@ void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
     //uint8_t cmd[3] = {reg, data >> 8, data & 0xFF};
     //i2cMasterSendNI(_issi_address, 3, cmd);
 
-    i2cMasterSendCommandNI(_issi_address, reg, 2, &data);
+    i2cMasterSendCommandNI(_issi_address, reg, 2, (uint8_t const *)&data);
 
 #else
 

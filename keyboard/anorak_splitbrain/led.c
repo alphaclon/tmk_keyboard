@@ -24,5 +24,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* kiibohd has no LEDs */
 void led_set(uint8_t usb_led)
 {
-	send_lock_state_to_matrix_cpu(usb_led);
+	mcpu_send_lock_state(usb_led);
 }

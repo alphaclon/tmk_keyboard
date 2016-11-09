@@ -5,8 +5,7 @@
 #include "matrix.h"
 
 #define MATRIX_CMD_SHOW_VERSION 0x01
-#define MATRIX_CMD_TYPEMATRIX 0x10
-#define MATRIX_CMD_TYPEMATRIX_KEY 0x11
+#define MATRIX_CMD_STOP_CURRENT 0x02
 
 #define MATRIX_CMD_SHOW_TEXT 0x10
 #define MATRIX_CMD_SCROLL_TEXT 0x11
@@ -40,50 +39,50 @@ typedef union _cmd_text cmd_text;
 
 union _cmd_scroll_text
 {
-	struct _msg
+	struct _msg_scroll_text
 	{
 		uint8_t length;
 		uint8_t speed;
 		uint8_t direction;
 		char text[MAX_TEXT_LENGTH];
 	} msg;
-	uint8_t raw[sizeof(struct _msg)] ;
+	uint8_t raw[sizeof(struct _msg_scroll_text)] ;
 };
 
 typedef union _cmd_scroll_text cmd_scroll_text;
 
 union _cmd_typematrix_key
 {
-	struct _msg
+	struct _msg_typematrix_key
 	{
 		uint8_t row_number;
 		matrix_row_t row;
 	} msg;
-	uint8_t raw[sizeof(struct _msg)] ;
+	uint8_t raw[sizeof(struct _msg_typematrix_key)] ;
 };
 
 typedef union _cmd_typematrix_key cmd_typematrix_key;
 
 union _cmd_lock_state
 {
-	struct _msg
+	struct _msg_lock_state
 	{
 		uint8_t locks;
 	} msg;
-	uint8_t raw[sizeof(struct _msg)] ;
+	uint8_t raw[sizeof(struct _msg_lock_state)] ;
 };
 
 typedef union _cmd_lock_state cmd_lock_state;
 
 union _cmd_animation
 {
-	struct _msg
+	struct _msg_animation
 	{
 		uint8_t speed;
 		uint8_t direction;
 		uint8_t duration;
 	} msg;
-	uint8_t raw[sizeof(struct _msg)] ;
+	uint8_t raw[sizeof(struct _msg_animation)] ;
 };
 
 typedef union _cmd_animation cmd_animation;

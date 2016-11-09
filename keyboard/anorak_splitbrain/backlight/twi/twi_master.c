@@ -205,6 +205,30 @@ void i2cMasterSend(uint8_t deviceAddr, uint8_t length, uint8_t const *data)
     i2cSendStart();
 }
 
+void i2cMasterSendCommand(uint8_t deviceAddr, uint8_t command, uint8_t length, uint8_t const *data)
+{
+#ifdef I2C_DEBUG
+    dprintf("I2C: send1\r\n");
+#endif
+
+    // wait for interface to be ready
+    while (I2cState)
+        ;
+
+    // set state
+    I2cState = I2C_MASTER_TX;
+    // save data
+    I2cDeviceAddrRW = (deviceAddr & 0xFE); // RW cleared: write operation
+    //memcpy(I2cSendData, data, length);
+    I2cSendData[0] = command;
+    for (uint8_t i = 1; i <= length; i++)
+        I2cSendData[i] = *data++;
+    I2cSendDataIndex = 0;
+    I2cSendDataLength = length+1;
+    // send start condition
+    i2cSendStart();
+}
+
 void i2cMasterReceive(uint8_t deviceAddr, uint8_t length, uint8_t *data)
 {
     // wait for interface to be ready

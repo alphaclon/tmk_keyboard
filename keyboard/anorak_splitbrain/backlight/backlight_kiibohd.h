@@ -2,23 +2,19 @@
 #define _BACKLIGHT_KIIBOHD_
 
 #define BACKLIGHT_WASD 0
-#define BACKLIGHT_JUMP 1
-#define BACKLIGHT_CONTROLS 2
-#define BACKLIGHT_LOGO 3
-#define BACKLIGHT_OTHER 4
-#define BACKLIGHT_CASE 5
-#define BACKLIGHT_ALL 6
+#define BACKLIGHT_CONTROLS 1
+#define BACKLIGHT_LOGO 2
+#define BACKLIGHT_OTHER 3
+#define BACKLIGHT_ALL 4
 
 #define BACKLIGHT_BV(arg) (1 << arg)
 
 enum backlight_region
 {
     backlight_region_WASD = BACKLIGHT_BV(BACKLIGHT_WASD),
-    backlight_region_jump = BACKLIGHT_BV(BACKLIGHT_JUMP),
     backlight_region_controls = BACKLIGHT_BV(BACKLIGHT_CONTROLS),
     backlight_region_logo = BACKLIGHT_BV(BACKLIGHT_LOGO),
     backlight_region_other = BACKLIGHT_BV(BACKLIGHT_OTHER),
-	backlight_region_case = BACKLIGHT_BV(BACKLIGHT_CASE),
 	backlight_region_ALL = BACKLIGHT_BV(BACKLIGHT_ALL),
 };
 

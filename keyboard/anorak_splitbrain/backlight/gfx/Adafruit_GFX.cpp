@@ -1121,124 +1121,168 @@ bool Adafruit_GFX_Button::justReleased()
 
 // -------------------------------------------------------------------------
 
-// GFXcanvas1 and GFXcanvas16 (currently a WIP, don't get too comfy with the
-// implementation) provide 1- and 16-bit offscreen canvases, the address of
-// which can be passed to drawBitmap() or pushColors() (the latter appears
-// to only be in Adafruit_TFTLCD at this time).  This is here mostly to
-// help with the recently-added proportionally-spaced fonts; adds a way to
-// refresh a section of the screen without a massive flickering clear-and-
-// redraw...but maybe you'll find other uses too.  VERY RAM-intensive, since
-// the buffer is in MCU memory and not the display driver...GXFcanvas1 might
-// be minimally useful on an Uno-class board, but this and GFXcanvas16 are
-// much more likely to require at least a Mega or various recent ARM-type
-// boards (recomment, as the text+bitmap draw can be pokey).  GFXcanvas1
-// requires 1 bit per pixel (rounded up to nearest byte per scanline),
-// GFXcanvas16 requires 2 bytes per pixel (no scanline pad).
-// NOT EXTENSIVELY TESTED YET.  MAY CONTAIN WORST BUGS KNOWN TO HUMANKIND.
-
-
-/** GFXCanvas2Bit
- *
- * The value of the bit pairs determines the corresponding pixel intensity:
- *
- *  b00 -> pixel off
- *  b01 -> pixel on low
- *  b10 -> pixel on mid
- *  b11 -> pixel on full
- */
+// In order for the display to show correct information, the user
+// software must write data to the display memory correctly.
+// This is dependent on the mode of operation, the number and
+// arrangement of MAX696x drivers ICs and LEDs matrices.
+//
+// The user should check the MAX696x data sheet for information on how
+// the display driver memory maps to pixels.
+//
+// As an example:
+//
+// A display uses two MAX696x ICs and four 8x8 monochrome displays
+// arranged in order from left to right.  The display consists of 32
+// columns (0 to 31,left to right) and 8 rows (0 to 7, top to bottom).
+//
+// This puts the pixel at the top left at (0,0) and bottom right pixel
+// at (31,7)
+//
+// 1 BIT PER PIXEL
+//---------------------
+// When in 1 bit per pixel mode there are 4 memory planes (0, 1, 2 & 3)
+// of 32 bytes each.
+//
+// For each memory plane:
+//
+// Addresses 0x00 (0 dec) to 0x1F (31 dec) correspond directly to the
+// pixels in all 8 rows accross the length of the display, from left to
+// right, ie writing to address 0x00 effects pixels in column 0, and
+// writing to address 0x1F effects pixels in column 31.
+//
+// 8 bit data written to each address maps to the display as follows:
+//
+//  Bit 0 -> row 0
+//  Bit 1 -> row 1
+//  Bit 2 -> row 2
+//  Bit 3 -> row 3
+//  Bit 4 -> row 4
+//  Bit 5 -> row 5
+//  Bit 6 -> row 6
+//  Bit 7 -> row 7
+//
+// ie there's a direct 1 to 1 mapping of pixels to memory addresses
+//
+// 2 BITS PER PIXEL
+//---------------------
+// When in 2 bit per pixel mode there are 2 memory planes
+// (0 and 1) of 64 bytes each.
+//
+// For each memory plane:
+//
+// Addresses 0x00 (0 dec) to 0x1F (31 dec) correspond to the pixels
+// in the first 4 rows across the length of the display from left to right.
+// ie, writing to address 0x00 effects pixels in column 0, and writing to
+// address 0x1F effects pixels in column 31.
+//
+// 8 bit data written to each address maps to the  display as follows:
+//
+//  Bits 0 and 1 -> row 0
+//  Bits 2 and 3 -> row 1
+//  Bits 4 and 5 -> row 2
+//  Bits 6 and 7 -> row 3
+//
+// Addresses 0x20 (32 dec) to 0x3F (63 dec) correspond to the pixels
+// in the last 4 rows across the length of the display from left to right.
+// ie, writing to address 0x20 effects pixels in column 0, and writing to
+// address 0x3F effects pixels in column 31.
+//
+// 8 bit data is written to each address and it maps to the
+// display as follows:
+//
+//  Bits 0 and 1 -> row 4
+//  Bits 2 and 3 -> row 5
+//  Bits 4 and 5 -> row 6
+//  Bits 6 and 7 -> row 7
+//
+// ie the pixels in a display are split across 2 different addresses ranges in the
+// display memory, separated by 32 bytes (in this example)
+//
+// The value of the bit pairs determines the corresponding pixel intensity:
+//
+//  b00 -> pixel off
+//  b01 -> pixel on low
+//  b10 -> pixel on mid
+//  b11 -> pixel on full
+//
 
 GFXCanvas_MAX6960_2BPP::GFXCanvas_MAX6960_2BPP(uint16_t w, uint16_t h) : Adafruit_GFX(w, h)
 {
-	_buffer_size = ((w + 7) / 8) * h * 2;
-    if ((buffer = (uint8_t *)malloc(_buffer_size)))
+	uint16_t _page_size = ((w + 7) / 8) * h * 2;
+    if ((_page = (uint8_t *)malloc(_page_size)))
     {
-        memset(buffer, 0, _buffer_size);
+        memset(_page, 0, _page_size);
+        _upper_part = _page;
+        _lower_part = _page + (_page_size / 2);
     }
-
-    _half_height = h / 2;
 }
 
 GFXCanvas_MAX6960_2BPP::~GFXCanvas_MAX6960_2BPP(void)
 {
-    if (buffer)
-        free(buffer);
-}
-
-uint8_t *GFXCanvas_MAX6960_2BPP::getBuffer(void)
-{
-    return buffer;
-}
-
-uint8_t GFXCanvas_MAX6960_2BPP::getBufferSize(void)
-{
-	return _buffer_size;
+	free(_page);
 }
 
 void GFXCanvas_MAX6960_2BPP::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
-    // Bitmask tables of 0x80>>X and ~(0x80>>X), because X>>Y is slow on AVR
-    static const uint8_t PROGMEM GFXsetBit[] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01},
-                                 GFXclrBit[] = {0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE};
+	if ((x < 0) || (y < 0) || (x >= _width) || (y >= _height))
+		return;
 
-    if (buffer)
-    {
-        if ((x < 0) || (y < 0) || (x >= _width) || (y >= _height))
-            return;
+	int16_t t;
+	switch (rotation)
+	{
+	case 1:
+		t = x;
+		x = WIDTH - 1 - y;
+		y = t;
+		break;
+	case 2:
+		x = WIDTH - 1 - x;
+		y = HEIGHT - 1 - y;
+		break;
+	case 3:
+		t = x;
+		x = y;
+		y = HEIGHT - 1 - t;
+		break;
+	}
 
-        int16_t t;
-        switch (rotation)
-        {
-        case 1:
-            t = x;
-            x = WIDTH - 1 - y;
-            y = t;
-            break;
-        case 2:
-            x = WIDTH - 1 - x;
-            y = HEIGHT - 1 - y;
-            break;
-        case 3:
-            t = x;
-            x = y;
-            y = HEIGHT - 1 - t;
-            break;
-        }
+	uint8_t *ptr = 0;
 
-        uint8_t *ptr = 0;
+	//  upper part, y = row 0..3
+	//  one byte per x = column
+	//  Bits 0 and 1 -> row 0
+	//  Bits 2 and 3 -> row 1
+	//  Bits 4 and 5 -> row 2
+	//  Bits 6 and 7 -> row 3
+	//
+	//  lower part, row 4..7
+	//  one byte per column
+	//  Bits 0 and 1 -> row 4
+	//  Bits 2 and 3 -> row 5
+	//  Bits 4 and 5 -> row 6
+	//  Bits 6 and 7 -> row 7
 
+	if (y <= 3)
+	{
+		ptr = &_upper_part[x];
+	}
+	else
+	{
+		ptr = &_lower_part[x];
+	}
 
-        // (0|0) -> Byte 0
-        // (0|1) -> Byte 0
-        // (0|3) -> Byte 0
-        // (0|4) -> Byte WIDTH
-        // (0|7) -> Byte WIDTH
-        // (1|0) -> Byte 1
-        // row + (column / 4) * width
-        //uint8_t byte = x + (y / 4) * WIDTH;
+	uint8_t subcolor = (color & 0x0003);
+	uint8_t bits = (y % 4) * 2;
 
-        if (y < _half_height)
-        {
-        	ptr = &buffer[x];
-        }
-        else
-        {
-        	ptr = &buffer[x + WIDTH];
-        }
+	*ptr &= ~(0x03 << bits);
 
-        uint8_t bitshift = ((y % 4) * 2);
-
-        *ptr &= ~(0x0003 << bitshift);
-
-        if (color)
-        	*ptr |= (color & 0x000f) << bitshift;
-    }
+	if (color)
+		*ptr |= subcolor << bits;
 }
 
 void GFXCanvas_MAX6960_2BPP::fillScreen(uint16_t color)
 {
-    if (buffer)
-    {
-    	uint8_t pattern = ((color & 0x03) << 6) | ((color & 0x03) << 4) | ((color & 0x03) << 2) | (color & 0x03);
-        memset(buffer, pattern, _buffer_size);
-    }
+	uint8_t subcolor = (color & 0x03);
+	uint8_t pattern = (subcolor << 6) | (subcolor << 4) | (subcolor << 2) | subcolor;
+	memset(_page, pattern, _page_size);
 }

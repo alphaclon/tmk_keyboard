@@ -6,9 +6,6 @@
  * PE6 -> grüne LED, active low
  * PB7 -> gelbe LED, active low
  *
- * #define LED_CONFIG      (DDRD |= (1<<6))
- * #define LED_ON          (PORTD &= ~(1<<6))
- * #define LED_OFF         (PORTD |= (1<<6))
  *
  */
 

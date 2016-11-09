@@ -93,6 +93,7 @@ public:
 
 protected:
 #if TWILIB == BUFFTW
+    /*
     union _i2c_command
     {
         struct _data
@@ -102,6 +103,7 @@ protected:
         } parts;
         uint8_t raw[ISSI_USED_CHANNELS + 1];
     } i2c_command;
+    */
 #endif
 
     void selectBank(uint8_t bank);

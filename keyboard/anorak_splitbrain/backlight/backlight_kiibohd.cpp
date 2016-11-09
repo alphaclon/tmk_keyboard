@@ -31,7 +31,10 @@ extern "C" {
 #include "backlight.h"
 #include "../backlight/backlight_kiibohd.h"
 #include "../nfo_led.h"
+#include "../splitbrain.h"
 }
+
+
 
 extern "C" {
 #if TWILIB == AVR315
@@ -44,6 +47,7 @@ extern "C" {
 }
 
 
+
 #define BRIGHTNESS_MAX_LEVEL 8
 
 extern "C" {
@@ -52,15 +56,39 @@ uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
 uint8_t current_region = backlight_region_ALL;
 
+uint8_t *LedMaskFull;
+uint8_t *LedMaskOthr;
+uint8_t *LedMaskWASD;
+uint8_t *LedMaskCtrl;
+uint8_t *LedMaskLogo;
+
+
+void initialize_region_masks_by_side(void)
+{
+	if (is_left_side_of_keyboard())
+	{
+		LedMaskFull = LedMaskFull_Left;
+		LedMaskOthr = LedMaskOthr_Left;
+		LedMaskWASD = LedMaskWASD_Left;
+		LedMaskCtrl = LedMaskCtrl_Left;
+		LedMaskLogo = LedMaskLogo_Left;
+	}
+	else
+	{
+		LedMaskFull = LedMaskFull_Right;
+		LedMaskOthr = LedMaskOthr_Right;
+		LedMaskWASD = LedMaskWASD_Right;
+		LedMaskCtrl = LedMaskCtrl_Right;
+		LedMaskLogo = LedMaskLogo_Right;
+	}
+}
+
 void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE])
 {
     switch (region)
     {
     case backlight_region_WASD:
         memcpy_P(mask, LedMaskWASD, ISSI_LED_MASK_SIZE);
-        break;
-    case backlight_region_jump:
-        memcpy_P(mask, LedMaskJump, ISSI_LED_MASK_SIZE);
         break;
     case backlight_region_controls:
         memcpy_P(mask, LedMaskCtrl, ISSI_LED_MASK_SIZE);
@@ -70,9 +98,6 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
         break;
     case backlight_region_other:
         memcpy_P(mask, LedMaskOthr, ISSI_LED_MASK_SIZE);
-        break;
-    case backlight_region_case:
-        memcpy_P(mask, LedMaskCase, ISSI_LED_MASK_SIZE);
         break;
     case backlight_region_ALL:
         memcpy_P(mask, LedMaskFull, ISSI_LED_MASK_SIZE);
@@ -93,9 +118,6 @@ uint8_t get_array_position_for_region(uint8_t region)
     case backlight_region_WASD:
         pos = BACKLIGHT_WASD;
         break;
-    case backlight_region_jump:
-        pos = BACKLIGHT_JUMP;
-        break;
     case backlight_region_controls:
         pos = BACKLIGHT_CONTROLS;
         break;
@@ -104,9 +126,6 @@ uint8_t get_array_position_for_region(uint8_t region)
         break;
     case backlight_region_other:
         pos = BACKLIGHT_OTHER;
-        break;
-    case backlight_region_case:
-        pos = BACKLIGHT_CASE;
         break;
     case backlight_region_ALL:
         pos = BACKLIGHT_ALL;
@@ -385,6 +404,8 @@ void backlight_setup()
 	_delay_ms(500);
 	_delay_ms(500);
 
+	initialize_region_masks_by_side();
+
     IS31FL3731_init();
     //IS31FL3731_set_maximum_power_consumption(320);
 
@@ -431,7 +452,6 @@ void backlight_setup_finish()
 		_delay_ms(100);
 	}
 #endif
-
 
 	_delay_ms(500);
 	LED_YELLOW_ON();

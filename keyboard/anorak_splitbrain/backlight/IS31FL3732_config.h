@@ -1,10 +1,7 @@
 #ifndef _ADAFRUIT_IS31FL3731_CONFIG_H_
 #define _ADAFRUIT_IS31FL3731_CONFIG_H_
 
-#define AVR315 1
-#define BUFFTW 2
-
-#define TWILIB BUFFTW
+#include "twi_config.h"
 
 #define ISSI_ADDR_DEFAULT 0x74
 

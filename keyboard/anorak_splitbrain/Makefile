@@ -58,6 +58,7 @@ SRC += \
 	matrix.c \
 	keymap_common.c \
 	splitbrain.c \
+	infodisplay.c \
 	uart/uart.c \
 	backlight/twi/twi_master.c \
 	backlight/gfx/new.cpp \
@@ -71,7 +72,8 @@ SRC += \
 	backlight/control.cpp \
 	backlight/led_control.cpp \
 	backlight/pwm_control.cpp \
-	backlight/led_masks.cpp \
+	backlight/led_masks_leftside.cpp \
+	backlight/led_masks_rightside.cpp \
 	backlight/sleep_led.cpp
 
 #	backlight/twi/twi_master.c \

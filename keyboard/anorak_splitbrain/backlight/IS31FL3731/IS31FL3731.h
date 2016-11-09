@@ -3,8 +3,8 @@
 
 #include <inttypes.h>
 
-#include "../../backlight/gfx/Adafruit_GFX.h"
-#include "../../backlight/IS31FL3732_config.h"
+#include "gfx/Adafruit_GFX.h"
+#include "IS31FL3732_config.h"
 
 /*
  * IS31FL3731 supports 144 = 8*9 * 2 LEDs

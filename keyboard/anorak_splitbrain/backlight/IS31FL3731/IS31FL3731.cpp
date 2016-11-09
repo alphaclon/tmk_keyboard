@@ -1,15 +1,14 @@
 
-#include "../../backlight/IS31FL3731/IS31FL3731.h"
-
 #include <util/delay.h>
+#include "IS31FL3731.h"
 
 extern "C" {
 #if TWILIB == AVR315
-#include "../../backlight/avr315/TWI_Master.h"
+#include "../avr315/TWI_Master.h"
 #elif TWILIB == BUFFTW
-#include "../../backlight/twi/twi_master.h"
+#include "../twi/twi_master.h"
 #else
-#include "../../backlight/i2cmaster/i2cmaster.h"
+#include "../i2cmaster/i2cmaster.h"
 #endif
 }
 
@@ -154,6 +153,7 @@ void IS31FL3731::audioSync(bool sync)
 
 void IS31FL3731::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
+#ifdef IS31FL3731_SUPPORT_ROTATION
     // check rotation, move pixel around if necessary
     switch (getRotation())
     {
@@ -170,12 +170,14 @@ void IS31FL3731::drawPixel(int16_t x, int16_t y, uint16_t color)
         y = 9 - y - 1;
         break;
     }
+#endif
 
-#ifdef IS31FL3731_DO_CHECKS
     if ((x < 0) || (x >= 16))
         return;
     if ((y < 0) || (y >= 9))
         return;
+
+#ifdef IS31FL3731_DO_CHECKS
     if (color > 255)
         color = 255; // PWM 8bit max
 #endif
@@ -213,9 +215,11 @@ void IS31FL3731::enableLeds(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uin
 
 #elif TWILIB == BUFFTW
 
-    i2c_command.parts.cmd = 0;
-    memcpy(i2c_command.parts.data, ledEnableMask, ISSI_LED_MASK_SIZE);
-    i2cMasterSendNI(_issi_address, ISSI_LED_MASK_SIZE + 1, i2c_command.raw);
+    //i2c_command.parts.cmd = 0;
+    //memcpy(i2c_command.parts.data, ledEnableMask, ISSI_LED_MASK_SIZE);
+    //i2cMasterSendNI(_issi_address, ISSI_LED_MASK_SIZE + 1, i2c_command.raw);
+
+    i2cMasterSendCommandNI(_issi_address, 0, ISSI_LED_MASK_SIZE, ledEnableMask);
 
 #else
 
@@ -246,9 +250,11 @@ void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8
 
 #elif TWILIB == BUFFTW
 
-    i2c_command.parts.cmd = 0x24;
-    memcpy(i2c_command.parts.data, pwm, ISSI_USED_CHANNELS);
-    i2cMasterSendNI(_issi_address, ISSI_USED_CHANNELS + 1, i2c_command.raw);
+    //i2c_command.parts.cmd = 0x24;
+    //memcpy(i2c_command.parts.data, pwm, ISSI_USED_CHANNELS);
+    //i2cMasterSendNI(_issi_address, ISSI_USED_CHANNELS + 1, i2c_command.raw);
+
+    i2cMasterSendCommandNI(_issi_address, 0x24, ISSI_USED_CHANNELS, pwm);
 
 #else
 
@@ -271,8 +277,10 @@ void IS31FL3731::selectBank(uint8_t bank)
 
 #elif TWILIB == BUFFTW
 
-    uint8_t cmd[2] = {ISSI_COMMANDREGISTER, bank};
-    i2cMasterSendNI(_issi_address, 2, cmd);
+    //uint8_t cmd[2] = {ISSI_COMMANDREGISTER, bank};
+    //i2cMasterSendNI(_issi_address, 2, cmd);
+
+    i2cMasterSendCommandNI(_issi_address, ISSI_COMMANDREGISTER, 1, &bank);
 
 #else
 
@@ -294,8 +302,10 @@ void IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 
 #elif TWILIB == BUFFTW
 
-    uint8_t cmd[2] = {reg, data};
-    i2cMasterSendNI(_issi_address, 2, cmd);
+    //uint8_t cmd[2] = {reg, data};
+    //i2cMasterSendNI(_issi_address, 2, cmd);
+
+    i2cMasterSendCommandNI(_issi_address, ISSI_COMMANDREGISTER, 1, &data);
 
 #else
 
@@ -317,8 +327,10 @@ void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 
 #elif TWILIB == BUFFTW
 
-    uint8_t cmd[3] = {reg, data >> 8, data & 0xFF};
-    i2cMasterSendNI(_issi_address, 3, cmd);
+    //uint8_t cmd[3] = {reg, data >> 8, data & 0xFF};
+    //i2cMasterSendNI(_issi_address, 3, cmd);
+
+    i2cMasterSendCommandNI(_issi_address, reg, 2, &data);
 
 #else
 
@@ -344,8 +356,10 @@ uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 
 #elif TWILIB == BUFFTW
 
-    uint8_t cmd[1] = {reg};
-    i2cMasterSendNI(_issi_address, 1, cmd);
+    //uint8_t cmd[1] = {reg};
+    //i2cMasterSendNI(_issi_address, 1, cmd);
+
+    i2cMasterSendCommandNI(_issi_address, reg, 0, 0);
     i2cMasterReceiveNI(_issi_address, 1, &data);
 
 #else

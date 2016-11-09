@@ -1,6 +1,5 @@
 
-#include "../../backlight/IS31FL3731/IS31FL3731_buffered.h"
-
+#include "IS31FL3731_buffered.h"
 #include <util/delay.h>
 
 #ifndef _swap_int16_t
@@ -20,10 +19,12 @@ IS31FL3731Buffered::IS31FL3731Buffered(uint8_t x, uint8_t y) : IS31FL3731(x, y)
 
 IS31FL3731Buffered::~IS31FL3731Buffered()
 {
+	free(_pwm_buffer);
 }
 
 void IS31FL3731Buffered::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
+#ifdef IS31FL3731_SUPPORT_ROTATION
     // check rotation, move pixel around if necessary
     switch (getRotation())
     {
@@ -40,12 +41,13 @@ void IS31FL3731Buffered::drawPixel(int16_t x, int16_t y, uint16_t color)
         y = 9 - y - 1;
         break;
     }
+#endif
 
-#ifdef IS31FL3731_DO_CHECKS
     if ((x < 0) || (x >= 16))
         return;
     if ((y < 0) || (y >= 9))
         return;
+#ifdef IS31FL3731_DO_CHECKS
     if (color > 255)
         color = 255; // PWM 8bit max
 #endif

@@ -6,12 +6,13 @@
  * commands:
  *
  * 0x01 row status from the other side
- * 		payload length: 4 bytes
+ * 		payload length: 5 bytes
+ * 		byte 1: <row number>
+ *      byte 2..5: <row>
  *
  * 0x02 ping
  * 	    payload length: 1 byte
- * 	    0: slave -> not connected to usb
- * 	    1: master -> connected to usb
+ * 	    byte 1: 0: slave -> not connected to usb, 1: master -> connected to usb
  *
  *
  */

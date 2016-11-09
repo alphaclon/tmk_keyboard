@@ -107,15 +107,14 @@ public:
     GFXCanvas_MAX6960_2BPP(uint16_t w, uint16_t h);
     ~GFXCanvas_MAX6960_2BPP(void);
 
-    void drawPixel(int16_t x, int16_t y, uint16_t color), fillScreen(uint16_t color);
-
-    uint8_t *getBuffer(void);
-    uint8_t getBufferSize(void);
+    void drawPixel(int16_t x, int16_t y, uint16_t color);
+    void fillScreen(uint16_t color);
 
 private:
-    uint8_t *buffer;
-    uint8_t _buffer_size;
-    uint8_t _half_height;
+    uint8_t *_page;
+    uint8_t *_upper_part;
+    uint8_t *_lower_part;
+    uint16_t _page_size;
 };
 
 typedef GFXCanvas_MAX6960_2BPP Canvas;

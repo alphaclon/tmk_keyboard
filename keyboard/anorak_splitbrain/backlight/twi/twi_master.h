@@ -22,7 +22,7 @@
 #include <util/twi.h>
 
 // include project-specific configuration
-#include "../../backlight/twi/i2cconf.h"
+#include "i2cconf.h"
 
 // defines and constants
 #define TWCR_CMD_MASK 0x0F
@@ -81,6 +81,9 @@ void i2cMasterReceive(uint8_t deviceAddr, uint8_t length, uint8_t *data);
 uint8_t i2cMasterSendNI(uint8_t deviceAddr, uint8_t length, uint8_t const *data);
 //! receive I2C data from a device on the bus (non-interrupt based)
 uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint8_t length, uint8_t *data);
+
+//! send I2C data to a device on the bus (non-interrupt based)
+uint8_t i2cMasterSendCommandNI(uint8_t deviceAddr, uint8_t cmd, uint8_t length, uint8_t const *data);
 
 //! Get the current high-level state of the I2C interface
 eI2cStateType i2cGetState(void);

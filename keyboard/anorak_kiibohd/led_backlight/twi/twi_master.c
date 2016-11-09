@@ -273,6 +273,56 @@ uint8_t i2cMasterSendNI(uint8_t deviceAddr, uint8_t length, uint8_t const *data)
     return retval;
 }
 
+uint8_t i2cMasterSendCommandNI(uint8_t deviceAddr, uint8_t cmd, uint8_t length, uint8_t const *data)
+{
+    uint8_t retval = I2C_OK;
+
+    // disable TWI interrupt
+    cbi(TWCR, TWIE);
+
+    // send start condition
+    i2cSendStart();
+    i2cWaitForComplete();
+
+    // send device address with write
+    i2cSendByte(deviceAddr & 0xFE);
+    i2cWaitForComplete();
+
+    // check if device is present and live
+    if (inb(TWSR) == TW_MT_SLA_ACK)
+    {
+        // send command with write
+        i2cSendByte(cmd);
+        i2cWaitForComplete();
+
+        // send data
+        while (length)
+        {
+            i2cSendByte(*data++);
+            i2cWaitForComplete();
+            length--;
+        }
+    }
+    else
+    {
+        // device did not ACK it's address,
+        // data will not be transferred
+        // return error
+        retval = I2C_ERROR_NODEV;
+    }
+
+    // transmit stop condition
+    // leave with TWEA on for slave receiving
+    i2cSendStop();
+    while (!(inb(TWCR) & BV(TWSTO)))
+        ;
+
+    // enable TWI interrupt
+    sbi(TWCR, TWIE);
+
+    return retval;
+}
+
 uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint8_t length, uint8_t *data)
 {
     uint8_t retval = I2C_OK;

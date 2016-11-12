@@ -426,12 +426,6 @@ void backlight_setup()
 
 void backlight_setup_finish()
 {
-	LED_GREEN_OFF();
-	LED_YELLOW_OFF();
-
-	_delay_ms(500);
-	_delay_ms(500);
-
     // wait for interface to be ready
 #if TWILIB == AVR315
 	while (TWI_Transceiver_Busy() /*i2cGetState()*/)
@@ -451,15 +445,17 @@ void backlight_setup_finish()
 	}
 #endif
 
+	LED_YELLOW_OFF();
 	_delay_ms(500);
 	LED_YELLOW_ON();
 	_delay_ms(500);
 	LED_YELLOW_OFF();
 
-
 	_delay_ms(500);
 	_delay_ms(500);
 
+	LED_GREEN_ON();
+	LED_YELLOW_ON();
 }
 
 void backlight_test()

@@ -20,6 +20,38 @@ extern "C" {
 uint8_t cmd_buffer[TWI_SEND_DATA_BUFFER_SIZE];
 
 
+void mcpu_init()
+{
+
+}
+
+uint8_t mcpu_read_register8(uint8_t reg)
+{
+    uint8_t data;
+
+#if TWILIB == AVR315
+
+    TWI_Start_Transceiver_With_Data_2(MATRIX_TWI_ADDRESS | (1 << TWI_READ_BIT), reg, &data, 1);
+    TWI_Get_Data_From_Transceiver(&data, 1);
+
+#elif TWILIB == BUFFTW
+
+    i2cMasterSendCommandNI(MATRIX_TWI_ADDRESS, reg, 0, 0);
+    i2cMasterReceiveNI(MATRIX_TWI_ADDRESS, 1, &data);
+
+#else
+
+    i2c_start_wait(MATRIX_TWI_ADDRESS + I2C_WRITE);
+    i2c_write(reg);
+    i2c_rep_start(MATRIX_TWI_ADDRESS + I2C_READ);
+    data = i2c_readNak();
+    i2c_stop();
+
+#endif
+
+    return data;
+}
+
 void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length)
 {
 #if TWILIB == AVR315

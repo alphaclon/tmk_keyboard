@@ -598,11 +598,25 @@ int main(void)
     setup_usb();
     sei();
 
+
+    keyboard_init();
+
+    /*
+    keyboard_init();
+
+    while (1)
+    {
+    	keyboard_task();
+    }
+    */
+
     /* wait for USB startup & debug output */
     while (USB_DeviceState != DEVICE_STATE_Configured) {
 #if defined(INTERRUPT_CONTROL_ENDPOINT)
         ;
+        keyboard_task();
 #else
+        keyboard_task();
         USB_USBTask();
 #endif
     }

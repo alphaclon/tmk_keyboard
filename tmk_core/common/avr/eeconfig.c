@@ -41,7 +41,8 @@ bool eeconfig_is_enabled(void)
 
 uint8_t eeconfig_read_debug(void)
 {
-    return eeprom_read_byte(EECONFIG_DEBUG);
+	return 0xff;
+    //return eeprom_read_byte(EECONFIG_DEBUG);
 }
 void eeconfig_write_debug(uint8_t val)
 {

@@ -32,6 +32,8 @@
 #include <util/delay.h>
 #include "backlight/backlight_kiibohd.h"
 #include "splitbrain.h"
+#include "infodisplay.h"
+#include "uart/uart.h"
 
 #ifndef DEBOUNCE_TIME
 #define DEBOUNCE_TIME 5
@@ -68,12 +70,15 @@ void matrix_setup(void)
 	MCUCR |= (1 << JTD);
 
 	splitbrain_config_init();
+	mcpu_init();
 
     LED_GREEN_INIT();
     LED_YELLOW_INIT();
 
     LED_YELLOW_ON();
     LED_GREEN_ON();
+
+    uart_puts_P("matrix_setup\r\n");
 }
 
 void matrix_init(void)
@@ -93,6 +98,8 @@ void matrix_init(void)
 
     LED_GREEN_OFF();
     LED_YELLOW_OFF();
+
+    uart_puts_P("matrix_init\r\n");
 }
 
 uint8_t matrix_scan(void)
@@ -100,18 +107,19 @@ uint8_t matrix_scan(void)
 	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
 	{
 		select_row(i);
-		_delay_us(30);  // without this wait read unstable value.
+		_delay_us(50);  // without this wait it will read unstable value.
 		matrix_row_t cols = read_cols();
 
 #ifndef NO_DEBUG_LEDS
 		if (cols)
-			LED_YELLOW_ON();
+			LED_GREEN_ON();
 		else
-			LED_YELLOW_OFF();
+			LED_GREEN_OFF();
 #endif
 
 		if (matrix_debouncing[i] != cols)
 		{
+			dprintf("bounce %u\r\n", i);
 			matrix_debouncing[i] = cols;
 			debouncing_times[i] = timer_read();
 			debouncing[i] = true;
@@ -120,14 +128,16 @@ uint8_t matrix_scan(void)
 		unselect_rows();
 	}
 
-	for (int i = 0; i < MATRIX_ROWS; i++)
+	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
 	{
 		if (debouncing[i])
 		{
-			LED_GREEN_ON();
+			LED_YELLOW_ON();
 
 			if (timer_elapsed(debouncing_times[i]) > DEBOUNCE_TIME)
 			{
+				dprintf("bounced %u\r\n", i);
+
 				matrix[i] = matrix_debouncing[i];
 				debouncing[i] = false;
 
@@ -136,13 +146,12 @@ uint8_t matrix_scan(void)
 		}
 		else
 		{
-			LED_GREEN_OFF();
+			LED_YELLOW_OFF();
 		}
 	}
 
 	receive_data_from_other_side();
-	send_ping_to_other_side();
-	validate_communication_to_other_side();
+	communication_watchdog();
 
 	return 1;
 }
@@ -173,13 +182,13 @@ inline matrix_row_t matrix_get_row(uint8_t row)
 
 void matrix_print(void)
 {
-	print("\nr/c 0123456789012345678\n");
+	dprint("\nr/c 0123456789012345678\n");
 	for (uint8_t row = 0; row < MATRIX_ROWS; row++)
 	{
 		phex(row);
-		print(": ");
-		pbin_reverse(matrix_get_row(row));
-		print("\n");
+		dprint(": ");
+		pbin_reverse32(matrix_get_row(row));
+		dprint("\n");
 	}
 }
 
@@ -217,7 +226,7 @@ static void init_cols(void)
 	DDRA &= ~(1 << 7 | 1 << 6);
 	PORTA |= (1 << 7 | 1 << 6);
 
-	/*
+	/* more columns
 	DDRD &= ~(1 << 6 | 1 << 5 | 1 << 4);
 	PORTD |= (1 << 6 | 1 << 5 | 1 << 4);
 
@@ -228,16 +237,31 @@ static void init_cols(void)
 
 static matrix_row_t read_cols(void)
 {
-	return (PINC |
-		   (PINF << 8) |
-		   (PINA & (1<<7) ? 0 : ((matrix_row_t)1<<16)) |
-		   (PINA & (1<<6) ? 0 : ((matrix_row_t)1<<17)));
+	// Invert the value read, because PIN indicates 'switch on' with low(0) and 'off' with high(1)
+
+	uint8_t c = ~PINC;
+	uint8_t f = ~PINF;
+	uint8_t a = (~PINA) & 0xC0;
+
+	/*
+	a &= 0xC0;
+	dprintf("A:%u\r\n", a);
+
+	matrix_row_t v1 = c;
+	matrix_row_t v2 = (matrix_row_t)(f) << 8;
+	matrix_row_t v3 = (matrix_row_t)(a) << 16;
+	matrix_row_t v4 = v1 | v2 | v3;
+
+	dprintf("C:%lX F:%lX A:%lX v:%lX\r\n", v1, v2, v3, v4);
+	*/
+
+	return (c | ((matrix_row_t) (f) << 8) | ((matrix_row_t) (a) << 16));
 }
 
 static void unselect_rows(void)
 {
-	// ROWs are on Port A, Bin 0..5
-	// Hi-Z (DDR:0, PORT:0) to unselect
+	// Hi-Z (DDR:0, PORT:0) (input, no pull-up) to unselect the row
+	// ROWs are on Port A, Pin 0..5
 
 	DDRA &= ~(0x3F);
 	PORTA &= ~(0x3F);
@@ -245,10 +269,10 @@ static void unselect_rows(void)
 
 static void select_row(uint8_t row)
 {
-	// Output low (DDR:1, PORT:0) to select
-	// ROWs are on Port A, Bin 0..5
+	// Output low (DDR:1, PORT:0) to select the row
+	// ROWs are on Port A, Pin 0..5
 
-	// xprintf("row %d ", row);
+	//dprintf("select_row %d\r\n", row);
 
 	DDRA |= (1 << row);
 	PORTA &= ~(1 << row);

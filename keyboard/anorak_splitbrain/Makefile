@@ -38,6 +38,9 @@
 #                   bug reports to the GCC project.
 #
 # To rebuild project do "make clean" then "make all".
+#
+# Default fuses (factory) : E:F3, H:99, L:5E
+#
 #----------------------------------------------------------------------------
 
 # Target file name (without extension).
@@ -49,7 +52,7 @@ TMK_DIR = ../../tmk_core
 # Directory keyboard dependent files exist
 TARGET_DIR = .
 
-PROGRAM_CMD = avrdude -v -c avr109 -p at90usb646 -P /dev/ttyACM0 -U flash:w:anorak_splitbrain_lufa.hex
+PROGRAM_CMD = avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B 0.1 -U flash:w:anorak_splitbrain_lufa.hex
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
@@ -100,7 +103,8 @@ MCU = at90usb1286
 #     does not *change* the processor frequency - it should merely be updated to
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
-F_CPU = 16000000
+#F_CPU = 16000000
+F_CPU = 8000000
 
 
 #
@@ -149,7 +153,6 @@ NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
 #OPT_DEFS += -DNO_ACTION_MACRO
-
 
 # Search Path
 VPATH += $(TARGET_DIR)

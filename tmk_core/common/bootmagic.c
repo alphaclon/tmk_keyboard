@@ -55,6 +55,10 @@ void bootmagic(void)
     }
     eeconfig_write_debug(debug_config.raw);
 
+    debug_config.enable = 1;
+    debug_config.matrix = 1;
+    debug_config.keyboard = 0;
+
     /* keymap config */
     keymap_config.raw = eeconfig_read_keymap();
     if (bootmagic_scan_keycode(BOOTMAGIC_KEY_SWAP_CONTROL_CAPSLOCK)) {

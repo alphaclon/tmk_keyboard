@@ -7,7 +7,7 @@
 #include "../IS31FL3732_config.h"
 
 /*
- * IS31FL3731 supports 144 = 8*9 * 2 LEDs
+ * IS31FL3731 supports 144 = 9*16 LEDs
  *
  */
 
@@ -91,6 +91,20 @@ public:
      *  enable/disable software shutdown
      */
     void enableSoftwareShutdown(bool enabled);
+
+    /** set hardware shutdown (pin SDB)
+     *  enable/disable hardware shutdown
+     */
+    void enableHardwareShutdown(bool enabled);
+
+
+
+    void test();
+    void dumpConfiguration();
+    void dumpLeds(uint8_t bank);
+    void dumpBrightness(uint8_t bank);
+
+
 
 protected:
 #if TWILIB == BUFFTW

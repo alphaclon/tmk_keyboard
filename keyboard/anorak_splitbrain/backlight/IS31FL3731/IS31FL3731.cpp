@@ -1,6 +1,7 @@
 
 #include <util/delay.h>
 #include "IS31FL3731.h"
+#include "debug.h"
 
 extern "C" {
 #if TWILIB == AVR315
@@ -61,8 +62,12 @@ bool IS31FL3731::begin(uint8_t issi_slave_address)
     _issi_address = (issi_slave_address << 1);
     _frame = 0;
 
+    enableHardwareShutdown(false);
+
+    _delay_ms(1);
+
     // shutdown
-    enableSoftwareShutdown(1);
+    enableSoftwareShutdown(true);
 
     _delay_ms(1);
 
@@ -76,7 +81,6 @@ bool IS31FL3731::begin(uint8_t issi_slave_address)
             writeRegister8(f, i, 0x0); // each 8 LEDs off
     }
 
-    // all LEDs on & PWM
     for (uint8_t f = 0; f < ISSI_TOTAL_FRAMES; f++)
     {
         for (uint8_t led = 0; led < ISSI_TOTAL_CHANNELS; led++)
@@ -84,14 +88,40 @@ bool IS31FL3731::begin(uint8_t issi_slave_address)
     }
 
     // out of shutdown
-    enableSoftwareShutdown(0);
+    enableSoftwareShutdown(false);
 
     return true;
+}
+
+void IS31FL3731::test()
+{
+	uint8_t bank = 0;
+
+    for (uint8_t i = 0; i <= 0x11; i++)
+        writeRegister8(bank, i, 0xff); // each 8 LEDs on
+
+    for (uint8_t led = 0; led < ISSI_TOTAL_CHANNELS; led++)
+        setLedBrightness(led, 0x32, bank); // set each led to PWM 0x32
+
 }
 
 void IS31FL3731::enableSoftwareShutdown(bool enabled)
 {
     writeRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN, enabled ? 0x00 : 0x01);
+}
+
+void IS31FL3731::enableHardwareShutdown(bool enabled)
+{
+	if (enabled)
+	{
+		DDRD |= (1 << 7);
+		PORTD &= ~(1 << 7);
+	}
+	else
+	{
+		DDRD |= (1 << 7);
+		PORTD |= (1 << 7);
+	}
 }
 
 void IS31FL3731::setPictureMode()
@@ -341,6 +371,53 @@ void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
     i2c_stop();
 
 #endif
+}
+
+void IS31FL3731::dumpConfiguration()
+{
+	uint8_t reg;
+	reg = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_MODE);
+	dprintf("mode: 0x%X\r\n", reg);
+	reg = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN);
+	dprintf("shutdown: %d\r\n", reg);
+}
+
+void IS31FL3731::dumpLeds(uint8_t bank)
+{
+	uint8_t leds[ISSI_TOTAL_LED_MASK_SIZE];
+
+	selectBank(bank);
+    i2cMasterSendCommandNI(_issi_address, 0x0, 0, 0);
+    i2cMasterReceiveNI(_issi_address, ISSI_TOTAL_LED_MASK_SIZE, leds);
+
+	for (uint8_t r = 0; r < ISSI_TOTAL_ROWS; ++r)
+    {
+		dprintf("%02d: ", r);
+        for (uint8_t c = 0; c < 2; ++c)
+    	{
+    		dprintf("%02X ", leds[r*16 + c]);
+    	}
+        dprintf("\r\n");
+    }
+}
+
+void IS31FL3731::dumpBrightness(uint8_t bank)
+{
+	uint8_t pwm[ISSI_TOTAL_CHANNELS];
+
+	selectBank(bank);
+    i2cMasterSendCommandNI(_issi_address, 0x24, 0, 0);
+    i2cMasterReceiveNI(_issi_address, ISSI_TOTAL_CHANNELS, pwm);
+
+	for (uint8_t r = 0; r < ISSI_TOTAL_ROWS; ++r)
+    {
+		dprintf("%02d: ", r);
+        for (uint8_t c = 0; c < ISSI_TOTAL_COLUMS; ++c)
+    	{
+    		dprintf("%02X ", pwm[r*16 + c]);
+    	}
+        dprintf("\r\n");
+    }
 }
 
 uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)

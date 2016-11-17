@@ -1,6 +1,5 @@
 
-#include "../backlight/led_masks.h"
-
+#include "led_masks.h"
 #include <avr/pgmspace.h>
 
 #ifndef __AVR_ARCH__

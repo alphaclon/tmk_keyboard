@@ -1,8 +1,8 @@
 #ifndef _PWM_CONTROL_H_
 #define _PWM_CONTROL_H_
 
-#include "../backlight/control.h"
-#include "../backlight/IS31FL3731/IS31FL3731.h"
+#include "control.h"
+#include "IS31FL3731/IS31FL3731.h"
 
 // Basic LED PWM Control Capability
 typedef enum _tLedPWMControlMode
@@ -33,6 +33,7 @@ typedef struct _tLedPWMControlCommand
 } tLedPWMControlCommand;
 
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control);
+void IS31FL3731_set_power_target_I_max(double value);
 void IS31FL3731_set_power_target(uint16_t value);
 
 #endif

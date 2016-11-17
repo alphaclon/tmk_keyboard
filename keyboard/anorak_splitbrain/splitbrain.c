@@ -22,17 +22,22 @@
  *
  */
 
+#include "splitbrain.h"
 #include "config.h"
-#include "debug.h"
 #include "timer.h"
 #include "crc8.h"
 #include "nfo_led.h"
 #include "uart/uart.h"
-#include "splitbrain.h"
 #include "LUFA/Drivers/USB/USB.h"
 #include <util/delay.h>
 #include <avr/io.h>
 #include <string.h>
+
+#ifdef DEBUG_SPLITBRAIN
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
 
 #define BAUD 115200 // 9600 14400 19200 38400 57600 115200
 
@@ -109,12 +114,14 @@ void splitbrain_config_init()
 
 void splitbrain_get_my_side()
 {
+	// Port PE0 is HIGH for right side and LOW for left side
+
 	DDRE &= ~(1 << 0);
 	PORTE |= (1 << 0);
 
 	_delay_us(50);
 
-	_is_left_side_of_keyboard = (PINE & (1 << 0)) == 0;
+	_is_left_side_of_keyboard = ((PINE & (1 << 0)) == 0);
 	_is_right_side_of_keyboard = !_is_left_side_of_keyboard;
 }
 
@@ -166,11 +173,16 @@ matrix_row_t get_other_sides_row(uint8_t row_number)
 	return other_sides_rows[row_number];
 }
 
+uint8_t get_datagram_cmd(uint8_t const *buffer)
+{
+	return buffer[1];
+}
+
 void interpret_command(uint8_t const *buffer, uint8_t length)
 {
 	//dprintf("cmd: %u %c\r\n", buffer[1], buffer[1]);
 
-	if (buffer[1] == DATAGRAM_CMD_INIT)
+	if (get_datagram_cmd(buffer) == DATAGRAM_CMD_INIT)
 	{
 		dprintf("recv init\r\n");
 
@@ -185,13 +197,13 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
 			dprintf("init failed!\r\n");
 		}
 	}
-	else if (buffer[1] == DATAGRAM_CMD_INIT_ACK)
+	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_INIT_ACK)
 	{
 		dprintf("recv init_ack\r\n");
 		_is_connected_to_other_side = true;
 		dprintf("init success!\r\n");
 	}
-	else if (buffer[1] == DATAGRAM_CMD_ROW)
+	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_ROW)
 	{
 		dprintf("recv row\r\n");
 		row_datagram const *rd = (row_datagram const *) (buffer + 2);
@@ -200,11 +212,11 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
 			other_sides_rows[rd->row_number] = rd->row;
 		}
 	}
-	else if (buffer[1] == DATAGRAM_CMD_PING)
+	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_PING)
 	{
 		//dprintf("recv ping %u\r\n", timer_read());
 	}
-	else if (buffer[1] == DATAGRAM_CMD_SYNC)
+	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_SYNC)
 	{
 		//dprintf("recv sync\r\n");
 	}
@@ -233,6 +245,20 @@ void dump_buffer(uint8_t const *buffer, uint8_t length)
 	dprintf("]\r\n");
 }
 
+bool might_be_a_datagram(uint8_t buffer_pos)
+{
+	// minimal length of a datagram is <start><cmd><crc><stop> = 4 bytes
+	return (buffer_pos >= 4);
+}
+
+bool datagram_is_feasible(uint8_t buffer_pos)
+{
+	if (get_datagram_cmd(recv_buffer) == DATAGRAM_CMD_ROW && buffer_pos < 9)
+		return false;
+
+	return check_crc(recv_buffer, buffer_pos);
+}
+
 void receive_data_from_other_side()
 {
 	static uint8_t buffer_pos = 0;
@@ -252,6 +278,7 @@ void receive_data_from_other_side()
 			if (ucData == DATAGRAM_START && recv_status == recvStatusIdle)
 			{
 				//dprintf("recv: start\r\n");
+
 				buffer_pos = 0;
 				recv_status = recvStatusFoundStart;
 			}
@@ -275,13 +302,13 @@ void receive_data_from_other_side()
 			if (recv_status == recvStatusFoundStart && ucData == DATAGRAM_STOP)
 			{
 				//dprintf("recv: stop, %u\r\n", buffer_pos);
-				// minimal length of a datagram is <start><cmd><crc><stop> = 4 bytes
-				if (buffer_pos >= 4)
+
+				if (might_be_a_datagram(buffer_pos))
 				{
-					//dprintf("recv: ");
-					//dump_buffer(recv_buffer, buffer_pos);
-					if (check_crc(recv_buffer, buffer_pos))
+					if (datagram_is_feasible(buffer_pos))
 					{
+						//dprintf("recv: ");
+						//dump_buffer(recv_buffer, buffer_pos);
 						interpret_command(recv_buffer, buffer_pos);
 						buffer_pos = 0;
 						recv_status = recvStatusIdle;
@@ -291,8 +318,7 @@ void receive_data_from_other_side()
 				{
 					buffer_pos = 0;
 					recv_status = recvStatusIdle;
-					dprintf("recv: msg too short\r\n");
-					dprintf("recv: ");
+					dprintf("recv: msg too short: ");
 					dump_buffer(recv_buffer, buffer_pos);
 				}
 			}

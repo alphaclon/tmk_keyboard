@@ -147,8 +147,8 @@ EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
 CONSOLE_ENABLE = yes        # Console for debug(+400)
 COMMAND_ENABLE = yes        # Commands for debug and configuration
 NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
-#BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
-#SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
+SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -162,7 +162,8 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
-debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
+#debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
+debug-on: EXTRAFLAGS += -DDEBUG
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT

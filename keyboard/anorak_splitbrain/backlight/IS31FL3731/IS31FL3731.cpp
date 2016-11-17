@@ -61,6 +61,12 @@ bool IS31FL3731::begin(uint8_t issi_slave_address)
     _issi_address = (issi_slave_address << 1);
     _frame = 0;
 
+    // set SDB pin to HIGH (PD7)
+    DDRD |= (1<<7);
+    PORTD |= (1<<7);
+
+    _delay_ms(1);
+
     // shutdown
     enableSoftwareShutdown(1);
 

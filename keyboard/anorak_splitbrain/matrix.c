@@ -119,7 +119,7 @@ uint8_t matrix_scan(void)
 
 		if (matrix_debouncing[i] != cols)
 		{
-			dprintf("bounce %u\r\n", i);
+			//dprintf("bounce %u\r\n", i);
 			matrix_debouncing[i] = cols;
 			debouncing_times[i] = timer_read();
 			debouncing[i] = true;
@@ -136,7 +136,7 @@ uint8_t matrix_scan(void)
 
 			if (timer_elapsed(debouncing_times[i]) > DEBOUNCE_TIME)
 			{
-				dprintf("bounced %u\r\n", i);
+				//dprintf("bounced %u\r\n", i);
 
 				matrix[i] = matrix_debouncing[i];
 				debouncing[i] = false;

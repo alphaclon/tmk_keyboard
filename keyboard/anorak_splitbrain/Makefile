@@ -103,8 +103,8 @@ MCU = at90usb1286
 #     does not *change* the processor frequency - it should merely be updated to
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
-#F_CPU = 16000000
-F_CPU = 8000000
+F_CPU = 16000000
+#F_CPU = 8000000
 
 
 #
@@ -163,7 +163,7 @@ include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
 #debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
-debug-on: EXTRAFLAGS += -DDEBUG
+debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_BACKLIGHT
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT

@@ -75,9 +75,8 @@ __attribute__((weak)) void matrix_setup(void)
 
 void keyboard_setup(void)
 {
-    backlight_setup();
-    backlight_setup_finish();
-    matrix_setup();
+	matrix_setup();
+	backlight_setup();
 }
 
 void keyboard_init(void)
@@ -102,8 +101,8 @@ void keyboard_init(void)
 #endif
 
 #ifdef BACKLIGHT_ENABLE
-    backlight_init();
     backlight_setup_finish();
+    backlight_init();
 #endif
 }
 

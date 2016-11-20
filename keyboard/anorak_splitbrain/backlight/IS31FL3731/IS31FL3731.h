@@ -5,9 +5,10 @@
 
 #include "../gfx/Adafruit_GFX.h"
 #include "../IS31FL3732_config.h"
+#include "../../twi_config.h"
 
 /*
- * IS31FL3731 supports 144 = 8*9 * 2 LEDs
+ * IS31FL3731 supports 144 = 9*16 LEDs
  *
  */
 
@@ -27,6 +28,7 @@ public:
     virtual ~IS31FL3731();
 
     bool begin(uint8_t issi_slave_address = ISSI_ADDR_DEFAULT);
+    void reset();
 
     virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
 
@@ -91,6 +93,20 @@ public:
      *  enable/disable software shutdown
      */
     void enableSoftwareShutdown(bool enabled);
+
+    /** set hardware shutdown (pin SDB)
+     *  enable/disable hardware shutdown
+     */
+    void enableHardwareShutdown(bool enabled);
+
+
+
+    void test();
+    void dumpConfiguration();
+    void dumpLeds(uint8_t bank);
+    void dumpBrightness(uint8_t bank);
+
+
 
 protected:
 #if TWILIB == BUFFTW

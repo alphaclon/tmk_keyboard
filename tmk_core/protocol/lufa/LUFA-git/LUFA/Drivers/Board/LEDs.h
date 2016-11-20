@@ -166,6 +166,8 @@
 			#include "AVR8/MICROSIN162/LEDs.h"
 		#elif (BOARD == BOARD_SPARKFUN8U2)
 			#include "AVR8/SPARKFUN8U2/LEDs.h"
+		#elif (BOARD == BOARD_SPLITBRAIN)
+			#include "AVR8/SPLITBRAIN/LEDs.h"
 		#elif (BOARD == BOARD_EVK1101)
 			#include "UC3/EVK1101/LEDs.h"
 		#elif (BOARD == BOARD_TUL)

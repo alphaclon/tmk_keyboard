@@ -1,20 +1,68 @@
 
-#include "../backlight/pwm_control.h"
+#include "pwm_control.h"
+#include "led_control.h"
+#include "led_masks.h"
 
-#include "../backlight/led_control.h"
-#include "../backlight/led_masks.h"
-
-extern "C" {
+#ifdef DEBUG_BACKLIGHT
 #include "debug.h"
-}
+#else
+#include "nodebug.h"
+#endif
+
+/*
+ * I_PWM = (I_LED / 256) * SUM(LED_PWM)
+ */
+
+#define R_EXT 18
+#define POWER_FACTOR 64700
+#define I_LED_MAX (POWER_FACTOR / R_EXT)
 
 uint8_t current_pwm_bank = 0;
 uint8_t LedPWMPageBuffer[ISSI_USED_CHANNELS] = {0};
-uint16_t maximum_total_pwm = ISSI_TOTAL_CHANNELS * 255;
+uint32_t maximum_total_I_led = 100;
 
-void IS31FL3731_set_power_target(uint16_t value)
+void IS31FL3731_set_power_target_I_max(double value)
 {
-    maximum_total_pwm = value;
+    maximum_total_I_led = value;
+}
+
+uint32_t get_I_led_summed_up()
+{
+	uint32_t sum = 0;
+
+    for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
+    {
+    	if (LedPWMPageBuffer[channel])
+    	{
+    		sum += LedPWMPageBuffer[channel];
+    	}
+    }
+
+    sum *= I_LED_MAX;
+    sum /= 256;
+    sum /= 1000;
+
+    return sum;
+}
+
+void fix_max_I_led()
+{
+	uint32_t I_leds = get_I_led_summed_up();
+
+    while (I_leds > maximum_total_I_led)
+    {
+    	dprintf("fixing %lu\r\n", I_leds);
+
+        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
+        {
+            if (LedPWMPageBuffer[channel] > 5)
+                LedPWMPageBuffer[channel] -= 5;
+        }
+
+    	I_leds = get_I_led_summed_up();
+    }
+
+    dprintf("fixed to %lu\r\n", I_leds);
 }
 
 void select_next_bank()
@@ -54,48 +102,11 @@ uint8_t channel_enabled_masked(uint16_t channel)
     return ((LedMask[mask_byte] & (1 << mask_bit)));
 }
 
-uint16_t get_pwm_summed_up()
-{
-    uint16_t sum = 0; // Maximum is 255 * ISSI_TOTAL_CHANNELS
-
-    for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
-        sum += LedPWMPageBuffer[channel];
-
-    return sum;
-}
-
-void fix_max_pwm()
-{
-    if (maximum_total_pwm >= ISSI_TOTAL_CHANNELS * 255)
-        return;
-
-    uint16_t sum = get_pwm_summed_up();
-
-    dprintf("fixing %u\n", sum);
-
-    while (sum > maximum_total_pwm)
-    {
-        sum = 0;
-
-        for (uint8_t channel = 0; channel < ISSI_USED_CHANNELS; channel++)
-        {
-            if (LedPWMPageBuffer[channel] > 5)
-                LedPWMPageBuffer[channel] -= 5;
-            sum += LedPWMPageBuffer[channel];
-        }
-    }
-
-    dprintf("fixed %u\n", sum);
-}
-
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 {
-    //dprintf("IS_PWM_control %d: %d\n", control->mode, control->amount);
+    dprintf("IS_PWM_control %d: %d\n", control->mode, control->amount);
 
     //select_next_bank();
-
-    // Configure based upon the given mode
-    // TODO Perhaps do gamma adjustment?
 
     switch (control->mode)
     {
@@ -184,20 +195,11 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
     }
 
-    fix_max_pwm();
+    //fix_max_I_led();
 
-    /*
-    for (uint8_t i = 0; i < 6; i++)
-    {
-        for (uint8_t j = 0; j < 16; j++)
-        {
-            dprintf("%03u ", LedPWMPageBuffer[i*16+j]);
-        }
-
-        dprintf("\n");
-    }
-    */
+    uint32_t I_led = get_I_led_summed_up();
+    dprintf("I_led: %lu\r\n", I_led);
 
     issi.setLedsBrightness(LedPWMPageBuffer, current_pwm_bank);
-    //issi.displayFrame(currentBank);
+    //issi.displayFrame(current_pwm_bank);
 }

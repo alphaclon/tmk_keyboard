@@ -111,6 +111,8 @@
 			#include "AVR8/MICROSIN162/Board.h"
 		#elif (BOARD == BOARD_SPARKFUN8U2)
 			#include "AVR8/SPARKFUN8U2/Board.h"
+		#elif (BOARD == BOARD_SPLITBRAIN)
+			#include "AVR8/SPLITBRAIN/Board.h"
 		#elif (BOARD == BOARD_EVK1101)
 			#include "UC3/EVK1101/Board.h"
 		#elif (BOARD == BOARD_TUL)

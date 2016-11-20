@@ -20,35 +20,38 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
-#include "../backlight/led_control.h"
-#include "../backlight/led_masks.h"
-#include "../backlight/pwm_control.h"
-
-extern "C" {
-#include "config.h"
-#include "debug.h"
-#include "eeconfig.h"
-#include "backlight.h"
-#include "../backlight/backlight_kiibohd.h"
-#include "../nfo_led.h"
-#include "../splitbrain.h"
-}
-
-#include "../twi_config.h"
-
-extern "C" {
-#if TWILIB == AVR315
-#include "../backlight/avr315/TWI_Master.h"
-#elif TWILIB == BUFFTW
-#include "../backlight/twi/twi_master.h"
-#else
-#include "../backlight/i2cmaster/i2cmaster.h"
-#endif
-}
+#include "led_control.h"
+#include "led_masks.h"
+#include "pwm_control.h"
 
 #define BRIGHTNESS_MAX_LEVEL 8
 
+#ifdef __cplusplus
 extern "C" {
+#endif
+
+#include "config.h"
+#include "eeconfig.h"
+#include "backlight.h"
+#include "backlight_kiibohd.h"
+#include "../nfo_led.h"
+#include "../splitbrain.h"
+#include "../twi_config.h"
+
+#if TWILIB == AVR315
+#include "avr315/TWI_Master.h"
+#elif TWILIB == BUFFTW
+#include "twi/twi_master.h"
+#else
+#include "i2cmaster/i2cmaster.h"
+#endif
+
+#ifdef DEBUG_BACKLIGHT
+#include "debug.h"
+#include "../uart/uart.h"
+#else
+#include "nodebug.h"
+#endif
 
 uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
@@ -59,8 +62,6 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
 {
 	if (is_left_side_of_keyboard())
 	{
-		dprintf("left mask: %u\n", region);
-
 		switch (region)
 		{
 		case backlight_region_WASD:
@@ -80,7 +81,7 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
 			break;
 		default:
 			memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
-			//dprintf("unknown region %d\n", region);
+			dprintf("unknown region: %u\n", region);
 			break;
 		}
 	}
@@ -105,13 +106,27 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
 			break;
 		default:
 			memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
-			//dprintf("unknown region %d\n", region);
+			dprintf("unknown region: %u\n", region);
 			break;
 		}
 	}
+
+#ifdef DEBUG_BACKLIGHT_EXTENDED
+	dprintf("selected mask: %u\r\n", region);
+    for (uint8_t r = 0; r < ISSI_USED_ROWS; ++r)
+	{
+		dprintf("%02u: ", r);
+		for (uint8_t c = 0; c < 2; ++c)
+		{
+			dprintf("%02X ", mask[r*2 + c]);
+		}
+		dprintf("\r\n");
+	}
+    dprintf("\r\n");
+#endif
 }
 
-uint8_t get_array_position_for_region(uint8_t region)
+uint8_t get_index_for_region(uint8_t region)
 {
     uint8_t pos = 0;
 
@@ -161,13 +176,11 @@ void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMContro
 
 void set_and_save_brightness_for_region(uint8_t region, uint8_t pos, uint8_t brightness)
 {
-    dprintf("set bri %d\n", brightness);
     if (brightness >= GAMMA_STEPS)
         brightness = GAMMA_STEPS - 1;
 
     set_brightness_for_region(region, brightness, LedControlMode_brightness_set_by_mask);
     region_brightness[pos] = brightness;
-    //eeconfig_write_backlight_region_brightness(pos, brightness);
 }
 
 void set_brightness_for_all_regions(uint8_t brightness, tLedPWMControlMode mode)
@@ -188,7 +201,7 @@ void backlight_increase_brightness_for_region(uint8_t region)
         return;
     }
 
-    uint8_t pos = get_array_position_for_region(region);
+    uint8_t pos = get_index_for_region(region);
     uint8_t brightness = region_brightness[pos];
 
     if (brightness >= GAMMA_STEPS)
@@ -217,7 +230,7 @@ void backlight_decrease_brightness_for_region(uint8_t region)
         return;
     }
 
-    uint8_t pos = get_array_position_for_region(region);
+    uint8_t pos = get_index_for_region(region);
     uint8_t brightness = region_brightness[pos];
 
     if (brightness > 0)
@@ -236,7 +249,7 @@ void backlight_decrease_brightness_selected_region()
 void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness)
 {
     dprintf("bl_bri_set_by_mask %d\n", brightness);
-    uint8_t pos = get_array_position_for_region(current_region);
+    uint8_t pos = get_index_for_region(current_region);
     set_and_save_brightness_for_region(current_region, pos, brightness);
 }
 
@@ -319,7 +332,7 @@ void backlight_enable_region(uint8_t region)
 void backlight_save_region_states()
 {
 #ifdef BACKLIGHT_ENABLE
-    //dprintf("save\n");
+    dprintf("save\n");
 
     eeconfig_write_backlight_regions(regions);
 
@@ -358,10 +371,10 @@ void backlight_set_regions_from_saved_state(void)
         if (regions & region)
         {
             set_region_mode(region, LedControlMode_enable_mask);
-
-            uint8_t brightness = region_brightness[pos];
-            set_and_save_brightness_for_region(region, pos, brightness);
         }
+
+        uint8_t brightness = region_brightness[pos];
+        set_and_save_brightness_for_region(region, pos, brightness);
     }
 }
 
@@ -379,40 +392,26 @@ void backlight_set(uint8_t level)
     }
 }
 
-/*
-void backlight_initialize_regions(void)
-{
-    backlight_load_region_states();
-    backlight_set_regions_from_saved_state();
-}
-*/
-
 void backlight_setup()
 {
-    LED_GREEN_INIT();
-    LED_YELLOW_INIT();
-
-    LED_GREEN_ON();
-    LED_YELLOW_ON();
-
-    _delay_ms(500);
-    _delay_ms(500);
-
-    _delay_ms(500);
-	LED_GREEN_OFF();
-	_delay_ms(500);
-	LED_GREEN_ON();
-
-	_delay_ms(500);
-	_delay_ms(500);
+	uart_puts_P("backlight_setup\r\n");
 
     IS31FL3731_init();
-    //IS31FL3731_set_maximum_power_consumption(320);
+    IS31FL3731_set_power_target_I_max(100);
 
-#ifdef BACKLIGHT_ENABLE
+    uart_puts_P("backlight_setup\r\n");
+}
+
+void backlight_setup_finish()
+{
+	uart_puts_P("backlight_setup_finish\r\n");
+
     regions = 0;
     current_region = backlight_region_ALL;
 
+    IS31FL3731_set_power_target_I_max(200);
+
+#ifdef BACKLIGHT_ENABLE
     backlight_config_t backlight_config;
     backlight_config.raw = eeconfig_read_backlight();
 
@@ -424,11 +423,11 @@ void backlight_setup()
 
     backlight_load_region_states();
 #endif
-}
 
-void backlight_setup_finish()
-{
+    uart_puts_P("backlight_setup_finish\r\n");
+
     // wait for interface to be ready
+#if 0
 #if TWILIB == AVR315
 	while (TWI_Transceiver_Busy() /*i2cGetState()*/)
 	{
@@ -446,24 +445,16 @@ void backlight_setup_finish()
 		_delay_ms(100);
 	}
 #endif
-
-	LED_YELLOW_OFF();
-	_delay_ms(500);
-	LED_YELLOW_ON();
-	_delay_ms(500);
-	LED_YELLOW_OFF();
-
-	_delay_ms(500);
-	_delay_ms(500);
-
-	LED_GREEN_ON();
-	LED_YELLOW_ON();
+#endif
 }
 
-void backlight_test()
+void backlight_dump_issi_state()
 {
-	backlight_load_region_states();
-	backlight_set_regions_from_saved_state();
+	issi.dumpConfiguration();
+	issi.dumpLeds(0);
+	issi.dumpBrightness(0);
 }
 
+#ifdef __cplusplus
 } /* C */
+#endif

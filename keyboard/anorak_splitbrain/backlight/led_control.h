@@ -1,7 +1,7 @@
 #ifndef _LED_CONTROL_H_
 #define _LED_CONTROL_H_
 
-#include "../backlight/control.h"
+#include "control.h"
 
 // Basic LED Region Control Capability
 typedef enum _tLedRegionControlMode

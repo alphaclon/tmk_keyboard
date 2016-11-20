@@ -78,7 +78,7 @@ void matrix_setup(void)
     LED_YELLOW_ON();
     LED_GREEN_ON();
 
-    uart_puts_P("matrix_setup\r\n");
+	//uart_puts_P("matrix_setup\r\n");
 }
 
 void matrix_init(void)
@@ -99,7 +99,7 @@ void matrix_init(void)
     LED_GREEN_OFF();
     LED_YELLOW_OFF();
 
-    uart_puts_P("matrix_init\r\n");
+    //uart_puts_P("matrix_init\r\n");
 }
 
 uint8_t matrix_scan(void)

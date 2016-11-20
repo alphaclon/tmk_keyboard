@@ -88,7 +88,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
          TAB,    Q,    W,    E,    R,    T,    Y,    U,    I,    O,    P, LBRC, RBRC,              DEL,  END, PGDN,   \
         CAPS,    A,    S,    D,    F,    G,    H,    J,    K,    L, SCLN, QUOT, NUHS,  ENT,                           \
         LSFT, NUBS,    Z,    X,    C,    V,    B,    N,    M, COMM,  DOT, SLSH, RSFT,              FN2,   UP,  FN3,   \
-        LCTL,  LGUI, FN0, LALT,  SPC,                    SPC, RALT,  FN1, RGUI,  APP, RCTL,        LEFT, DOWN, RGHT  ),
+        LCTL,  LGUI, FN0, LALT,  SPC,                    SPC, RALT,  FN0, RGUI,  APP, RCTL,        LEFT, DOWN, RGHT  ),
     /*
      * 1: media keys
      *     0     1     2     3     4     5     6     7     8     9    10    11    12    13     14    15   16    18
@@ -99,8 +99,8 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
 		 FN6, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, MUTE, VOLD, VOLU, TRNS,       TRNS, TRNS, TRNS,   \
 		 FN5, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
          FN4,  FN9, FN10, FN11, FN12, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,                           \
-         FN3, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
-         FN2, TRNS, TRNS,  FN8,  FN7,                   TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,       TRNS, TRNS, TRNS  )
+         FN3, FN13, FN14, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
+         FN2, FN15, TRNS,  FN8,  FN7,                   TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,       TRNS, TRNS, TRNS  )
 };
 
 /*
@@ -122,7 +122,8 @@ enum function_id {
 	KIIBOHD_FUNCTION_Backlight_Decrease_Region,
 	KIIBOHD_FUNCTION_Backlight_Save_Current_State,
 	KIIBOHD_FUNCTION_Backlight_Breath,
-	KIIBOHD_FUNCTION_Backlight_Animate
+	KIIBOHD_FUNCTION_Backlight_Animate,
+	KIIBOHD_FUNCTION_Backlight_Dump
 };
 
 enum macro_id
@@ -149,8 +150,10 @@ const uint16_t PROGMEM fn_actions[] =
    [10] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_CONTROLS), //BACKLIGHT_REGION_CONTROLS
    [11] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_OTHER),    //BACKLIGHT_REGION_OTHER
    [12] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_LOGO),     //BACKLIGHT_REGION_LOGO
-   [13] = ACTION_MACRO(KIIBOHD_MACRO_EXTRA_LEFT),
-   [14] = ACTION_MACRO(KIIBOHD_MACRO_EXTRA_RIGHT),
+   [13] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Breath),
+   [14] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
+   [15] = ACTION_MACRO(KIIBOHD_MACRO_EXTRA_LEFT),
+   [16] = ACTION_MACRO(KIIBOHD_MACRO_EXTRA_RIGHT),
 };
 
 /*
@@ -212,8 +215,11 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         	sleep_led_toggle();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
-        	backlight_test();
+        	//backlight_test();
             break;
+        case KIIBOHD_FUNCTION_Backlight_Dump:
+        	backlight_dump_issi_state();
+        	break;
         }
     }
 }

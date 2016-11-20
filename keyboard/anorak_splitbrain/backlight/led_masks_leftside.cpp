@@ -1,11 +1,6 @@
 
-#include "../backlight/led_masks.h"
-
+#include "led_masks.h"
 #include <avr/pgmspace.h>
-
-#ifndef __AVR_ARCH__
-#define PROGMEM
-#endif
 
 /*
  * Ten-key-less, cursor keys on the right side
@@ -28,12 +23,12 @@
  *
  *
  *           1  2  3  4  5  6  7
- * Row 0:  ESC,F1,F2,F3,F4,F5,F6
- * Row 1:    ^, 1, 2, 3, 4, 5, 6
- * Row 2:  TAB, Q, W, E, R, T
- * Row 3: CAPS, A, S, D, F, G
- * Row 4: Shft, Y, X, C, V, B
- * Row 5: Ctrl, G, F, A, S
+ * Row 0:  ESC,F1,F2,F3,F4,F5,F6         C1-1 -> C1-16
+ * Row 1:    ^, 1, 2, 3, 4, 5, 6         C2-1 -> C2-16
+ * Row 2:  TAB, Q, W, E, R, T            C3-1 -> C3-16
+ * Row 3: CAPS, A, S, D, F, G            C4-1 -> C4-16
+ * Row 4: Shft, <, Y, X, C, V, B         C5-1 -> C5-16
+ * Row 5: Ctrl, G, F, A, S               C6-1 -> C6-16
  *
  *
  */
@@ -41,12 +36,12 @@
 /* Full keyboard LED matrix
  *
  *           1  2  3  4  5  6  7
- * Row 0:  ESC,F1,F2,F3,F4,F5,F6   00000000 01111111   C1-1 -> C1-16
- * Row 1:    ^, 1, 2, 3, 4, 5, 6   00000000 01111111   C2-1 -> C2-16
- * Row 2:  TAB, Q, W, E, R, T      00000000 00111111   C3-1 -> C3-16
- * Row 3: CAPS, A, S, D, F, G      00000000 00111111   C4-1 -> C4-16
- * Row 4: Shft, Y, X, C, V, B      00000000 00111111   C5-1 -> C5-16
- * Row 5: Ctrl, G, F, A, S         00000000 00011111   C6-1 -> C6-16
+ * Row 0:  ESC,F1,F2,F3,F4,F5,F6   00000000 01111111
+ * Row 1:    ^, 1, 2, 3, 4, 5, 6   00000000 01111111
+ * Row 2:  TAB, Q, W, E, R, T      00000000 00111111
+ * Row 3: CAPS, A, S, D, F, G      00000000 00111111
+ * Row 4: Shft, <, Y, X, C, V, B   00000000 00111111
+ * Row 5: Ctrl, G, F, A, S         00000000 00011111
  *
  */
 
@@ -67,12 +62,12 @@ uint8_t const LedMaskFull_Left[ISSI_LED_MASK_SIZE] PROGMEM =
 /* Other keys LED matrix
  *
  *           1  2  3  4  5  6  7
- * Row 0:  ESC,F1,F2,F3,F4,F5,F6    00000000 00000000  C1-1 -> C1-16
- * Row 1:    ^, 1, 2, 3, 4, 5, 6    00000000 01111111  C2-1 -> C2-16
- * Row 2:  TAB, Q, W, E, R, T       00000000 00010111  C3-1 -> C3-16
- * Row 3: CAPS, A, S, D, F, G       00000000 00000011  C4-1 -> C4-16
- * Row 4: Shft, Y, X, C, V, B       00000000 00011111  C5-1 -> C5-16
- * Row 5: Ctrl, G, F, A, S          00000000 00000000  C6-1 -> C6-16
+ * Row 0:  ESC,F1,F2,F3,F4,F5,F6    00000000 00000000
+ * Row 1:    ^, 1, 2, 3, 4, 5, 6    00000000 01111111
+ * Row 2:  TAB, Q, W, E, R, T       00000000 00010111
+ * Row 3: CAPS, A, S, D, F, G       00000000 00000011
+ * Row 4: Shft, <, Y, X, C, V, B    00000000 00111111
+ * Row 5: Ctrl, G, F, A, S          00000000 00000000
  *
  */
 
@@ -82,7 +77,7 @@ uint8_t const LedMaskOthr_Left[ISSI_LED_MASK_SIZE] PROGMEM =
     0x00, 0x7F,
     0x00, 0x17,
     0x00, 0x03,
-    0x00, 0x1F,
+    0x00, 0x3F,
     0x00, 0x00,
   //0x00, 0x00,
   //0x00, 0x00,
@@ -93,12 +88,12 @@ uint8_t const LedMaskOthr_Left[ISSI_LED_MASK_SIZE] PROGMEM =
 /* WASD keys LED matrix
  *
  *           1  2  3  4  5  6  7
- * Row 0:  ESC,F1,F2,F3,F4,F5,F6    00000000 00000000  C1-1 -> C1-16
- * Row 1:    ^, 1, 2, 3, 4, 5, 6    00000000 00000000  C2-1 -> C2-16
- * Row 2:  TAB, Q, W, E, R, T       00000000 00001000  C3-1 -> C3-16
- * Row 3: CAPS, A, S, D, F, G       00000000 00011100  C4-1 -> C4-16
- * Row 4: Shft, Y, X, C, V, B       00000000 00000000  C5-1 -> C5-16
- * Row 5: Ctrl, G, F, A, S          00000000 00000000  C6-1 -> C6-16
+ * Row 0:  ESC,F1,F2,F3,F4,F5,F6    00000000 00000000
+ * Row 1:    ^, 1, 2, 3, 4, 5, 6    00000000 00000000
+ * Row 2:  TAB, Q, W, E, R, T       00000000 00001000
+ * Row 3: CAPS, A, S, D, F, G       00000000 00011100
+ * Row 4: Shft, <, Y, X, C, V, B    00000000 00000000
+ * Row 5: Ctrl, G, F, A, S          00000000 00000000
  *
  */
 
@@ -119,12 +114,12 @@ uint8_t const LedMaskWASD_Left[ISSI_LED_MASK_SIZE] PROGMEM =
 /* Control keys LED matrix
  *
  *           1  2  3  4  5  6  7
- * Row 0:  ESC,F1,F2,F3,F4,F5,F6  01111111 N/A 00000000   C1-1 -> C1-16
- * Row 1:    ^, 1, 2, 3, 4, 5, 6  01000000 N/A 00000000   C2-1 -> C2-16
- * Row 2:  TAB, Q, W, E, R, T     00100000 N/A 00000000   C3-1 -> C3-16
- * Row 3: CAPS, A, S, D, F, G     00100000 N/A 00000000   C4-1 -> C4-16
- * Row 4: Shft, Y, X, C, V, B     00100000 N/A 00000000   C5-1 -> C5-16
- * Row 5: Ctrl, G, F, A, S        00011111 N/A 00000000   C6-1 -> C6-16
+ * Row 0:  ESC,F1,F2,F3,F4,F5,F6  01111111 N/A 00000000
+ * Row 1:    ^, 1, 2, 3, 4, 5, 6  01000000 N/A 00000000
+ * Row 2:  TAB, Q, W, E, R, T     00100000 N/A 00000000
+ * Row 3: CAPS, A, S, D, F, G     00100000 N/A 00000000
+ * Row 4: Shft, <, Y, X, C, V, B  01000000 N/A 00000000
+ * Row 5: Ctrl, G, F, A, S        00011111 N/A 00000000
  *
  */
 
@@ -134,7 +129,7 @@ uint8_t const LedMaskCtrl_Left[ISSI_LED_MASK_SIZE] PROGMEM =
     0x00, 0x40,
     0x00, 0x20,
     0x00, 0x20,
-    0x00, 0x20,
+    0x00, 0x40,
     0x00, 0x1F,
   //0x00, 0x00,
   //0x00, 0x00,
@@ -144,12 +139,12 @@ uint8_t const LedMaskCtrl_Left[ISSI_LED_MASK_SIZE] PROGMEM =
 /* Logo LED matrix
  *
  *           1  2  3  4  5  6  7
- * Row 0:  ESC,F1,F2,F3,F4,F5,F6    00000000 00000000  C1-1 -> C1-16
- * Row 1:    ^, 1, 2, 3, 4, 5, 6    00000000 00000000  C2-1 -> C2-16
- * Row 2:  TAB, Q, W, E, R, T       00000000 00000000  C3-1 -> C3-16
- * Row 3: CAPS, A, S, D, F, G       00000000 00000000  C4-1 -> C4-16
- * Row 4: Shft, Y, X, C, V, B       00000000 00000000  C5-1 -> C5-16
- * Row 5: Ctrl, G, F, A, S          00000000 00000000  C6-1 -> C6-16
+ * Row 0:  ESC,F1,F2,F3,F4,F5,F6    00000000 01111111   01111111
+ * Row 1:    ^, 1, 2, 3, 4, 5, 6    00000000 01111111   01111111
+ * Row 2:  TAB, Q, W, E, R, T       00000000 00111111   00111111
+ * Row 3: CAPS, A, S, D, F, G       00000000 00111111   00111111
+ * Row 4: Shft, <, Y, X, C, V, B    00000000 00111111   00111111
+ * Row 5: Ctrl, G, F, A, S          00000000 00011111   00011111
  *
  */
 

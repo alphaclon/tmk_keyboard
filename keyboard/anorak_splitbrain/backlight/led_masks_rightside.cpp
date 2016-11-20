@@ -1,11 +1,6 @@
 
-#include "../backlight/led_masks.h"
-
+#include "led_masks.h"
 #include <avr/pgmspace.h>
-
-#ifndef __AVR_ARCH__
-#define PROGMEM
-#endif
 
 /*
  * Ten-key-less, cursor keys on the right side

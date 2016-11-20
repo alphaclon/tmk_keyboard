@@ -1,17 +1,17 @@
 
-#include "../backlight/control.h"
-
+#include "control.h"
+#include "debug.h"
+#include "../twi_config.h"
 #include <avr/interrupt.h>
 
 extern "C" {
 #if TWILIB == AVR315
-#include "../backlight/avr315/TWI_Master.h"
+#include "avr315/TWI_Master.h"
 #elif TWILIB == BUFFTW
-#include "../backlight/twi/twi_master.h"
+#include "twi/twi_master.h"
 #else
-#include "../backlight/i2cmaster/i2cmaster.h"
+#include "i2cmaster/i2cmaster.h"
 #endif
-#include "debug.h"
 }
 
 IS31FL3731Buffered issi;

@@ -83,7 +83,7 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
     }
 }
 
-uint8_t get_array_position_for_region(uint8_t region)
+uint8_t get_index_for_region(uint8_t region)
 {
     uint8_t pos = 0;
 
@@ -166,7 +166,7 @@ void backlight_increase_brightness_for_region(uint8_t region)
         return;
     }
 
-    uint8_t pos = get_array_position_for_region(region);
+    uint8_t pos = get_index_for_region(region);
     uint8_t brightness = region_brightness[pos];
 
     if (brightness >= GAMMA_STEPS)
@@ -195,7 +195,7 @@ void backlight_decrease_brightness_for_region(uint8_t region)
         return;
     }
 
-    uint8_t pos = get_array_position_for_region(region);
+    uint8_t pos = get_index_for_region(region);
     uint8_t brightness = region_brightness[pos];
 
     if (brightness > 0)
@@ -214,7 +214,7 @@ void backlight_decrease_brightness_selected_region()
 void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness)
 {
     //dprintf("bl_bri_set_by_mask %d\n", brightness);
-    uint8_t pos = get_array_position_for_region(current_region);
+    uint8_t pos = get_index_for_region(current_region);
     set_and_save_brightness_for_region(current_region, pos, brightness);
 }
 

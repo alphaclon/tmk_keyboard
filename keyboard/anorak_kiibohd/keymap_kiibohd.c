@@ -169,7 +169,7 @@ enum macro_id
 /*
  * Fn action definition
  */
-const uint16_t PROGMEM fn_actions[] =
+const action_t PROGMEM fn_actions[] =
 {
     [0] = ACTION_LAYER_MOMENTARY(LAYER_FN0_BACKGROURND),
     [1] = ACTION_MODS_TAP_KEY(KC_CAPS, KC_M),
@@ -250,7 +250,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             backlight_save_region_states();
             break;
         case KIIBOHD_FUNCTION_Backlight_Breath:
-        	sleep_led_toggle();
+        	//sleep_led_toggle();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
         	backlight_test();

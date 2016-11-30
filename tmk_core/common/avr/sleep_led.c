@@ -18,6 +18,7 @@
  */
 #define SLEEP_LED_TIMER_TOP F_CPU/(256*64)
 
+void sleep_led_init(void)  __attribute__ ((weak));
 void sleep_led_init(void)
 {
     /* Timer1 setup */

@@ -11,5 +11,6 @@ tags
 *~
 build/
 *.bak
-/.cproject
-/.project
+.DS_Store
+!converter/*/binary/*.hex
+!keyboard/*/binary/*.hex

@@ -18,7 +18,6 @@
  */
 #define SLEEP_LED_TIMER_TOP F_CPU/(256*64)
 
-void sleep_led_init(void)  __attribute__ ((weak));
 void sleep_led_init(void)
 {
     /* Timer1 setup */
@@ -48,11 +47,16 @@ void sleep_led_disable(void)
     TIMSK1 &= ~_BV(OCIE1A);
 }
 
-void sleep_led_toggle(void)  __attribute__ ((weak));
-void sleep_led_toggle(void)
+__attribute__ ((weak))
+void sleep_led_on(void)
 {
-    /* Disable Compare Match Interrupt */
-    TIMSK1 ^= _BV(OCIE1A);
+    led_set(1<<USB_LED_CAPS_LOCK);
+}
+
+__attribute__ ((weak))
+void sleep_led_off(void)
+{
+    led_set(0);
 }
 
 
@@ -90,10 +94,10 @@ ISR(TIMER1_COMPA_vect)
 
     // LED on
     if (timer.pwm.count == 0) {
-        led_set(1<<USB_LED_CAPS_LOCK);
+        sleep_led_on();
     }
     // LED off
     if (timer.pwm.count == pgm_read_byte(&breathing_table[timer.pwm.index])) {
-        led_set(0);
+        sleep_led_off();
     }
 }

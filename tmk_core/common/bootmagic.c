@@ -58,14 +58,17 @@ void bootmagic(void)
             debug_config.enable = !debug_config.enable;
         }
     }
-    eeconfig_write_debug(debug_config.raw);
+    if (debug_config.raw != eeconfig_read_debug())
+    	eeconfig_write_debug(debug_config.raw);
 
 
 
 
-    debug_config.matrix = 0;
-    debug_config.keyboard = 0;
-
+    debug_config.enable = 1;
+    /*
+    debug_config.matrix = 1;
+    debug_config.keyboard = 1;
+	*/
 
 
 
@@ -95,7 +98,8 @@ void bootmagic(void)
     if (bootmagic_scan_key(BOOTMAGIC_HOST_NKRO)) {
         keymap_config.nkro = !keymap_config.nkro;
     }
-    eeconfig_write_keymap(keymap_config.raw);
+    if (keymap_config.raw != eeconfig_read_keymap())
+    	eeconfig_write_keymap(keymap_config.raw);
 
 #ifdef NKRO_ENABLE
     keyboard_nkro = keymap_config.nkro;

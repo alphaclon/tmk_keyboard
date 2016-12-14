@@ -18,7 +18,18 @@ uint8_t breathing = 0;
 
 void backlight_sleep_led_init(void)
 {
+	dprintf("backlight_sleep_led_init\n");
 	breathing = 0;
+}
+
+void backlight_sleep_led_on(void)
+{
+	dprintf("backlight_sleep_led_on\n");
+}
+
+void backlight_sleep_led_off(void)
+{
+	dprintf("backlight_sleep_led_off\n");
 }
 
 void backlight_sleep_led_enable(void)
@@ -75,6 +86,16 @@ void sleep_led_disable(void)
 void sleep_led_toggle(void)
 {
 	backlight_sleep_led_toggle();
+}
+
+void sleep_led_on(void)
+{
+	backlight_sleep_led_on();
+}
+
+void sleep_led_off(void)
+{
+	backlight_sleep_led_off();
 }
 }
 #endif

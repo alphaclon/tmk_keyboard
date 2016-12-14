@@ -117,12 +117,12 @@ extern const action_t fn_actions[];
                 KC_##K1K, KC_##K1L, KC_##K1M, KC_##K1N, KC_##K1O, KC_##K1P, KC_##K1Q, KC_##K1R                         \
                 },                                                                                                    \
         /* 0 */ {                                                                                                     \
-                KC_##K0A, KC_##K0B, KC_##K0C, KC_##K0D, KC_##K0E, KC_##K0F, KC_##K0G, KC_##K0H, KC_##K1I, KC_##K1J,    \
+                KC_##K0A, KC_##K0B, KC_##K0C, KC_##K0D, KC_##K0E, KC_##K0F, KC_##K0G, KC_##K0H, KC_##K0I, KC_##K0J,    \
                 KC_##K0K, KC_##K0L, KC_##K0M, KC_##K0N, KC_##K0O, KC_##K0P, KC_##K0Q, KC_##K0R                         \
                 }                                                                                                     \
                 }
 
-//                            0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
+//                            0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16   17
 //                            A    B    C    D    E    F    G    H    I    J    K    L    M    N    O    P    Q    R
 
 #define KEYMAP_ISO_CURSORKEYS_RIGHT( \
@@ -140,8 +140,8 @@ extern const action_t fn_actions[];
                             K1A, K1B, K1C, K1D, K1E, K1F, K1G, K1H, K1I, K1J, K1K, K1L, K1M,  NO,  NO, K1P, K1Q, K1R,  \
                             K0A, K0B, K0C, K0D, K0E,  NO,  NO,  NO, K0I, K0J, K0K, K0L, K0M, K0N,  NO, K0P, K0Q, K0R)
 
-//                            0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
-//                            A    B    C    D    E    F    G    H    I    J    K    L    M    N    O    P    Q
+//                            0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16   17
+//                            A    B    C    D    E    F    G    H    I    J    K    L    M    N    O    P    Q    R
 
 #define KEYMAP_ISO_CURSORKEYS_LEFT( \
 							K5A, K5B, K5C, K5D, K5E, K5F, K5G, K5H, K5I, K5J, K5K, K5L, K5M, K5N, K5O, K5P, K5Q, K5R,  \

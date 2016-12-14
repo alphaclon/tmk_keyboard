@@ -83,11 +83,11 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *     A     B     C     D     E     F     G     H     I     J     K     L     M     N     O     P     Q     R
      */
     KEYMAP_ISO(\
-         ESC,   F1,   F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9, F10,   F11,  F12,  FN4,  FN5, PSCR, SLCK,  BRK,   \
+         ESC,   F1,   F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9, F10,   F11,  F12,    A,    B, PSCR, SLCK,  BRK,   \
          GRV,    1,    2,    3,    4,    5,    6,    7,    8,    9,    0, MINS,  EQL, BSPC,        INS, HOME, PGUP,   \
          TAB,    Q,    W,    E,    R,    T,    Y,    U,    I,    O,    P, LBRC, RBRC,              DEL,  END, PGDN,   \
         CAPS,    A,    S,    D,    F,    G,    H,    J,    K,    L, SCLN, QUOT, NUHS,  ENT,                           \
-        LSFT, NUBS,    Z,    X,    C,    V,    B,    N,    M, COMM,  DOT, SLSH, RSFT,              FN2,   UP,  FN3,   \
+        LSFT, NUBS,    Z,    X,    C,    V,    B,    N,    M, COMM,  DOT, SLSH, RSFT,              FN15,   UP, FN16,  \
         LCTL,  LGUI, FN0, LALT,  SPC,                    SPC, RALT,  FN0, RGUI,  APP, RCTL,        LEFT, DOWN, RGHT  ),
     /*
      * 1: media keys
@@ -95,12 +95,12 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *     A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P    Q     R
      */
     KEYMAP_ISO(\
-        TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, SLEP,   \
+        TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,   \
 		 FN6, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, MUTE, VOLD, VOLU, TRNS,       TRNS, TRNS, TRNS,   \
 		 FN5, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
-         FN4,  FN9, FN10, FN11, FN12, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,                           \
-         FN3, FN13, FN14, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
-         FN2, FN15, TRNS,  FN8,  FN7,                   TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,       TRNS, TRNS, TRNS  )
+         FN4,  FN9, FN10, FN11, FN12, TRNS, TRNS,  FN9, FN10, FN11, FN12, TRNS, TRNS, TRNS,                           \
+         FN3, FN13, FN14, TRNS, TRNS, TRNS, TRNS, FN13, FN14, TRNS, TRNS, TRNS, TRNS,              FN3,  FN5, TRNS,   \
+         FN2, TRNS, TRNS,  FN8,  FN7,                    FN7,  FN8, TRNS, TRNS, TRNS,  FN2,        FN4,  FN6, TRNS  )
 };
 
 /*

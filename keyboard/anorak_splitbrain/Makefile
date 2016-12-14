@@ -40,6 +40,10 @@
 # To rebuild project do "make clean" then "make all".
 #
 # Default fuses (factory) : E:F3, H:99, L:5E
+# Used fuses              : E:F3, H:D9, L:DE
+#
+# Flashing the bootloader:
+#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -D -U flash:w:BootloaderDFU.hex:a
 #
 #----------------------------------------------------------------------------
 
@@ -104,8 +108,6 @@ MCU = at90usb1286
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
 F_CPU = 16000000
-#F_CPU = 8000000
-
 
 #
 # LUFA specific
@@ -169,3 +171,21 @@ debug-on: all
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
 debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
 debug-off: all
+
+dfu-hex: $(TARGET).hex
+	@echo -n dfu-programmer: waiting
+	@until dfu-programmer $(MCU) get bootloader-version > /dev/null 2>&1; do \
+		echo  -n "."; \
+		sleep 1; \
+	done
+	@echo
+	dfu-programmer $(MCU) erase --force
+	dfu-programmer $(MCU) flash $(TARGET).hex
+	dfu-programmer $(MCU) launch --no-reset
+	
+dfu-launch:
+	dfu-programmer $(MCU) launch --no-reset
+
+dfu-eep: $(TARGET).hex $(TARGET).eep
+	dfu-programmer $(MCU) flash --eeprom $(TARGET).eep
+	dfu-programmer $(MCU) launch --no-reset

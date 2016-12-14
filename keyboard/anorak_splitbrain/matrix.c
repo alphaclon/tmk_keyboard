@@ -107,7 +107,7 @@ uint8_t matrix_scan(void)
 	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
 	{
 		select_row(i);
-		_delay_us(50);  // without this wait it will read unstable value.
+		_delay_us(5);  // without this wait it will read unstable value.
 		matrix_row_t cols = read_cols();
 
 #ifndef NO_DEBUG_LEDS
@@ -119,7 +119,8 @@ uint8_t matrix_scan(void)
 
 		if (matrix_debouncing[i] != cols)
 		{
-			//dprintf("bounce %u\r\n", i);
+			dprintf("bounce %u\r\n", i);
+
 			matrix_debouncing[i] = cols;
 			debouncing_times[i] = timer_read();
 			debouncing[i] = true;
@@ -136,7 +137,7 @@ uint8_t matrix_scan(void)
 
 			if (timer_elapsed(debouncing_times[i]) > DEBOUNCE_TIME)
 			{
-				//dprintf("bounced %u\r\n", i);
+				dprintf("bounced %u\r\n", i);
 
 				matrix[i] = matrix_debouncing[i];
 				debouncing[i] = false;
@@ -182,7 +183,7 @@ inline matrix_row_t matrix_get_row(uint8_t row)
 
 void matrix_print(void)
 {
-	dprint("\nr/c 0123456789012345678\n");
+	dprint("\nr/c 012345678901234567\n");
 	for (uint8_t row = 0; row < MATRIX_ROWS; row++)
 	{
 		phex(row);
@@ -237,16 +238,15 @@ static void init_cols(void)
 
 static matrix_row_t read_cols(void)
 {
-	// Invert the value read, because PIN indicates 'switch on' with low(0) and 'off' with high(1)
+	// Invert the value read, because PINx indicates 'switch on' with low(0) and 'off' with high(1)
 
 	uint8_t c = ~PINC;
 	uint8_t f = ~PINF;
-	uint8_t a = (~PINA) & 0xC0;
+	uint8_t a = ~PINA & 0xC0;
+
+	a = a >> 6;
 
 	/*
-	a &= 0xC0;
-	dprintf("A:%u\r\n", a);
-
 	matrix_row_t v1 = c;
 	matrix_row_t v2 = (matrix_row_t)(f) << 8;
 	matrix_row_t v3 = (matrix_row_t)(a) << 16;
@@ -265,6 +265,10 @@ static void unselect_rows(void)
 
 	DDRA &= ~(0x3F);
 	PORTA &= ~(0x3F);
+
+	// PB0: Fix for row 4 / PA4 not working on right side
+	DDRB &= ~(1 << 0);
+	PORTB &= ~(1 << 0);
 }
 
 static void select_row(uint8_t row)
@@ -272,8 +276,13 @@ static void select_row(uint8_t row)
 	// Output low (DDR:1, PORT:0) to select the row
 	// ROWs are on Port A, Pin 0..5
 
-	//dprintf("select_row %d\r\n", row);
-
 	DDRA |= (1 << row);
 	PORTA &= ~(1 << row);
+
+	// PB0: Fix for row 4 / PA4 not working on right side
+	if (row == 4)
+	{
+		DDRB |= (1 << 0);
+		PORTB &= ~(1 << 0);
+	}
 }

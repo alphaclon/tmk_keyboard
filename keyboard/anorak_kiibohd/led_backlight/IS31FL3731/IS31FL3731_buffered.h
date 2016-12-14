@@ -9,6 +9,8 @@ public:
     virtual ~IS31FL3731Buffered();
 
 	virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
+	uint8_t getPixel(int16_t x, int16_t y);
+	void clear();
 	void blitToFrame(uint8_t frame);
 
 private:

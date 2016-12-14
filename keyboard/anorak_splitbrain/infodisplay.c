@@ -1,26 +1,13 @@
 #include "infodisplay.h"
-#include "twi_config.h"
+#include "infodisplay_cmd.h"
+#include "twi/twi_config.h"
 #include <string.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#if TWILIB == AVR315
-#include "backlight/avr315/TWI_Master.h"
-#elif TWILIB == BUFFTW
-#include "backlight/twi/twi_master.h"
-#else
-#include "backlight/i2cmaster/i2cmaster.h"
-#endif
-#ifdef __cplusplus
-}
-#endif
 
 
 uint8_t cmd_buffer[TWI_SEND_DATA_BUFFER_SIZE];
 
 
-void mcpu_init()
+void matrixcpu_init()
 {
 
 }

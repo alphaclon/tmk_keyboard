@@ -59,8 +59,9 @@
 
 #define DATAGRAM_CMD_INIT      0x49
 #define DATAGRAM_CMD_INIT_ACK  0x48
-#define DATAGRAM_CMD_ROW       0x52
 #define DATAGRAM_CMD_PING      0x50
+#define DATAGRAM_CMD_ROW       0x52
+#define DATAGRAM_CMD_ROW_ACK   0x51
 #define DATAGRAM_CMD_SYNC      0x53
 
 #define MAX_MSG_LENGTH 16
@@ -68,14 +69,24 @@
 #define INIT_TIMEOUT 500
 #define PING_TIMEOUT 1000
 #define CONNECTION_TIMEOUT (PING_TIMEOUT*2)
+#define ROW_ACK_TIMEOUT 30
 
 bool _is_left_side_of_keyboard = false;
 bool _is_right_side_of_keyboard = false;
 bool _is_connected_to_other_side = false;
-matrix_row_t other_sides_rows[MATRIX_ROWS];
+bool _waiting_for_row_ack = false;
+
 uint16_t last_receive_ts = 0;
 uint16_t last_send_ts = 0;
 uint16_t last_init_send_ts = 0;
+uint16_t last_row_send_ts = 0;
+
+uint8_t last_row_number = 0;
+matrix_row_t last_row = 0;
+uint16_t row_resend_counter = 0;
+
+matrix_row_t other_sides_rows[MATRIX_ROWS];
+
 uint8_t recv_buffer[MAX_MSG_LENGTH];
 uint8_t send_buffer[MAX_MSG_LENGTH];
 
@@ -101,6 +112,8 @@ bool is_connected_to_usb(void);
 char is_connected_to_usb_as_char(void);
 bool accept_init_request(uint8_t usb, uint8_t side);
 char this_side_as_char(void);
+void send_row_ack_to_other_side(bool ack);
+void resend_row_to_other_side(void);
 void reset_connection_on_timeout(void);
 void reset_other_sides_rows(void);
 
@@ -188,8 +201,8 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
 
 		if (accept_init_request(buffer[2], buffer[3]))
 		{
-			send_init_ack_to_other_side();
 			_is_connected_to_other_side = true;
+			send_init_ack_to_other_side();
 			dprintf("init success!\r\n");
 		}
 		else
@@ -199,9 +212,8 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
 	}
 	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_INIT_ACK)
 	{
-		dprintf("recv init_ack\r\n");
 		_is_connected_to_other_side = true;
-		dprintf("init success!\r\n");
+		dprintf("init success! rtt %u\r\n", timer_elapsed(last_init_send_ts));
 	}
 	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_ROW)
 	{
@@ -210,7 +222,13 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
 		if (rd->row_number < MATRIX_ROWS)
 		{
 			other_sides_rows[rd->row_number] = rd->row;
+			send_row_ack_to_other_side(true);
 		}
+	}
+	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_ROW_ACK)
+	{
+		_waiting_for_row_ack = false;
+		dprintf("rtt %u\r\n", timer_elapsed(last_row_send_ts));
 	}
 	else if (get_datagram_cmd(buffer) == DATAGRAM_CMD_PING)
 	{
@@ -313,6 +331,13 @@ void receive_data_from_other_side()
 						buffer_pos = 0;
 						recv_status = recvStatusIdle;
 					}
+					else
+					{
+						if (get_datagram_cmd(recv_buffer) == DATAGRAM_CMD_ROW && buffer_pos >= 9)
+						{
+							send_row_ack_to_other_side(false);
+						}
+					}
 				}
 				else
 				{
@@ -412,22 +437,46 @@ void send_row_to_other_side(uint8_t row_number, matrix_row_t row)
 
 	dprintf("send row %u\r\n", row_number);
 
+	last_row_number = row_number;
+	last_row = row;
+
 	uint8_t pos = fill_message_header(DATAGRAM_CMD_ROW);
 	row_datagram *rd = (row_datagram *) (send_buffer + pos);
 
 	rd->row_number = row_number;
 	rd->row = row;
 
+	_waiting_for_row_ack = true;
+	last_row_send_ts = timer_read();
+
 	pos = fill_message_footer(pos + sizeof(row_datagram) + 1);
 	send_message_to_other_side(pos);
+}
+
+void send_row_ack_to_other_side(bool ack)
+{
+	dprintf("send row ack %c\r\n", (ack ? 'A' : 'N'));
+	uint8_t pos = fill_message_header(DATAGRAM_CMD_ROW_ACK);
+	send_buffer[pos++] = ack ? 'A' : 'N';
+	pos = fill_message_footer(pos);
+	send_message_to_other_side(pos);
+	last_init_send_ts = timer_read();
+}
+
+void resend_row_to_other_side()
+{
+	row_resend_counter++;
+	dprintf("resend row! %u\r\n", row_resend_counter);
+	send_row_to_other_side(last_row_number, last_row);
 }
 
 void reset_connection_on_timeout()
 {
 	dprintf("connection broken!\r\n");
+	_is_connected_to_other_side = false;
+	_waiting_for_row_ack = false;
 	reset_other_sides_rows();
 	last_receive_ts = timer_read();
-	_is_connected_to_other_side = false;
 }
 
 void communication_watchdog()
@@ -442,6 +491,11 @@ void communication_watchdog()
 		if (timer_elapsed(last_send_ts) > PING_TIMEOUT)
 		{
 			send_ping_to_other_side();
+		}
+
+		if (_waiting_for_row_ack && timer_elapsed(last_row_send_ts) > ROW_ACK_TIMEOUT)
+		{
+			resend_row_to_other_side();
 		}
 	}
 	else

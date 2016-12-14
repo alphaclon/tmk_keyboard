@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <avr/io.h>
 #include <util/delay.h>
 #include "led_backlight/backlight_kiibohd.h"
+#include "led_backlight/animations/animation.h"
 #include "util.h"
 #include "timer.h"
 #include "matrix.h"
@@ -84,7 +85,8 @@ void matrix_init(void)
     init_cols();
 
     // initialize matrix state: all keys off
-    for (uint8_t i=0; i < MATRIX_ROWS; i++) {
+    for (uint8_t i=0; i < MATRIX_ROWS; i++)
+    {
         matrix[i] = 0;
         matrix_debouncing[i] = 0;
     }
@@ -134,27 +136,7 @@ uint8_t matrix_scan(void)
         LED_GREEN_OFF();
     }
 
-    /*
-    if (debouncing)
-    {
-        LED_GREEN_ON();
-        if (--debouncing)
-        {
-            _delay_ms(1);
-        }
-        else
-        {
-            for (uint8_t i = 0; i < MATRIX_ROWS; i++)
-            {
-                matrix[i] = matrix_debouncing[i];
-            }
-        }
-    }
-    else
-    {
-        LED_GREEN_OFF();
-    }
-    */
+    animate();
 
     return 1;
 }

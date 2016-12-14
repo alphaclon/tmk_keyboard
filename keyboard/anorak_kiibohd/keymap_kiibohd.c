@@ -1,8 +1,9 @@
-#include "keymap_common.h"
-#include <avr/pgmspace.h>
-#include "led_backlight/backlight_kiibohd.h"
 #include "config.h"
+#include "keymap_common.h"
+#include "led_backlight/animations/animation.h"
+#include "led_backlight/backlight_kiibohd.h"
 #include "sleep_led.h"
+#include <avr/pgmspace.h>
 
 /*
  *  Keymaps
@@ -25,9 +26,9 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * 0: Default layer (QWERT)
      *
      * ,-------------------------.
-     * |Esc  |   1|  2|  3|  4|  5|
+     * | Esc |   1|  2|  3|  4|  5|
      * |--------------------------|
-     * |Tab  |   Q|  W|  E|  R|  T|
+     * | Tab |   Q|  W|  E|  R|  T|
      * |--------------------------|
      * |    M|   A|  S|  D|  F|  G|
      * |--------------------------|
@@ -102,15 +103,16 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, FN14, TRNS, TRNS, TRNS, TRNS),
     /*
-     * 4: layer 4, TF2 F-key layer,
+     * 4: layer 4, TF2 F-key layer, thumb key
      *    activated by FN2 (leftmost thumb key)
+     *    FN22: lock macro for A-key
      *
      */
     KEYMAP_KIIBOHD(
         TRNS,   F1,   F2,   F5,   F6, TRNS, \
-          F1,   F2,   F3,   F4,   F5,   F6, \
-          F7,   F8,   F9,  F10,  F11,  F12, \
-           0,    5,    6,    7,    8,    9, \
+        TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
+        TRNS, TRNS, FN22, TRNS, TRNS, TRNS, \
+        TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS),
     /*
      * 5: layer 5, media and backlight layer,
@@ -130,9 +132,11 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      *   Fn10: F LOGO
      *   Fn11: G OTHR
      *
+     *   Fn23: start animation
+     *
      */
     KEYMAP_KIIBOHD(
-        PAUS, TRNS, TRNS, TRNS, TRNS, TRNS, \
+        TRNS, FN23, FN24, FN25, FN26, FN27, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
          FN5,  FN7,  FN8,  FN9, FN10, FN11, \
          FN6, VOLD, VOLU, MUTE, TRNS, TRNS, \
@@ -158,12 +162,17 @@ enum function_id
     KIIBOHD_FUNCTION_Backlight_Decrease_Region,
     KIIBOHD_FUNCTION_Backlight_Save_Current_State,
     KIIBOHD_FUNCTION_Backlight_Breath,
-	KIIBOHD_FUNCTION_Backlight_Animate
+	KIIBOHD_FUNCTION_Backlight_Animate,
+	KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed,
+	KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed,
+	KIIBOHD_FUNCTION_Backlight_Animate_Next,
+	KIIBOHD_FUNCTION_Backlight_Animate_Prev
 };
 
 enum macro_id
 {
     KIIBOHD_MACRO_DUCK_JUMP,
+	KIIBOHD_MACRO_A_KEY_LOCK
 };
 
 /*
@@ -192,7 +201,13 @@ const action_t PROGMEM fn_actions[] =
    [18] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SPC_ENT),
    [19] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SHIFTED_TQWER),
    [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Breath),
-   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate)
+   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
+   [22] = ACTION_MACRO(KIIBOHD_MACRO_A_KEY_LOCK)
+   [23] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
+   [24] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed),
+   [25] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed),
+   [26] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Next),
+   [27] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Prev),
 };
 
 
@@ -204,9 +219,10 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
     switch (id)
     {
     case KIIBOHD_MACRO_DUCK_JUMP:
-        return (record->event.pressed ?
-                MACRO(D(SPC), D(LCTL), END) :
-                MACRO(U(LCTL), U(SPC), END));
+        return (record->event.pressed ? MACRO(D(SPC), D(LCTL), END) : MACRO(U(LCTL), U(SPC), END));
+        break;
+    case KIIBOHD_MACRO_A_KEY_LOCK:
+        return (record->event.pressed ? MACRO(D(A), END) : MACRO_NONE);
         break;
     }
     return MACRO_NONE;
@@ -250,10 +266,22 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             backlight_save_region_states();
             break;
         case KIIBOHD_FUNCTION_Backlight_Breath:
-        	//sleep_led_toggle();
+        	backlight_sleep_led_toggle();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
-        	backlight_test();
+            animation_toggle();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed:
+            increase_animation_speed();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed:
+            decrease_animation_speed();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Next:
+        	start_next_animation();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Prev:
+        	start_prev_animation();
             break;
         }
     }

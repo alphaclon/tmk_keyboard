@@ -44,6 +44,13 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
+#ifndef AVR315_TWI_MASTER_H_
+#define AVR315_TWI_MASTER_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /****************************************************************************
   TWI Status/Control register definitions
 ****************************************************************************/
@@ -132,3 +139,8 @@ unsigned char TWI_Get_Data_From_Transceiver( unsigned char *, unsigned char );
 #define TWI_NO_STATE               0xF8  // No relevant state information available; TWINT = �0�
 #define TWI_BUS_ERROR              0x00  // Bus error due to an illegal START or STOP condition
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif

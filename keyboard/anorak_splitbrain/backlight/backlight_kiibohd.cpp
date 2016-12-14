@@ -26,31 +26,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define BRIGHTNESS_MAX_LEVEL 8
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "config.h"
 #include "eeconfig.h"
 #include "backlight.h"
 #include "backlight_kiibohd.h"
 #include "../nfo_led.h"
 #include "../splitbrain.h"
-#include "../twi_config.h"
-
-#if TWILIB == AVR315
-#include "avr315/TWI_Master.h"
-#elif TWILIB == BUFFTW
-#include "twi/twi_master.h"
-#else
-#include "i2cmaster/i2cmaster.h"
-#endif
+#include "../twi/twi_config.h"
 
 #ifdef DEBUG_BACKLIGHT
 #include "debug.h"
 #include "../uart/uart.h"
 #else
 #include "nodebug.h"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 uint8_t regions = 0;
@@ -378,6 +370,7 @@ void backlight_set_regions_from_saved_state(void)
     }
 }
 
+// Defined in tmk_core/common/backlight.h
 void backlight_set(uint8_t level)
 {
     dprintf("bl_set %d\n", level);
@@ -399,15 +392,15 @@ void backlight_setup()
     IS31FL3731_init();
     IS31FL3731_set_power_target_I_max(100);
 
+    regions = 0;
+    current_region = backlight_region_ALL;
+
     uart_puts_P("backlight_setup\r\n");
 }
 
 void backlight_setup_finish()
 {
 	uart_puts_P("backlight_setup_finish\r\n");
-
-    regions = 0;
-    current_region = backlight_region_ALL;
 
     IS31FL3731_set_power_target_I_max(200);
 

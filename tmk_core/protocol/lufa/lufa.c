@@ -61,6 +61,10 @@
 
 //#define LUFA_DEBUG
 
+#ifdef LUFA_DEBUG_UART
+extern void uart_putc(unsigned char data);
+#endif
+
 
 uint8_t keyboard_idle = 0;
 /* 0: Boot Protocol, 1: Report Protocol(default) */
@@ -533,6 +537,10 @@ int8_t sendchar(uint8_t c)
 #ifdef LUFA_DEBUG_SUART
     xmit(c);
 #endif
+#ifdef LUFA_DEBUG_UART
+    uart_putc(c);
+#endif
+
     // Not wait once timeouted.
     // Because sendchar() is called so many times, waiting each call causes big lag.
     static bool timeouted = false;
@@ -593,6 +601,10 @@ int8_t sendchar(uint8_t c)
 #ifdef LUFA_DEBUG_SUART
     xmit(c);
 #endif
+#ifdef LUFA_DEBUG_UART
+    uart_putc(c);
+#endif
+
     return 0;
 }
 #endif
@@ -626,19 +638,21 @@ int main(void)  __attribute__ ((weak));
 int main(void)
 {
     setup_mcu();
+    hook_early_init();
 
 #ifdef LUFA_DEBUG_SUART
     SUART_OUT_DDR |= (1<<SUART_OUT_BIT);
     SUART_OUT_PORT |= (1<<SUART_OUT_BIT);
 #endif
+
     print_set_sendchar(sendchar);
     print("\r\ninit\n");
 
-    hook_early_init();
     keyboard_setup();
     setup_usb();
     sei();
 
+#ifndef LUFA_NO_WAIT_FOR_USB
     /* wait for USB startup & debug output */
     while (USB_DeviceState != DEVICE_STATE_Configured) {
 #if defined(INTERRUPT_CONTROL_ENDPOINT)
@@ -648,6 +662,7 @@ int main(void)
 #endif
     }
     print("USB configured.\n");
+#endif
 
     /* init modules */
     keyboard_init();

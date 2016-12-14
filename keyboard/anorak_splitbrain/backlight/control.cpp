@@ -1,18 +1,9 @@
 
 #include "control.h"
 #include "debug.h"
-#include "../twi_config.h"
+#include "../twi/twi_config.h"
 #include <avr/interrupt.h>
 
-extern "C" {
-#if TWILIB == AVR315
-#include "avr315/TWI_Master.h"
-#elif TWILIB == BUFFTW
-#include "twi/twi_master.h"
-#else
-#include "i2cmaster/i2cmaster.h"
-#endif
-}
 
 IS31FL3731Buffered issi;
 

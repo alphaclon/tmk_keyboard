@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BACKLIGHT_LEVELS 8
 
 /* key combination for command */
-#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_LCTRL)))
+#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_LCTRL)) || keyboard_report->mods == (MOD_BIT(KC_RSHIFT) | MOD_BIT(KC_RCTRL)))
 
 /* period of tapping(ms) */
 #define TAPPING_TERM    300

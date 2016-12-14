@@ -50,6 +50,7 @@ static void init_cols(void);
 static void unselect_rows(void);
 static void select_row(uint8_t row);
 
+#if 0
 inline uint8_t matrix_rows(void)
 {
 	return MATRIX_ROWS;
@@ -59,6 +60,7 @@ inline uint8_t matrix_cols(void)
 {
 	return MATRIX_COLS;
 }
+#endif
 
 void matrix_setup(void)
 {
@@ -68,9 +70,6 @@ void matrix_setup(void)
 	// JTAG disable for PORT F. write JTD bit twice within four cycles.
 	MCUCR |= (1 << JTD);
 	MCUCR |= (1 << JTD);
-
-	splitbrain_config_init();
-	mcpu_init();
 
     LED_GREEN_INIT();
     LED_YELLOW_INIT();
@@ -84,6 +83,16 @@ void matrix_setup(void)
 void matrix_init(void)
 {
 	// initialize row and col
+	matrix_clear();
+
+    LED_GREEN_OFF();
+    LED_YELLOW_OFF();
+
+    //uart_puts_P("matrix_init\r\n");
+}
+
+void matrix_clear(void)
+{
 	unselect_rows();
 	init_cols();
 
@@ -95,11 +104,6 @@ void matrix_init(void)
 		debouncing_times[i] = 0;
 		debouncing[i] = false;
 	}
-
-    LED_GREEN_OFF();
-    LED_YELLOW_OFF();
-
-    //uart_puts_P("matrix_init\r\n");
 }
 
 uint8_t matrix_scan(void)
@@ -107,15 +111,13 @@ uint8_t matrix_scan(void)
 	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
 	{
 		select_row(i);
-		_delay_us(5);  // without this wait it will read unstable value.
+		_delay_us(15);  // without this wait it will read unstable value. 10? 50?
 		matrix_row_t cols = read_cols();
 
-#ifndef NO_DEBUG_LEDS
 		if (cols)
 			LED_GREEN_ON();
 		else
 			LED_GREEN_OFF();
-#endif
 
 		if (matrix_debouncing[i] != cols)
 		{
@@ -181,6 +183,7 @@ inline matrix_row_t matrix_get_row(uint8_t row)
 	return (matrix[row] | get_other_sides_row(row));
 }
 
+#if 0
 void matrix_print(void)
 {
 	dprint("\nr/c 012345678901234567\n");
@@ -192,6 +195,7 @@ void matrix_print(void)
 		dprint("\n");
 	}
 }
+#endif
 
 uint8_t matrix_key_count(void)
 {
@@ -265,10 +269,6 @@ static void unselect_rows(void)
 
 	DDRA &= ~(0x3F);
 	PORTA &= ~(0x3F);
-
-	// PB0: Fix for row 4 / PA4 not working on right side
-	DDRB &= ~(1 << 0);
-	PORTB &= ~(1 << 0);
 }
 
 static void select_row(uint8_t row)
@@ -278,11 +278,4 @@ static void select_row(uint8_t row)
 
 	DDRA |= (1 << row);
 	PORTA &= ~(1 << row);
-
-	// PB0: Fix for row 4 / PA4 not working on right side
-	if (row == 4)
-	{
-		DDRB |= (1 << 0);
-		PORTB &= ~(1 << 0);
-	}
 }

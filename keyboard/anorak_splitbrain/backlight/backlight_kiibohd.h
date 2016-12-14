@@ -20,6 +20,9 @@ enum backlight_region
 
 #define BACKLIGHT_MAX_REGIONS 5
 
+void backlight_setup(void);
+void backlight_setup_finish(void);
+
 void backlight_set_brightness(uint8_t brightness);
 void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness);
 

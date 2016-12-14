@@ -5,7 +5,6 @@
 
 #include "../gfx/Adafruit_GFX.h"
 #include "../IS31FL3732_config.h"
-#include "../../twi_config.h"
 
 /*
  * IS31FL3731 supports 144 = 9*16 LEDs

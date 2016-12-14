@@ -33,6 +33,8 @@ void backlight_sleep_led_enable(void)
 	issi.setBreathConfig(7, 7, 2);
 	issi.setBreathMode(1);
 	*/
+
+	issi.enableSoftwareShutdown(true);
 }
 
 void backlight_sleep_led_disable(void)
@@ -44,6 +46,8 @@ void backlight_sleep_led_disable(void)
 	issi.setPictureMode();
 	issi.displayFrame(0);
 	*/
+
+	issi.enableSoftwareShutdown(false);
 }
 
 void backlight_sleep_led_toggle(void)
@@ -55,8 +59,10 @@ void backlight_sleep_led_toggle(void)
 }
 
 #ifdef SLEEP_LED_ENABLE
+#ifdef __cplusplus
 extern "C"
 {
+#endif
 void sleep_led_init(void)
 {
 	backlight_sleep_led_init();
@@ -71,10 +77,14 @@ void sleep_led_disable(void)
 {
 	backlight_sleep_led_disable();
 }
-
-void sleep_led_toggle(void)
+void sleep_led_on(void)
 {
-	backlight_sleep_led_toggle();
+
 }
+void sleep_led_off(void)
+{
 }
+#ifdef __cplusplus
+}
+#endif
 #endif

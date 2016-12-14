@@ -1,30 +1,8 @@
 
 #include "IS31FL3731.h"
+#include "../../twi/twi_config.h"
+#include "IS31FL3731_debug.h"
 #include <util/delay.h>
-
-#if defined(DEBUG_ISSI) || defined(DEBUG_BACKLIGHT)
-#include "debug.h"
-#else
-#include "nodebug.h"
-#endif
-
-#ifdef DEBUG_ISSI
-#define LS_(arg) dprintf(arg "\r\n")
-#define LV_(s, args...) dprintf(s "\r\n", args)
-#else
-#define LS_(arg)
-#define LV_(s, args...)
-#endif
-
-extern "C" {
-#if TWILIB == AVR315
-#include "../avr315/TWI_Master.h"
-#elif TWILIB == BUFFTW
-#include "../twi/twi_master.h"
-#else
-#include "../i2cmaster/i2cmaster.h"
-#endif
-}
 
 #define ISSI_PICTUREMODE 0x00
 #define ISSI_AUTOPLAYMODE 0x08

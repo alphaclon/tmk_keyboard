@@ -22,10 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backlight/backlight_kiibohd.h"
 #include "sleep_led.h"
 
-#ifndef __AVR_ARCH__
-#define PROGMEM
-#endif
-
 /*
  *  Keymaps
  *

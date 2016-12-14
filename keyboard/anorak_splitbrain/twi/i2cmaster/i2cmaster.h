@@ -88,6 +88,10 @@
 
 #include <avr/io.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** defines the data direction (reading from I2C device) in i2c_start(),i2c_rep_start() */
 #define I2C_READ    1
 
@@ -172,7 +176,9 @@ extern unsigned char i2c_readNak(void);
 extern unsigned char i2c_read(unsigned char ack);
 #define i2c_read(ack)  (ack) ? i2c_readAck() : i2c_readNak(); 
 
-
+#ifdef __cplusplus
+}
+#endif
 
 /**@}*/
 #endif

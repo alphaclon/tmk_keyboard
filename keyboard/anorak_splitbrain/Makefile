@@ -59,9 +59,11 @@ SRC += \
 	led.c \
 	crc8.c \
 	matrix.c \
-	keymap_common.c \
+	keymap_splitbrain.c \
 	splitbrain.c \
 	infodisplay.c \
+	hooks.c \
+	command.c \
 	uart/uart.c \
 	backlight/twi/twi_master.c \
 	backlight/gfx/new.cpp \
@@ -104,8 +106,6 @@ MCU = at90usb1286
 #     reflect the processor speed set externally so that the code can use accurate
 #     software delays.
 F_CPU = 16000000
-#F_CPU = 8000000
-
 
 #
 # LUFA specific
@@ -154,6 +154,9 @@ SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 #OPT_DEFS += -DNO_ACTION_LAYER
 #OPT_DEFS += -DNO_ACTION_MACRO
 
+# Do not wait for a connection to an USB host during startup
+OPT_DEFS += -DLUFA_NO_WAIT_FOR_USB
+
 # Search Path
 VPATH += $(TARGET_DIR)
 VPATH += $(TMK_DIR)
@@ -162,8 +165,13 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
-#debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
-debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_BACKLIGHT
+
+debug-on: EXTRAFLAGS += -DDEBUG
+debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
+debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG
+#debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT

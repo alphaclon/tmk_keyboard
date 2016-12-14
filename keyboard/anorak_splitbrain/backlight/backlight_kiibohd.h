@@ -9,6 +9,7 @@
 
 #define BACKLIGHT_BV(arg) (1 << arg)
 
+
 enum backlight_region
 {
     backlight_region_WASD = BACKLIGHT_BV(BACKLIGHT_WASD),
@@ -19,6 +20,11 @@ enum backlight_region
 };
 
 #define BACKLIGHT_MAX_REGIONS 5
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void backlight_setup(void);
 void backlight_setup_finish(void);
@@ -43,5 +49,9 @@ void backlight_save_region_states(void);
 void backlight_load_region_states(void);
 
 void backlight_dump_issi_state(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

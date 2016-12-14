@@ -54,6 +54,48 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * Command common
  ***********************************************************/
 
+static void switch_default_layer(uint8_t layer)
+{
+    xprintf("L%d\n", layer);
+    default_layer_set(1UL<<layer);
+    clear_keyboard();
+}
+
+#ifdef BOOTMAGIC_ENABLE
+static void print_eeconfig(void)
+{
+    print("default_layer: "); print_dec(eeconfig_read_default_layer()); print("\n");
+
+    debug_config_t dc;
+    dc.raw = eeconfig_read_debug();
+    print("debug_config.raw: "); print_hex8(dc.raw); print("\n");
+    print(".enable: "); print_dec(dc.enable); print("\n");
+    print(".matrix: "); print_dec(dc.matrix); print("\n");
+    print(".keyboard: "); print_dec(dc.keyboard); print("\n");
+    print(".mouse: "); print_dec(dc.mouse); print("\n");
+
+    keymap_config_t kc;
+    kc.raw = eeconfig_read_keymap();
+    print("keymap_config.raw: "); print_hex8(kc.raw); print("\n");
+    print(".swap_control_capslock: "); print_dec(kc.swap_control_capslock); print("\n");
+    print(".capslock_to_control: "); print_dec(kc.capslock_to_control); print("\n");
+    print(".swap_lalt_lgui: "); print_dec(kc.swap_lalt_lgui); print("\n");
+    print(".swap_ralt_rgui: "); print_dec(kc.swap_ralt_rgui); print("\n");
+    print(".no_gui: "); print_dec(kc.no_gui); print("\n");
+    print(".swap_grave_esc: "); print_dec(kc.swap_grave_esc); print("\n");
+    print(".swap_backslash_backspace: "); print_dec(kc.swap_backslash_backspace); print("\n");
+    print(".nkro: "); print_dec(kc.nkro); print("\n");
+
+#ifdef BACKLIGHT_ENABLE
+    backlight_config_t bc;
+    bc.raw = eeconfig_read_backlight();
+    print("backlight_config.raw: "); print_hex8(bc.raw); print("\n");
+    print(".enable: "); print_dec(bc.enable); print("\n");
+    print(".level: "); print_dec(bc.level); print("\n");
+#endif
+}
+#endif
+
 static void command_common_splitbrain_help(void)
 {
     print("\n\t- Magic -\n"
@@ -85,7 +127,7 @@ static void command_common_splitbrain_help(void)
     );
 }
 
-static bool command_common(uint8_t code)
+static bool command_common_splitbrain(uint8_t code)
 {
 #ifdef KEYBOARD_LOCK_ENABLE
     static host_driver_t *host_driver = 0;
@@ -136,7 +178,7 @@ static bool command_common(uint8_t code)
             debug_keyboard = false;
             debug_mouse    = false;
             debug_enable   = false;
-            command_console_help();
+            command_common_splitbrain_help();
             print("C> ");
             command_state = CONSOLE;
             break;

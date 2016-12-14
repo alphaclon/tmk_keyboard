@@ -1,7 +1,7 @@
 #ifndef _ADAFRUIT_IS31FL3731_CONFIG_H_
 #define _ADAFRUIT_IS31FL3731_CONFIG_H_
 
-#include "twi_config.h"
+#include "../twi/twi_config.h"
 
 #define ISSI_ADDR_DEFAULT 0x74
 

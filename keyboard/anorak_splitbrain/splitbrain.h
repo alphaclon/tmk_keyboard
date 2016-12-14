@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void splitbrain_config_init(void);
 bool is_left_side_of_keyboard(void);
 bool is_right_side_of_keyboard(void);
@@ -13,3 +17,7 @@ void send_ping_to_other_side(void);
 void send_sync_to_other_side(void);
 void communication_watchdog(void);
 matrix_row_t get_other_sides_row(uint8_t row_number);
+
+#ifdef __cplusplus
+}
+#endif

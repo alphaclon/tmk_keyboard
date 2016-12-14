@@ -1,11 +1,12 @@
 
 #include "animation_utils.h"
-#include "../../splitbrain.h"
 #include "../control.h"
 #include "../key_led_map.h"
+#include "../led_masks.h"
 #include "config.h"
-#include "led_masks.h"
 #include <avr/pgmspace.h>
+
+animation_interface animation;
 
 void get_full_led_mask(uint8_t mask[ISSI_LED_MASK_SIZE])
 {

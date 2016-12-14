@@ -58,6 +58,7 @@ SRC += \
 	led.c \
 	matrix.c \
 	keymap_common.c \
+	led_backlight/key_led_map.cpp \
 	led_backlight/twi/twi_master.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
@@ -71,7 +72,14 @@ SRC += \
 	led_backlight/led_control.cpp \
 	led_backlight/pwm_control.cpp \
 	led_backlight/led_masks.cpp \
-	led_backlight/sleep_led.cpp
+	led_backlight/sleep_led.cpp \
+	led_backlight/animations/animation.cpp \
+	led_backlight/animations/animation_utils.cpp \
+	led_backlight/animations/sweep.cpp \
+	led_backlight/animations/breathing.cpp \
+	led_backlight/animations/type_o_matic.cpp \
+	led_backlight/animations/type_o_circles.cpp
+	
 
 #	led_backlight/twi/twi_master.c \
 #	led_backlight/i2cmaster/twimaster.c \

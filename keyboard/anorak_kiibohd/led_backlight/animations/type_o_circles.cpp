@@ -7,13 +7,13 @@
 
 #define RADIUS_COUNT 5
 
-uint8_t animation_frame = 1;
-uint8_t *pressed_keys = 0;
+static uint8_t *pressed_keys = 0;
+static uint8_t animation_frame = 1;
 
 void type_o_circles_animation_start()
 {
     animation_frame = 1;
-    pressed_keys = (uint8_t)calloc(MATRIX_ROWS * MATRIX_COLS, sizeof(uint8_t));
+    pressed_keys = (uint8_t*)calloc(MATRIX_ROWS * MATRIX_COLS, sizeof(uint8_t));
     animation_prepare(animation_frame);
 }
 
@@ -34,6 +34,7 @@ void type_o_circles_animation_loop()
     {
         for (uint8_t col = 0; col < MATRIX_COLS; ++col)
         {
+        	/*
         	if (pressed_keys[row][col] == 0 && matrix_is_on(row, col))
         		pressed_keys[row][col] = RADIUS_COUNT;
 
@@ -44,6 +45,7 @@ void type_o_circles_animation_loop()
 				issi.drawCircle(led_row, led_col, r, 128);
 				pressed_keys[row][col]--;
         	}
+        	*/
         }
     }
 

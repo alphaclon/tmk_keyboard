@@ -3,7 +3,7 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
-#include "../backlight/control.h"
+#include "control.h"
 #include "debug.h"
 
 extern "C"

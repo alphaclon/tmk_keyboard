@@ -26,7 +26,7 @@ IS31FL3731Buffered::~IS31FL3731Buffered()
 
 void IS31FL3731Buffered::clear()
 {
-	bzero(_pwm_buffer, _pwm_buffer_size);
+	memset(_pwm_buffer, 0, _pwm_buffer_size);
 }
 
 void IS31FL3731Buffered::drawPixel(int16_t x, int16_t y, uint16_t color)

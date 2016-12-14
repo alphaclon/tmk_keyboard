@@ -21,6 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef union {
     uint8_t raw;
     struct {
@@ -36,5 +40,9 @@ void backlight_toggle(void);
 void backlight_step(void);
 void backlight_set(uint8_t level);
 void backlight_level(uint8_t level);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

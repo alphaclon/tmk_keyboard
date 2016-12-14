@@ -4,9 +4,9 @@
 #include "animation_utils.h"
 
 // The lookup table to make the brightness changes be more visible
-uint8_t PROGMEM sweep[] = {1, 2, 3, 4, 6, 8, 10, 15, 20, 30, 40, 60, 60, 40, 30, 20, 15, 10, 8, 6, 4, 3, 2, 1};
-uint8_t animation_frame;
-uint8_t incr;
+uint8_t const sweep[] PROGMEM = {1, 2, 3, 4, 6, 8, 10, 15, 20, 30, 40, 60, 60, 40, 30, 20, 15, 10, 8, 6, 4, 3, 2, 1};
+static uint8_t animation_frame;
+static uint8_t incr;
 
 void sweep_animation_start()
 {

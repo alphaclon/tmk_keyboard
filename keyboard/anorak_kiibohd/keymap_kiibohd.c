@@ -202,7 +202,7 @@ const action_t PROGMEM fn_actions[] =
    [19] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SHIFTED_TQWER),
    [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Breath),
    [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
-   [22] = ACTION_MACRO(KIIBOHD_MACRO_A_KEY_LOCK)
+   [22] = ACTION_MACRO(KIIBOHD_MACRO_A_KEY_LOCK),
    [23] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
    [24] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed),
    [25] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed),
@@ -266,7 +266,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             backlight_save_region_states();
             break;
         case KIIBOHD_FUNCTION_Backlight_Breath:
-        	backlight_sleep_led_toggle();
+        	//backlight_sleep_led_toggle();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
             animation_toggle();
@@ -281,7 +281,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         	start_next_animation();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate_Prev:
-        	start_prev_animation();
+        	start_previous_animation();
             break;
         }
     }

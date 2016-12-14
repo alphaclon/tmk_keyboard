@@ -16,104 +16,105 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <avr/interrupt.h>
-#include <avr/pgmspace.h>
-#include <util/delay.h>
-
+#include "backlight.h"
+#include "../nfo_led.h"
+#include "../splitbrain.h"
+#include "../twi/twi_config.h"
+#include "backlight_kiibohd.h"
+#include "config.h"
 #include "led_control.h"
 #include "led_masks.h"
 #include "pwm_control.h"
 
-#define BRIGHTNESS_MAX_LEVEL 8
-
-#include "config.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "eeconfig.h"
-#include "backlight.h"
-#include "backlight_kiibohd.h"
-#include "../nfo_led.h"
-#include "../splitbrain.h"
-#include "../twi/twi_config.h"
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef DEBUG_BACKLIGHT
-#include "debug.h"
 #include "../uart/uart.h"
+#include "debug.h"
 #else
 #include "nodebug.h"
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+#include <util/delay.h>
+
+#define BRIGHTNESS_MAX_LEVEL 8
 
 uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
 uint8_t current_region = backlight_region_ALL;
 
-
 void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE])
 {
-	if (is_left_side_of_keyboard())
-	{
-		switch (region)
-		{
-		case backlight_region_WASD:
-			memcpy_P(mask, LedMaskWASD_Left, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_controls:
-			memcpy_P(mask, LedMaskCtrl_Left, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_logo:
-			memcpy_P(mask, LedMaskLogo_Left, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_other:
-			memcpy_P(mask, LedMaskOthr_Left, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_ALL:
-			memcpy_P(mask, LedMaskFull_Left, ISSI_LED_MASK_SIZE);
-			break;
-		default:
-			memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
-			dprintf("unknown region: %u\n", region);
-			break;
-		}
-	}
-	else
-	{
-		switch (region)
-		{
-		case backlight_region_WASD:
-			memcpy_P(mask, LedMaskWASD_Right, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_controls:
-			memcpy_P(mask, LedMaskCtrl_Right, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_logo:
-			memcpy_P(mask, LedMaskLogo_Right, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_other:
-			memcpy_P(mask, LedMaskOthr_Right, ISSI_LED_MASK_SIZE);
-			break;
-		case backlight_region_ALL:
-			memcpy_P(mask, LedMaskFull_Right, ISSI_LED_MASK_SIZE);
-			break;
-		default:
-			memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
-			dprintf("unknown region: %u\n", region);
-			break;
-		}
-	}
+    if (is_left_side_of_keyboard())
+    {
+        switch (region)
+        {
+        case backlight_region_WASD:
+            memcpy_P(mask, LedMaskWASD_Left, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_controls:
+            memcpy_P(mask, LedMaskCtrl_Left, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_logo:
+            memcpy_P(mask, LedMaskLogo_Left, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_other:
+            memcpy_P(mask, LedMaskOthr_Left, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_ALL:
+            memcpy_P(mask, LedMaskFull_Left, ISSI_LED_MASK_SIZE);
+            break;
+        default:
+            memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
+            dprintf("unknown region: %u\n", region);
+            break;
+        }
+    }
+    else
+    {
+        switch (region)
+        {
+        case backlight_region_WASD:
+            memcpy_P(mask, LedMaskWASD_Right, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_controls:
+            memcpy_P(mask, LedMaskCtrl_Right, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_logo:
+            memcpy_P(mask, LedMaskLogo_Right, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_other:
+            memcpy_P(mask, LedMaskOthr_Right, ISSI_LED_MASK_SIZE);
+            break;
+        case backlight_region_ALL:
+            memcpy_P(mask, LedMaskFull_Right, ISSI_LED_MASK_SIZE);
+            break;
+        default:
+            memset(mask, 0, ISSI_TOTAL_LED_MASK_SIZE);
+            dprintf("unknown region: %u\n", region);
+            break;
+        }
+    }
 
 #ifdef DEBUG_BACKLIGHT_EXTENDED
-	dprintf("selected mask: %u\r\n", region);
+    dprintf("selected mask: %u\r\n", region);
     for (uint8_t r = 0; r < ISSI_USED_ROWS; ++r)
-	{
-		dprintf("%02u: ", r);
-		for (uint8_t c = 0; c < 2; ++c)
-		{
-			dprintf("%02X ", mask[r*2 + c]);
-		}
-		dprintf("\r\n");
-	}
+    {
+        dprintf("%02u: ", r);
+        for (uint8_t c = 0; c < 2; ++c)
+        {
+            dprintf("%02X ", mask[r * 2 + c]);
+        }
+        dprintf("\r\n");
+    }
     dprintf("\r\n");
 #endif
 }
@@ -189,7 +190,7 @@ void backlight_increase_brightness_for_region(uint8_t region)
 
     if ((regions & region) == 0)
     {
-        //set_region_mode(region, LedControlMode_enable_mask);
+        // set_region_mode(region, LedControlMode_enable_mask);
         return;
     }
 
@@ -218,7 +219,7 @@ void backlight_decrease_brightness_for_region(uint8_t region)
 
     if ((regions & region) == 0)
     {
-        //set_region_mode(region, LedControlMode_enable_mask);
+        // set_region_mode(region, LedControlMode_enable_mask);
         return;
     }
 
@@ -370,6 +371,10 @@ void backlight_set_regions_from_saved_state(void)
     }
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Defined in tmk_core/common/backlight.h
 void backlight_set(uint8_t level)
 {
@@ -387,7 +392,7 @@ void backlight_set(uint8_t level)
 
 void backlight_setup()
 {
-	uart_puts_P("backlight_setup\r\n");
+    dprintf("backlight_setup\r\n");
 
     IS31FL3731_init();
     IS31FL3731_set_power_target_I_max(100);
@@ -395,12 +400,12 @@ void backlight_setup()
     regions = 0;
     current_region = backlight_region_ALL;
 
-    uart_puts_P("backlight_setup\r\n");
+    dprintf("backlight_setup\r\n");
 }
 
 void backlight_setup_finish()
 {
-	uart_puts_P("backlight_setup_finish\r\n");
+    dprintf("backlight_setup_finish\r\n");
 
     IS31FL3731_set_power_target_I_max(200);
 
@@ -417,9 +422,9 @@ void backlight_setup_finish()
     backlight_load_region_states();
 #endif
 
-    uart_puts_P("backlight_setup_finish\r\n");
+    dprintf("backlight_setup_finish\r\n");
 
-    // wait for interface to be ready
+// wait for interface to be ready
 #if 0
 #if TWILIB == AVR315
 	while (TWI_Transceiver_Busy() /*i2cGetState()*/)
@@ -441,13 +446,13 @@ void backlight_setup_finish()
 #endif
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 void backlight_dump_issi_state()
 {
-	issi.dumpConfiguration();
-	issi.dumpLeds(0);
-	issi.dumpBrightness(0);
+    issi.dumpConfiguration();
+    issi.dumpLeds(0);
+    issi.dumpBrightness(0);
 }
-
-#ifdef __cplusplus
-} /* C */
-#endif

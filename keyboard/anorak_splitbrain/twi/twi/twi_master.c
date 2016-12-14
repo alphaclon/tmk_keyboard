@@ -56,8 +56,8 @@
 #include <util/twi.h>
 #include <string.h>
 
-#include "../../backlight/twi/i2c.h"
-#include "../../backlight/twi/legacy.h"
+#include "twi_master.h"
+#include "legacy.h"
 #include "debug.h"
 
 // Standard I2C bit rates are:

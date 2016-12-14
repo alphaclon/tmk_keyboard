@@ -1,28 +1,12 @@
 
 #include "animation.h"
+#include "animation_utils.h"
 #include "breathing.h"
 #include "sweep.h"
 #include "timer.h"
 #include "type_o_circles.h"
 #include "type_o_matic.h"
 
-struct _animation_interface
-{
-    uint8_t brightness;
-    uint16_t delay_in_ms;
-    uint32_t duration_in_ms;
-
-    void (*animationStart)(void);
-    void (*animationStop)(void);
-    void (*animationLoop)(void);
-
-    uint16_t loop_timer;
-    uint32_t duration_timer;
-};
-
-typedef struct _animation_interface animation_interface;
-
-animation_interface animation;
 uint8_t current_annimation = ANIMATION_TYPE_O_MATIC;
 
 void set_animation_sweep()

@@ -69,7 +69,7 @@ SRC += \
 	hooks.c \
 	command.c \
 	uart/uart.c \
-	backlight/twi/twi_master.c \
+	twi/twi/twi_master.c \
 	backlight/gfx/new.cpp \
 	backlight/gfx/glcdfont.c \
 	backlight/gfx/Adafruit_GFX.cpp \
@@ -85,9 +85,9 @@ SRC += \
 	backlight/led_masks_rightside.cpp \
 	backlight/sleep_led.cpp
 
-#	backlight/twi/twi_master.c \
-#	backlight/i2cmaster/twimaster.c \
-#	backlight/avr315/TWI_Master.c \
+#	twi/twi/twi_master.c \
+#	twi/i2cmaster/twimaster.c \
+#	twi/avr315/TWI_Master.c \
 
 CONFIG_H = config.h
 

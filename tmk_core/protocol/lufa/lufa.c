@@ -89,6 +89,50 @@ host_driver_t lufa_driver = {
 };
 
 
+
+/*******************************************************************************
+ * Console
+ ******************************************************************************/
+
+/** LUFA CDC Class driver interface configuration and state information. This structure is
+ *  passed to all CDC Class driver functions, so that multiple instances of the same class
+ *  within a device can be differentiated from one another.
+ */
+
+#ifdef VIRTUAL_SERIAL_ENABLE
+USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
+	{
+		.Config =
+			{
+				.ControlInterfaceNumber   = INTERFACE_ID_CDC_CCI,
+				.DataINEndpoint           =
+					{
+						.Address          = CDC_TX_EPADDR,
+						.Size             = CDC_TXRX_EPSIZE,
+						.Banks            = 1,
+					},
+				.DataOUTEndpoint =
+					{
+						.Address          = CDC_RX_EPADDR,
+						.Size             = CDC_TXRX_EPSIZE,
+						.Banks            = 1,
+					},
+				.NotificationEndpoint =
+					{
+						.Address          = CDC_NOTIFICATION_EPADDR,
+						.Size             = CDC_NOTIFICATION_EPSIZE,
+						.Banks            = 1,
+					},
+			},
+	};
+
+/** Standard file stream for the CDC interface when set up, so that the virtual CDC COM port can be
+ *  used like any regular character stream in the C APIs.
+ */
+static FILE USBSerialStream;
+
+#endif
+
 /*******************************************************************************
  * Console
  ******************************************************************************/
@@ -272,6 +316,11 @@ void EVENT_USB_Device_ConfigurationChanged(void)
     ConfigSuccess &= ENDPOINT_CONFIG(NKRO_IN_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_IN,
                                      NKRO_EPSIZE, ENDPOINT_BANK_SINGLE);
 #endif
+
+#ifdef VIRTUAL_SERIAL_ENABLE
+    ConfigSuccess &= CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC_Interface);
+#endif
+
 }
 
 /*
@@ -411,6 +460,10 @@ void EVENT_USB_Device_ControlRequest(void)
 
             break;
     }
+
+#ifdef VIRTUAL_SERIAL_ENABLE
+    CDC_Device_ProcessControlRequest(&VirtualSerial_CDC_Interface);
+#endif
 }
 
 /*******************************************************************************
@@ -640,6 +693,11 @@ int main(void)
     setup_mcu();
     hook_early_init();
 
+#ifdef VIRTUAL_SERIAL_ENABLE
+	/* Create a regular character stream for the interface so that it can be used with the stdio.h functions */
+	CDC_Device_CreateStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
+#endif
+
 #ifdef LUFA_DEBUG_SUART
     SUART_OUT_DDR |= (1<<SUART_OUT_BIT);
     SUART_OUT_PORT |= (1<<SUART_OUT_BIT);
@@ -682,6 +740,21 @@ int main(void)
         }
 
         keyboard_task();
+
+#ifdef VIRTUAL_SERIAL_ENABLE
+		/* Must throw away unused bytes from the host, or it will lock up while waiting for the device */
+        /*TODO: add command interpreter here!*/
+
+		CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
+
+		/* Write the string to the virtual COM port via the created character stream */
+		//fputs(ReportString, &USBSerialStream);
+
+		/* Alternatively, without the stream: */
+		// CDC_Device_SendString(&VirtualSerial_CDC_Interface, ReportString);
+
+		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
+#endif
 
 #if !defined(INTERRUPT_CONTROL_ENDPOINT)
         USB_USBTask();

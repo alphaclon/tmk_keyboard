@@ -84,11 +84,11 @@ void IS31FL3731::reset()
 
     for (uint8_t f = 0; f < ISSI_TOTAL_FRAMES; f++)
         for (uint8_t i = 0; i <= 0x11; i++)
-            writeRegister8(f, i, 0x0); // each 8 LEDs off
+            writeRegister8(f, i, 0x00); // each 8 LEDs off
 
     for (uint8_t f = 0; f < ISSI_TOTAL_FRAMES; f++)
         for (uint8_t led = 0; led < ISSI_TOTAL_CHANNELS; led++)
-            setLedBrightness(led, 0, f); // set each led to the default PWM
+            setLedBrightness(led, 0x00, f); // set each led to the default PWM
 
     // out of shutdown
     enableSoftwareShutdown(false);

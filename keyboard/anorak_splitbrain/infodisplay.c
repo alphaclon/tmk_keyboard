@@ -41,6 +41,9 @@ uint8_t mcpu_read_register8(uint8_t reg)
 
 void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length)
 {
+	dprintf("mcpu_send_command: %u l:%u\n\r", command, data_length);
+	return;
+
 #if TWILIB == AVR315
 
     TWI_Start_Transceiver_With_Data_2(MATRIX_TWI_ADDRESS, command, data, data_length);

@@ -71,11 +71,11 @@ void matrix_setup(void)
     MCUCR |= (1<<JTD);
     MCUCR |= (1<<JTD);
 
-    LED_GREEN_INIT();
-    LED_YELLOW_INIT();
+    LedInfo1_Init();
+    LedInfo2_Init();
 
-    LED_YELLOW_ON();
-    LED_GREEN_ON();
+    LedInfo2_On();
+    LedInfo1_On();
 }
 
 void matrix_init(void)
@@ -91,8 +91,8 @@ void matrix_init(void)
         matrix_debouncing[i] = 0;
     }
 
-    LED_GREEN_OFF();
-    LED_YELLOW_OFF();
+    LedInfo1_Off();
+    LedInfo2_Off();
 }
 
 uint8_t matrix_scan(void)
@@ -104,9 +104,9 @@ uint8_t matrix_scan(void)
         matrix_row_t cols = read_cols();
 
 		if (cols)
-			LED_YELLOW_ON();
+			LedInfo2_On();
 		else
-			LED_YELLOW_OFF();
+			LedInfo2_Off();
 
         if (matrix_debouncing[i] != cols)
         {
@@ -119,7 +119,7 @@ uint8_t matrix_scan(void)
 
     if (debouncing)
     {
-        LED_GREEN_ON();
+        LedInfo1_On();
 
     	if (timer_elapsed(debouncing_time) > DEBOUNCE_TIME)
     	{
@@ -133,7 +133,7 @@ uint8_t matrix_scan(void)
     }
     else
     {
-        LED_GREEN_OFF();
+        LedInfo1_Off();
     }
 
     animate();

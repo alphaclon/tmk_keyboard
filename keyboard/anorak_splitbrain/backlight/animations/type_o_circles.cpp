@@ -5,7 +5,7 @@
 #include "config.h"
 #include "matrix.h"
 
-#define RADIUS_COUNT 5
+#define RADIUS_COUNT 15
 
 static uint8_t *pressed_keys = 0;
 static uint8_t animation_frame = 1;

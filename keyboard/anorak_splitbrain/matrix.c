@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <util/delay.h>
 #include "backlight/backlight_kiibohd.h"
+#include "backlight/animations/animation.h"
 #include "splitbrain.h"
 #include "infodisplay.h"
 #include "uart/uart.h"
@@ -50,18 +51,6 @@ static void init_cols(void);
 static void unselect_rows(void);
 static void select_row(uint8_t row);
 
-#if 0
-inline uint8_t matrix_rows(void)
-{
-	return MATRIX_ROWS;
-}
-
-inline uint8_t matrix_cols(void)
-{
-	return MATRIX_COLS;
-}
-#endif
-
 void matrix_setup(void)
 {
 	// You need to set JTD bit of MCUCR yourself to use PF4-7 as GPIO. Those
@@ -71,13 +60,13 @@ void matrix_setup(void)
 	MCUCR |= (1 << JTD);
 	MCUCR |= (1 << JTD);
 
-    LED_GREEN_INIT();
-    LED_YELLOW_INIT();
+    LedInfo1_Init();
+    LedInfo2_Init();
 
-    LED_YELLOW_ON();
-    LED_GREEN_ON();
+    LedInfo2_On();
+    LedInfo1_On();
 
-	//uart_puts_P("matrix_setup\r\n");
+	dprintf("matrix_setup\r\n");
 }
 
 void matrix_init(void)
@@ -85,10 +74,10 @@ void matrix_init(void)
 	// initialize row and col
 	matrix_clear();
 
-    LED_GREEN_OFF();
-    LED_YELLOW_OFF();
+    LedInfo1_Off();
+    LedInfo2_Off();
 
-    //uart_puts_P("matrix_init\r\n");
+    dprintf("matrix_init\r\n");
 }
 
 void matrix_clear(void)
@@ -108,53 +97,55 @@ void matrix_clear(void)
 
 uint8_t matrix_scan(void)
 {
-	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
+	for (uint8_t row = 0; row < MATRIX_ROWS; row++)
 	{
-		select_row(i);
+		select_row(row);
 		_delay_us(15);  // without this wait it will read unstable value. 10? 50?
 		matrix_row_t cols = read_cols();
 
 		if (cols)
-			LED_GREEN_ON();
+			LedInfo1_On();
 		else
-			LED_GREEN_OFF();
+			LedInfo1_Off();
 
-		if (matrix_debouncing[i] != cols)
+		if (matrix_debouncing[row] != cols)
 		{
-			dprintf("bounce %u\r\n", i);
+			dprintf("bounce %u\r\n", row);
 
-			matrix_debouncing[i] = cols;
-			debouncing_times[i] = timer_read();
-			debouncing[i] = true;
+			matrix_debouncing[row] = cols;
+			debouncing_times[row] = timer_read();
+			debouncing[row] = true;
 		}
 
 		unselect_rows();
 	}
 
-	for (uint8_t i = 0; i < MATRIX_ROWS; i++)
+	for (uint8_t row = 0; row < MATRIX_ROWS; row++)
 	{
-		if (debouncing[i])
+		if (debouncing[row])
 		{
-			LED_YELLOW_ON();
+			LedInfo2_On();
 
-			if (timer_elapsed(debouncing_times[i]) > DEBOUNCE_TIME)
+			if (timer_elapsed(debouncing_times[row]) > DEBOUNCE_TIME)
 			{
-				dprintf("bounced %u\r\n", i);
+				dprintf("bounced %u\r\n", row);
 
-				matrix[i] = matrix_debouncing[i];
-				debouncing[i] = false;
+				matrix[row] = matrix_debouncing[row];
+				debouncing[row] = false;
 
-				send_row_to_other_side(i, matrix[i]);
+				send_row_to_other_side(row, matrix[row]);
+				mcpu_send_typematrix_row(row, matrix[row]);
 			}
 		}
 		else
 		{
-			LED_YELLOW_OFF();
+			LedInfo2_Off();
 		}
 	}
 
 	receive_data_from_other_side();
 	communication_watchdog();
+	animate();
 
 	return 1;
 }
@@ -183,7 +174,6 @@ inline matrix_row_t matrix_get_row(uint8_t row)
 	return (matrix[row] | get_other_sides_row(row));
 }
 
-#if 0
 void matrix_print(void)
 {
 	dprint("\nr/c 012345678901234567\n");
@@ -195,7 +185,6 @@ void matrix_print(void)
 		dprint("\n");
 	}
 }
-#endif
 
 uint8_t matrix_key_count(void)
 {

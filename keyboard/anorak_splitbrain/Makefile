@@ -84,6 +84,12 @@ SRC += \
 	backlight/led_masks_leftside.cpp \
 	backlight/led_masks_rightside.cpp \
 	backlight/sleep_led.cpp
+	backlight/animations/animation.cpp \
+	backlight/animations/animation_utils.cpp \
+	backlight/animations/sweep.cpp \
+	backlight/animations/breathing.cpp \
+	backlight/animations/type_o_matic.cpp \
+	backlight/animations/type_o_circles.cpp	
 
 #	twi/twi/twi_master.c \
 #	twi/i2cmaster/twimaster.c \
@@ -153,6 +159,7 @@ COMMAND_ENABLE = yes        # Commands for debug and configuration
 NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
 BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+VIRTUAL_SERIAL_ENABLE = no
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER

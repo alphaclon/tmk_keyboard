@@ -95,7 +95,6 @@ uint8_t IS31FL3731Buffered::getPixel(int16_t x, int16_t y)
     return _pwm_buffer[x + y * 16];
 }
 
-
 void IS31FL3731Buffered::blitToFrame(uint8_t frame)
 {
 	setLedsBrightness(_pwm_buffer, frame);

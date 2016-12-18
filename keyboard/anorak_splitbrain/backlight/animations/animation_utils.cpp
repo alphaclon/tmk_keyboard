@@ -9,7 +9,7 @@
 
 animation_interface animation;
 
-void get_full_led_mask(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE])
+void get_full_led_mask(uint8_t mask[ISSI_LED_MASK_SIZE])
 {
     if (is_left_side_of_keyboard())
     {

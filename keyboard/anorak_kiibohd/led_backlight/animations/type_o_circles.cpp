@@ -1,6 +1,7 @@
 
 #include "type_o_circles.h"
 #include "../control.h"
+#include "../key_led_map.h"
 #include "animation_utils.h"
 #include "config.h"
 #include "matrix.h"

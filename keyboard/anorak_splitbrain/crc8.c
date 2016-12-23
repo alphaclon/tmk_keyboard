@@ -83,7 +83,6 @@ unsigned char crc8_calc(unsigned char const *data, unsigned char crc_start, unsi
 	for (i = 0; i < len; i++)
 	{
 		crc = crc8_calc_byte(crc, data[i]);
-		//  pgm_read_byte(&crc8_lookuptable[crc ^ data[i]]);
 	}
 	return crc;
 }

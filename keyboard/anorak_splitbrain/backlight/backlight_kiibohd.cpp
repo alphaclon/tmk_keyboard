@@ -405,8 +405,6 @@ void backlight_setup()
 
 void backlight_setup_finish()
 {
-    dprintf("backlight_setup_finish\r\n");
-
     IS31FL3731_set_power_target_I_max(200);
 
 #ifdef BACKLIGHT_ENABLE

@@ -110,7 +110,7 @@ uint8_t matrix_scan(void)
 
 		if (matrix_debouncing[row] != cols)
 		{
-			dprintf("bounce %u\r\n", row);
+			//dprintf("bounce %u\r\n", row);
 
 			matrix_debouncing[row] = cols;
 			debouncing_times[row] = timer_read();
@@ -128,7 +128,7 @@ uint8_t matrix_scan(void)
 
 			if (timer_elapsed(debouncing_times[row]) > DEBOUNCE_TIME)
 			{
-				dprintf("bounced %u\r\n", row);
+				//dprintf("bounced %u\r\n", row);
 
 				matrix[row] = matrix_debouncing[row];
 				debouncing[row] = false;
@@ -143,9 +143,8 @@ uint8_t matrix_scan(void)
 		}
 	}
 
-	receive_data_from_other_side();
-	communication_watchdog();
-	animate();
+	splitbrain_communication_task();
+	//animate();
 
 	return 1;
 }

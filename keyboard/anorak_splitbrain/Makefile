@@ -181,8 +181,8 @@ include $(TMK_DIR)/rules.mk
 debug-on: EXTRAFLAGS += -DDEBUG
 debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
-debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
-debug-on: EXTRAFLAGS += -DLUFA_DEBUG
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all
 

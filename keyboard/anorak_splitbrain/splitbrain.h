@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 void splitbrain_config_init(void);
+void splitbrain_communication_task(void);
 bool is_left_side_of_keyboard(void);
 bool is_right_side_of_keyboard(void);
 void receive_data_from_other_side(void);

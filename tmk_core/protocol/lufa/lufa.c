@@ -715,12 +715,12 @@ int main(void)
     while (USB_DeviceState != DEVICE_STATE_Configured) {
 #if defined(INTERRUPT_CONTROL_ENDPOINT)
         ;
-#else
-        USB_USBTask();
 #endif
     }
-    print("USB configured.\n");
+#else
+    USB_USBTask();
 #endif
+    print("USB configured.\n");
 
     /* init modules */
     keyboard_init();
@@ -729,15 +729,19 @@ int main(void)
     sleep_led_init();
 #endif
 
-    print("Keyboard start.\n");
     hook_late_init();
+    print("Keyboard start.\n");
+
     while (1) {
+
+    	/*
         while (USB_DeviceState == DEVICE_STATE_Suspended) {
 #ifdef LUFA_DEBUG
             print("[s]");
 #endif
             hook_usb_suspend_loop();
         }
+        */
 
         keyboard_task();
 

@@ -39,7 +39,7 @@
 #include "nodebug.h"
 #endif
 
-#define BAUD 38400 // 9600 14400 19200 38400 57600 115200
+#define BAUD 115200 // 9600 14400 19200 38400 57600 115200
 
 /*
  #define UBRR_VAL ((F_CPU+BAUD*8)/(BAUD*16)-1)   // clever runden
@@ -127,6 +127,7 @@ void splitbrain_config_init()
     last_init_send_ts = timer_read();
     uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
     splitbrain_get_my_side();
+    recv_status = recvStatusIdle;
 }
 
 void splitbrain_get_my_side()
@@ -198,7 +199,7 @@ uint8_t get_datagram_cmd(uint8_t const *buffer)
 void interpret_command(uint8_t const *buffer, uint8_t length)
 {
     uint8_t cmd = get_datagram_cmd(buffer);
-    dprintf("cmd: %u %c, l:%u\r\n", cmd, cmd, length);
+    //dprintf("cmd: %x %c, l:%u\r\n", cmd, cmd, length);
 
     if (cmd == DATAGRAM_CMD_INIT)
     {
@@ -217,63 +218,51 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     }
     else if (cmd == DATAGRAM_CMD_INIT_ACK)
     {
+    	uint16_t rtt = timer_elapsed(last_init_send_ts);
         _is_connected_to_other_side = true;
-        dprintf("init success! rtt %u\r\n", timer_elapsed(last_init_send_ts));
+        dprintf("init ACKed! rtt %u\r\n", rtt);
     }
     else if (cmd == DATAGRAM_CMD_ROW)
     {
-        dprintf("recv row\r\n");
         row_datagram const *rd = (row_datagram const *)(buffer + 3);
+        dprintf("recv row %u\r\n", rd->row_number);
         if (rd->row_number < MATRIX_ROWS)
-        {
             other_sides_rows[rd->row_number] = rd->row;
-            send_row_ack_to_other_side(true);
-        }
+        send_row_ack_to_other_side(rd->row_number < MATRIX_ROWS);
     }
     else if (cmd == DATAGRAM_CMD_ROW_ACK)
     {
+    	uint16_t rtt = timer_elapsed(last_row_send_ts);
         _waiting_for_row_ack = false;
         uint8_t ack = buffer[3];
 
         if (ack != 'A')
         {
-        	resend_row_to_other_side();
+            resend_row_to_other_side();
         }
 
-        dprintf("rtt %u\r\n", timer_elapsed(last_row_send_ts));
+        dprintf("ACK %c rtt %u\r\n", ack, rtt);
     }
     else if (cmd == DATAGRAM_CMD_PING)
     {
-        // dprintf("recv ping %u\r\n", timer_read());
+        //dprintf("recv ping %u\r\n", timer_read());
     }
     else if (cmd == DATAGRAM_CMD_SYNC)
     {
-        // dprintf("recv sync\r\n");
+        dprintf("recv sync\r\n");
     }
     else if (cmd == DATAGRAM_CMD_CMD)
-	{
-		dprintf("recv cmd\r\n");
-		buffer[length] = '\0';
-		char const *cmd = (char const *)(buffer + 3);
-		dprintf("[%s]\r\n", cmd);
-
-		//TODO: do something with this command
-	}
-
-    last_receive_ts = timer_read();
-}
-
-bool check_crc(uint8_t const *buffer, uint8_t length)
-{
-    uint8_t crc = crc8_calc(buffer, 0x2D, length - 2);
-
-    if (crc != buffer[length - 2])
     {
-        dprintf("crc error: [%X] [%X]\r\n", crc, buffer[length - 2]);
-        return false;
+        dprintf("recv cmd\r\n");
+
+        char *cmd = (char *)(buffer + 3);
+        cmd[length] = '\0';
+        dprintf("[%s]\r\n", cmd);
+
+        // TODO: do something with this command
     }
 
-    return true;
+    last_receive_ts = timer_read();
 }
 
 void dump_buffer(uint8_t const *buffer, uint8_t length)
@@ -282,6 +271,21 @@ void dump_buffer(uint8_t const *buffer, uint8_t length)
     for (uint8_t i = 0; i < length; ++i)
         dprintf("%02X ", buffer[i]);
     dprintf("]\r\n");
+}
+
+bool check_crc(uint8_t const *buffer, uint8_t length)
+{
+    uint8_t crc = crc8_calc(buffer, 0x2D, length - 1);
+
+    if (crc != buffer[length - 1])
+    {
+        dprintf("crc error: [%X] [%X]\r\n", crc, buffer[length - 1]);
+        dprintf("msg: ");
+		dump_buffer(buffer, length);
+        return false;
+    }
+
+    return true;
 }
 
 bool might_be_a_datagram(uint8_t buffer_pos, uint8_t payload_length)
@@ -313,12 +317,13 @@ void receive_data_from_other_side()
 
         if (HIGH_BYTE(rd) == 0)
         {
+            LedInfo2_On();
             ucData = LOW_BYTE(rd);
-            dprintf("recv: [%02X] s:%u\r\n", ucData, recv_status);
+            //dprintf("recv: [%02X] s:%u\r\n", ucData, recv_status);
 
             if (ucData == DATAGRAM_START && recv_status == recvStatusIdle)
             {
-                dprintf("recv: start\r\n");
+                //dprintf("recv: start\r\n");
 
                 buffer_pos = 0;
 
@@ -330,12 +335,10 @@ void receive_data_from_other_side()
 
             else if (recv_status == recvStatusFoundStart)
             {
-                // dprintf("recv: len %u\r\n", ucData);
-
                 // start + len + cmd + payload + crc
                 expected_length = ucData + 4;
 
-                dprintf("recv: expected len %u\r\n", expected_length);
+                //dprintf("recv: expected len %u\r\n", expected_length);
 
                 recv_buffer[buffer_pos] = ucData;
                 buffer_pos++;
@@ -353,7 +356,7 @@ void receive_data_from_other_side()
 
             else if (recv_status == recvStatusRecvPayload && buffer_pos < expected_length)
             {
-                dprintf("recv: bpos %u\r\n", buffer_pos);
+                //dprintf("recv: bpos %u\r\n", buffer_pos);
 
                 recv_buffer[buffer_pos] = ucData;
                 buffer_pos++;
@@ -364,15 +367,13 @@ void receive_data_from_other_side()
 
             else if (recv_status == recvStatusFindStop && ucData == DATAGRAM_STOP)
             {
-                dprintf("recv: stop, %u\r\n", buffer_pos);
+                //dprintf("recv: stop %u\r\n", buffer_pos);
 
                 if (datagram_is_valid(buffer_pos, expected_length))
                 {
                     // dprintf("recv: ");
                     // dump_buffer(recv_buffer, buffer_pos);
                     interpret_command(recv_buffer, buffer_pos);
-                    buffer_pos = 0;
-                    recv_status = recvStatusIdle;
                 }
                 else
                 {
@@ -381,8 +382,13 @@ void receive_data_from_other_side()
                         send_row_ack_to_other_side(false);
                     }
                 }
+
+                buffer_pos = 0;
+                recv_status = recvStatusIdle;
             }
-            else if (buffer_pos > expected_length || buffer_pos >= MAX_MSG_LENGTH)
+
+            if ((recv_status == recvStatusRecvPayload || recv_status == recvStatusFindStop) &&
+                (buffer_pos > expected_length || buffer_pos >= MAX_MSG_LENGTH))
             {
                 buffer_pos = 0;
                 expected_length = 0;
@@ -390,12 +396,13 @@ void receive_data_from_other_side()
                 dprintf("recv: msg invalid: ");
                 dump_buffer(recv_buffer, buffer_pos);
             }
+
+            LedInfo2_Off();
         }
         else if ((rd & UART_NO_DATA) != UART_NO_DATA)
         {
             dprintf("uart error: 0x%X\r\n", HIGH_BYTE(rd));
         }
-
     } while (HIGH_BYTE(rd) == 0);
 }
 
@@ -426,13 +433,15 @@ uint8_t fill_message_footer(uint8_t pos)
 
 void send_message_to_other_side(uint8_t length)
 {
+    LedInfo1_On();
     uart_send(send_buffer, length);
     last_send_ts = timer_read();
+    LedInfo2_Off();
 }
 
 void send_init_to_other_side()
 {
-    // dprintf("send init\r\n");
+    dprintf("send init\r\n");
     uint8_t pos = fill_message_header(DATAGRAM_CMD_INIT, 2);
     send_buffer[pos++] = is_connected_to_usb_as_char();
     send_buffer[pos++] = this_side_as_char();
@@ -455,7 +464,7 @@ void send_ping_to_other_side()
     if (!_is_connected_to_other_side)
         return;
 
-    // dprintf("send ping %u\r\n", timer_read());
+    //dprintf("send ping\r\n");
     uint8_t pos = fill_message_header(DATAGRAM_CMD_PING, 2);
     send_buffer[pos++] = is_connected_to_usb() ? 'C' : 'D';
     send_buffer[pos++] = is_right_side_of_keyboard() ? 'R' : 'L';
@@ -468,7 +477,7 @@ void send_sync_to_other_side()
     if (!_is_connected_to_other_side)
         return;
 
-    // dprintf("send sync %u\r\n", timer_read());
+    dprintf("send sync\r\n");
     uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 0);
     pos = fill_message_footer(pos);
     send_message_to_other_side(pos);
@@ -493,7 +502,7 @@ void send_row_to_other_side(uint8_t row_number, matrix_row_t row)
     _waiting_for_row_ack = true;
     last_row_send_ts = timer_read();
 
-    pos = fill_message_footer(pos + sizeof(row_datagram) + 1);
+    pos = fill_message_footer(pos + sizeof(row_datagram));
     send_message_to_other_side(pos);
 }
 
@@ -509,6 +518,9 @@ void send_row_ack_to_other_side(bool ack)
 
 void send_command_to_other_side(char const *cmd)
 {
+    if (!_is_connected_to_other_side)
+        return;
+
     dprintf("send cmd\r\n");
     uint8_t len = strlen(cmd);
     uint8_t pos = fill_message_header(DATAGRAM_CMD_ROW_ACK, len);
@@ -548,10 +560,12 @@ void communication_watchdog()
             send_ping_to_other_side();
         }
 
+        /*
         if (_waiting_for_row_ack && timer_elapsed(last_row_send_ts) > ROW_ACK_TIMEOUT)
         {
             resend_row_to_other_side();
         }
+        */
     }
     else
     {
@@ -560,4 +574,10 @@ void communication_watchdog()
             send_init_to_other_side();
         }
     }
+}
+
+void splitbrain_communication_task()
+{
+    receive_data_from_other_side();
+    communication_watchdog();
 }

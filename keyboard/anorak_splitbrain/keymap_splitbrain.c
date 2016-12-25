@@ -1,6 +1,6 @@
 /*
 Copyright 2012,2013 Jun Wako <wakojun@gmail.com>
-Copyright 2016 Moritz Wenk <>
+Copyright 2016 Moritz Wenk <MoritzWenk@web.de>
 
 
 This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keymap_common.h"
 #include "backlight/backlight_kiibohd.h"
 #include "sleep_led.h"
+#include "backlight/animations/animation.h"
 
 /*
  *  Keymaps
@@ -84,19 +85,19 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
          TAB,    Q,    W,    E,    R,    T,    Y,    U,    I,    O,    P, LBRC, RBRC,              DEL,  END, PGDN,   \
         CAPS,    A,    S,    D,    F,    G,    H,    J,    K,    L, SCLN, QUOT, NUHS,  ENT,                           \
         LSFT, NUBS,    Z,    X,    C,    V,    B,    N,    M, COMM,  DOT, SLSH, RSFT,              FN15,   UP, FN16,  \
-        LCTL,  LGUI, FN0, LALT,  SPC,                    SPC, RALT,  FN0, RGUI,  APP, RCTL,        LEFT, DOWN, RGHT  ),
+        LCTL,  LGUI, FN0, LALT,  SPC,                    SPC, RALT,  FN0,  APP, RGUI, RCTL,        LEFT, DOWN, RGHT  ),
     /*
      * 1: media keys
      *     0     1     2     3     4     5     6     7     8     9    10    11    12    13     14    15   16    18
      *     A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P    Q     R
      */
     KEYMAP_ISO(\
-        TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,   \
+         FN8, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, VOLD, VOLU, MUTE, TRNS, TRNS,   \
 		 FN6, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, MUTE, VOLD, VOLU, TRNS,       TRNS, TRNS, TRNS,   \
-		 FN5, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
-         FN4,  FN9, FN10, FN11, FN12, TRNS, TRNS,  FN9, FN10, FN11, FN12, TRNS, TRNS, TRNS,                           \
-         FN3, FN13, FN14, TRNS, TRNS, TRNS, TRNS, FN13, FN14, TRNS, TRNS, TRNS, TRNS,              FN3,  FN5, TRNS,   \
-         FN2, TRNS, TRNS,  FN8,  FN7,                    FN7,  FN8, TRNS, TRNS, TRNS,  FN2,        FN4,  FN6, TRNS  )
+		 FN5, FN19, FN20, FN21, FN22, FN23, FN19, FN20, FN21, FN22, FN23, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
+         FN4,  FN9, FN10, FN11, FN12, TRNS,  FN9, FN10, FN11, FN12, TRNS, TRNS, TRNS, TRNS,                           \
+         FN3, FN13, FN14, TRNS, TRNS, TRNS, TRNS, FN13, FN14, TRNS, TRNS, TRNS, TRNS,              FN4,  FN6, TRNS,   \
+         FN2, FN17, TRNS, FN18,  FN7,                    FN7, FN18, TRNS,  FN8, FN17,  FN2,        FN3,  FN5, TRNS  )
 };
 
 /*
@@ -110,15 +111,20 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
 /* id for user defined function/macro */
 /* id for user defined function/macro */
 enum function_id {
-	KIIBOHD_FUNCTION_Backlight_Toggle_Region,
+	KIIBOHD_FUNCTION_Backlight_Region_On,
+	KIIBOHD_FUNCTION_Backlight_Region_Off,
 	KIIBOHD_FUNCTION_Backlight_Select_Region,
 	KIIBOHD_FUNCTION_Backlight_Increase_All,
 	KIIBOHD_FUNCTION_Backlight_Decrease_All,
 	KIIBOHD_FUNCTION_Backlight_Increase_Region,
 	KIIBOHD_FUNCTION_Backlight_Decrease_Region,
 	KIIBOHD_FUNCTION_Backlight_Save_Current_State,
-	KIIBOHD_FUNCTION_Backlight_Breath,
 	KIIBOHD_FUNCTION_Backlight_Animate,
+	KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed,
+	KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed,
+	KIIBOHD_FUNCTION_Backlight_Animate_Next,
+	KIIBOHD_FUNCTION_Backlight_Animate_Prev,
+	KIIBOHD_FUNCTION_Backlight_Breath,
 	KIIBOHD_FUNCTION_Backlight_Dump
 };
 
@@ -135,21 +141,28 @@ const action_t PROGMEM fn_actions[] =
 {
 	[0] = ACTION_LAYER_MOMENTARY(LAYER_FN0_MEDIA),
 	[1] = ACTION_LAYER_MOMENTARY(LAYER_FN1_SELECT_LAYER),
-	[2] = ACTION_BACKLIGHT_TOGGLE(),
+	[2] = ACTION_BACKLIGHT_LEVEL((BACKLIGHT_LEVELS - 1)),
 	[3] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Decrease_All),
 	[4] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Increase_All),
     [5] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Decrease_Region),
     [6] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Increase_Region),
-	[7] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Toggle_Region),
+	[7] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Region_On),
 	[8] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Save_Current_State),
-	[9] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_WASD),     //BACKLIGHT_REGION_WASD
-   [10] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_CONTROLS), //BACKLIGHT_REGION_CONTROLS
-   [11] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_OTHER),    //BACKLIGHT_REGION_OTHER
-   [12] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_LOGO),     //BACKLIGHT_REGION_LOGO
+	[9] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_WASD),
+   [10] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_CONTROLS),
+   [11] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_CURSOR),
+   [12] = ACTION_FUNCTION_OPT(KIIBOHD_FUNCTION_Backlight_Select_Region, BACKLIGHT_OTHER),
    [13] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Breath),
-   [14] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
+   [14] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Dump),
    [15] = ACTION_MACRO(KIIBOHD_MACRO_EXTRA_LEFT),
    [16] = ACTION_MACRO(KIIBOHD_MACRO_EXTRA_RIGHT),
+   [17] = ACTION_BACKLIGHT_LEVEL(0),
+   [18] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Region_Off),
+   [19] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
+   [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Prev),
+   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Next),
+   [22] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed),
+   [23] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed),
 };
 
 /*
@@ -189,8 +202,11 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         case KIIBOHD_FUNCTION_Backlight_Select_Region:
             backlight_select_region(BACKLIGHT_BV(opt));
             break;
-        case KIIBOHD_FUNCTION_Backlight_Toggle_Region:
-            backlight_toggle_selected_region();
+        case KIIBOHD_FUNCTION_Backlight_Region_On:
+            backlight_selected_region_on();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Region_Off:
+            backlight_selected_region_off();
             break;
         case KIIBOHD_FUNCTION_Backlight_Increase_All:
             backlight_increase_brightness();
@@ -210,12 +226,24 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         case KIIBOHD_FUNCTION_Backlight_Breath:
         	//sleep_led_toggle();
             break;
-        case KIIBOHD_FUNCTION_Backlight_Animate:
-        	//backlight_test();
-            break;
         case KIIBOHD_FUNCTION_Backlight_Dump:
         	backlight_dump_issi_state();
         	break;
+        case KIIBOHD_FUNCTION_Backlight_Animate:
+            animation_toggle();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed:
+            animation_increase_speed();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed:
+            animation_decrease_speed();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Next:
+        	animation_next();
+            break;
+        case KIIBOHD_FUNCTION_Backlight_Animate_Prev:
+        	animation_previous();
+            break;
         }
     }
 }

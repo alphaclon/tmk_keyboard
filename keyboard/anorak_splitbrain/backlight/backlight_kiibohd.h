@@ -1,9 +1,11 @@
 #ifndef _BACKLIGHT_KIIBOHD_
 #define _BACKLIGHT_KIIBOHD_
 
+#include <inttypes.h>
+
 #define BACKLIGHT_WASD 0
 #define BACKLIGHT_CONTROLS 1
-#define BACKLIGHT_LOGO 2
+#define BACKLIGHT_CURSOR 2
 #define BACKLIGHT_OTHER 3
 #define BACKLIGHT_ALL 4
 
@@ -14,12 +16,12 @@ enum backlight_region
 {
     backlight_region_WASD = BACKLIGHT_BV(BACKLIGHT_WASD),
     backlight_region_controls = BACKLIGHT_BV(BACKLIGHT_CONTROLS),
-    backlight_region_logo = BACKLIGHT_BV(BACKLIGHT_LOGO),
+    backlight_region_cursor = BACKLIGHT_BV(BACKLIGHT_CURSOR),
     backlight_region_other = BACKLIGHT_BV(BACKLIGHT_OTHER),
 	backlight_region_ALL = BACKLIGHT_BV(BACKLIGHT_ALL),
 };
 
-#define BACKLIGHT_MAX_REGIONS 5
+#define BACKLIGHT_MAX_REGIONS BACKLIGHT_ALL
 
 
 #ifdef __cplusplus
@@ -41,6 +43,8 @@ void backlight_enable_region(uint8_t region);
 
 void backlight_select_region(uint8_t region);
 void backlight_toggle_selected_region(void);
+void backlight_selected_region_on(void);
+void backlight_selected_region_off(void);
 
 void backlight_increase_brightness_selected_region(void);
 void backlight_decrease_brightness_selected_region(void);

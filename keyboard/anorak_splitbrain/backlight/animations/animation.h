@@ -26,10 +26,10 @@ void animation_toggle(void);
 void start_animation(void);
 void stop_animation(void);
 void set_animation(uint8_t animation_number);
-void start_next_animation(void);
-void start_previous_animation(void);
-void increase_animation_speed(void);
-void decrease_animation_speed(void);
+void animation_next(void);
+void animation_previous(void);
+void animation_increase_speed(void);
+void animation_decrease_speed(void);
 bool animation_is_running(void);
 
 void animate(void);

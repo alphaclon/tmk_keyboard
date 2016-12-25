@@ -1,4 +1,22 @@
 /*
+Copyright 2016 Moritz Wenk <MoritzWenk@web.de>
+
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*
  * Datenformat für Austausch zwischen linker und rechter Hälft
  *
  * <start> <length> <command> <... payload ...> <crc8> <stop>
@@ -54,6 +72,8 @@
 #define LOW_BYTE(x) (x & 0xff)         // 16Bit 	--> 8Bit
 #define HIGH_BYTE(x) ((x >> 8) & 0xff) // 16Bit 	--> 8Bit
 
+#define PROTOCOL_VERSION 1
+
 #define DATAGRAM_START 0x41
 #define DATAGRAM_STOP 0x45
 
@@ -72,6 +92,8 @@
 #define CONNECTION_TIMEOUT (PING_TIMEOUT * 2)
 #define ROW_ACK_TIMEOUT 30
 
+#define MAX_ROW_RESEND 3
+
 bool _is_left_side_of_keyboard = false;
 bool _is_right_side_of_keyboard = false;
 bool _is_connected_to_other_side = false;
@@ -85,6 +107,7 @@ uint16_t last_row_send_ts = 0;
 uint8_t last_row_number = 0;
 matrix_row_t last_row = 0;
 uint16_t row_resend_counter = 0;
+uint8_t row_resend_count = 0;
 
 matrix_row_t other_sides_rows[MATRIX_ROWS];
 
@@ -114,7 +137,7 @@ void send_init_to_other_side(void);
 void send_init_ack_to_other_side(void);
 bool is_connected_to_usb(void);
 char is_connected_to_usb_as_char(void);
-bool accept_init_request(uint8_t usb, uint8_t side);
+bool accept_init_request(uint8_t usb, uint8_t side, uint8_t protocol_version);
 char this_side_as_char(void);
 void send_row_ack_to_other_side(bool ack);
 void resend_row_to_other_side(void);
@@ -168,16 +191,19 @@ char this_side_as_char()
     return (_is_left_side_of_keyboard ? 'L' : 'R');
 }
 
-bool accept_init_request(uint8_t usb, uint8_t other_side)
+bool accept_init_request(uint8_t usb, uint8_t other_side, uint8_t protocol_version)
 {
     char this_side = this_side_as_char();
 
-    dprintf("init side: this: %c, other: %c\r\n", this_side, other_side);
-    dprintf("init  usb: this: %c, other: %c\r\n", is_connected_to_usb_as_char(), usb);
+    dprintf("init side: %c, other: %c\r\n", this_side, other_side);
+    dprintf("init  usb: %c, other: %c\r\n", is_connected_to_usb_as_char(), usb);
+    dprintf("init prot: %d, other: %d\r\n", PROTOCOL_VERSION, protocol_version);
 
     bool side_matches = (other_side != this_side);
     bool connect_matches = (usb != is_connected_to_usb_as_char());
-    return (side_matches && connect_matches);
+    bool protocol_matches = (PROTOCOL_VERSION == protocol_version);
+
+    return (side_matches && connect_matches && protocol_matches);
 }
 
 void reset_other_sides_rows()
@@ -205,7 +231,7 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     {
         dprintf("recv init\r\n");
 
-        if (accept_init_request(buffer[3], buffer[4]))
+        if (accept_init_request(buffer[3], buffer[4], buffer[5]))
         {
             _is_connected_to_other_side = true;
             send_init_ack_to_other_side();
@@ -236,12 +262,12 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
         _waiting_for_row_ack = false;
         uint8_t ack = buffer[3];
 
+        dprintf("row ACK: %c, rtt %u\r\n", ack, rtt);
+
         if (ack != 'A')
         {
             resend_row_to_other_side();
         }
-
-        dprintf("ACK %c rtt %u\r\n", ack, rtt);
     }
     else if (cmd == DATAGRAM_CMD_PING)
     {
@@ -441,10 +467,11 @@ void send_message_to_other_side(uint8_t length)
 
 void send_init_to_other_side()
 {
-    dprintf("send init\r\n");
-    uint8_t pos = fill_message_header(DATAGRAM_CMD_INIT, 2);
+    //dprintf("send init\r\n");
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_INIT, 3);
     send_buffer[pos++] = is_connected_to_usb_as_char();
     send_buffer[pos++] = this_side_as_char();
+    send_buffer[pos++] = PROTOCOL_VERSION;
     pos = fill_message_footer(pos);
     send_message_to_other_side(pos);
     last_init_send_ts = timer_read();
@@ -465,9 +492,9 @@ void send_ping_to_other_side()
         return;
 
     //dprintf("send ping\r\n");
-    uint8_t pos = fill_message_header(DATAGRAM_CMD_PING, 2);
-    send_buffer[pos++] = is_connected_to_usb() ? 'C' : 'D';
-    send_buffer[pos++] = is_right_side_of_keyboard() ? 'R' : 'L';
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_PING, 0);
+    //send_buffer[pos++] = is_connected_to_usb() ? 'C' : 'D';
+    //send_buffer[pos++] = is_right_side_of_keyboard() ? 'R' : 'L';
     pos = fill_message_footer(pos);
     send_message_to_other_side(pos);
 }
@@ -499,6 +526,7 @@ void send_row_to_other_side(uint8_t row_number, matrix_row_t row)
     rd->row_number = row_number;
     rd->row = row;
 
+    row_resend_count = MAX_ROW_RESEND;
     _waiting_for_row_ack = true;
     last_row_send_ts = timer_read();
 
@@ -532,6 +560,15 @@ void send_command_to_other_side(char const *cmd)
 
 void resend_row_to_other_side()
 {
+	if (row_resend_count)
+	{
+		row_resend_count--;
+	}
+	else
+	{
+		return;
+	}
+
     row_resend_counter++;
     dprintf("resend row! %u\r\n", row_resend_counter);
     send_row_to_other_side(last_row_number, last_row);
@@ -560,12 +597,10 @@ void communication_watchdog()
             send_ping_to_other_side();
         }
 
-        /*
-        if (_waiting_for_row_ack && timer_elapsed(last_row_send_ts) > ROW_ACK_TIMEOUT)
+        if (_waiting_for_row_ack && row_resend_count && timer_elapsed(last_row_send_ts) > ROW_ACK_TIMEOUT)
         {
             resend_row_to_other_side();
         }
-        */
     }
     else
     {

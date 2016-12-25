@@ -1,6 +1,5 @@
 /*
-Copyright 2014 Moritz Wenk <MoritzWenk@web.de>
-
+Copyright 2016 Moritz Wenk <MoritzWenk@web.de>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -63,8 +62,8 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
         case backlight_region_controls:
             memcpy_P(mask, LedMaskCtrl_Left, ISSI_LED_MASK_SIZE);
             break;
-        case backlight_region_logo:
-            memcpy_P(mask, LedMaskLogo_Left, ISSI_LED_MASK_SIZE);
+        case backlight_region_cursor:
+            memcpy_P(mask, LedMaskCurs_Left, ISSI_LED_MASK_SIZE);
             break;
         case backlight_region_other:
             memcpy_P(mask, LedMaskOthr_Left, ISSI_LED_MASK_SIZE);
@@ -88,8 +87,8 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
         case backlight_region_controls:
             memcpy_P(mask, LedMaskCtrl_Right, ISSI_LED_MASK_SIZE);
             break;
-        case backlight_region_logo:
-            memcpy_P(mask, LedMaskLogo_Right, ISSI_LED_MASK_SIZE);
+        case backlight_region_cursor:
+            memcpy_P(mask, LedMaskCurs_Right, ISSI_LED_MASK_SIZE);
             break;
         case backlight_region_other:
             memcpy_P(mask, LedMaskOthr_Right, ISSI_LED_MASK_SIZE);
@@ -131,8 +130,8 @@ uint8_t get_index_for_region(uint8_t region)
     case backlight_region_controls:
         pos = BACKLIGHT_CONTROLS;
         break;
-    case backlight_region_logo:
-        pos = BACKLIGHT_LOGO;
+    case backlight_region_cursor:
+        pos = BACKLIGHT_CURSOR;
         break;
     case backlight_region_other:
         pos = BACKLIGHT_OTHER;
@@ -301,6 +300,16 @@ void backlight_toggle_region(uint8_t region)
     }
 }
 
+void backlight_selected_region_on(void)
+{
+	backlight_enable_region(current_region);
+}
+
+void backlight_selected_region_off(void)
+{
+	backlight_disable_region(current_region);
+}
+
 void backlight_toggle_selected_region()
 {
     backlight_toggle_region(current_region);
@@ -353,13 +362,13 @@ void backlight_set_regions_from_saved_state(void)
 {
     set_region_mode(backlight_region_ALL, LedControlMode_disable_mask);
 
-    dprintf("regions %u\n", regions);
+    dprintf("region states: 0x%X\n", regions);
 
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {
         uint8_t region = (1 << pos);
 
-        dprintf("region %u on=%u\n", region, (regions & region) ? 1 : 0);
+        dprintf("set saved region %u on=%u\n", region, (regions & region) ? 1 : 0);
 
         if (regions & region)
         {
@@ -400,19 +409,15 @@ void backlight_setup()
     regions = 0;
     current_region = backlight_region_ALL;
 
-    dprintf("backlight_setup\r\n");
-}
-
-void backlight_setup_finish()
-{
-    IS31FL3731_set_power_target_I_max(200);
-
 #ifdef BACKLIGHT_ENABLE
     backlight_config_t backlight_config;
     backlight_config.raw = eeconfig_read_backlight();
 
+    dprintf("bl on: %u, level: %u\r\n", backlight_config.enable, backlight_config.level);
+
     if (backlight_config.level == 0)
     {
+    	dprintf("fix level\r\n");
         backlight_config.level = BACKLIGHT_LEVELS - 1;
         eeconfig_write_backlight(backlight_config.raw);
     }
@@ -420,9 +425,14 @@ void backlight_setup_finish()
     backlight_load_region_states();
 #endif
 
-    dprintf("backlight_setup_finish\r\n");
+    dprintf("backlight_setup done\r\n");
+}
 
-// wait for interface to be ready
+void backlight_setup_finish()
+{
+    IS31FL3731_set_power_target_I_max(200);
+
+    // wait for interface to be ready
 #if 0
 #if TWILIB == AVR315
 	while (TWI_Transceiver_Busy() /*i2cGetState()*/)
@@ -442,6 +452,8 @@ void backlight_setup_finish()
 	}
 #endif
 #endif
+
+    dprintf("backlight_setup_finish\r\n");
 }
 
 #ifdef __cplusplus

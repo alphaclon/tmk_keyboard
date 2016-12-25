@@ -703,7 +703,7 @@ int main(void)
     SUART_OUT_PORT |= (1<<SUART_OUT_BIT);
 #endif
 
-    print_set_sendchar(sendchar);
+	print_set_sendchar(sendchar);
     print("\r\ninit\n");
 
     keyboard_setup();

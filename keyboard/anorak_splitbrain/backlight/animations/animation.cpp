@@ -7,10 +7,18 @@
 #include "type_o_circles.h"
 #include "type_o_matic.h"
 
-uint8_t current_annimation = ANIMATION_TYPE_O_MATIC;
+#ifdef DEBUG_ANIMATION
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
+
+uint8_t current_annimation = ANIMATION_SWEEP;
 
 void set_animation_sweep()
 {
+	dprintf("sweep\r\n");
+
     animation.brightness = 0;
     animation.delay_in_ms = 500;
     animation.duration_in_ms = 0;
@@ -22,6 +30,8 @@ void set_animation_sweep()
 
 void set_animation_type_o_matic()
 {
+	dprintf("type_o_matic\r\n");
+
     animation.brightness = 130;
     animation.delay_in_ms = 500;
     animation.duration_in_ms = 0;
@@ -33,6 +43,8 @@ void set_animation_type_o_matic()
 
 void set_animation_type_o_circles()
 {
+	dprintf("type_o_circles\r\n");
+
     animation.brightness = 128;
     animation.delay_in_ms = 500;
     animation.duration_in_ms = 0;
@@ -44,6 +56,8 @@ void set_animation_type_o_circles()
 
 void set_animation_breathing()
 {
+	dprintf("breathing\r\n");
+
     animation.brightness = 0;
     animation.delay_in_ms = 1000;
     animation.duration_in_ms = 0;
@@ -72,37 +86,47 @@ void set_animation(uint8_t animation_number)
     }
 }
 
-void start_next_animation()
+void animation_next()
 {
-    stop_animation();
-
     current_annimation++;
     if (current_annimation >= ANIMATIONS_COUNT)
         current_annimation = 0;
 
+    dprintf("animation_next: %u\r\n", current_annimation);
+
+    if (!animation_is_running())
+    	return;
+
+    stop_animation();
+
     set_animation(current_annimation);
     start_animation();
 }
 
-void start_previous_animation()
+void animation_previous()
 {
-    stop_animation();
-
     if (current_annimation == 0)
         current_annimation = ANIMATIONS_COUNT;
     current_annimation--;
 
+	dprintf("animation_previous: %u\r\n", current_annimation);
+
+    if (!animation_is_running())
+    	return;
+
+    stop_animation();
+
     set_animation(current_annimation);
     start_animation();
 }
 
-void increase_animation_speed(void)
+void animation_increase_speed(void)
 {
     if (animation.delay_in_ms > 100)
         animation.delay_in_ms -= 100;
 }
 
-void decrease_animation_speed(void)
+void animation_decrease_speed(void)
 {
     animation.delay_in_ms += 100;
 }
@@ -121,6 +145,8 @@ void animation_test()
 
 void animation_toggle(void)
 {
+	dprintf("animation_toggle\r\n");
+
     if (animation_is_running())
     {
         stop_animation();
@@ -138,6 +164,8 @@ bool animation_is_running()
 
 void start_animation()
 {
+	dprintf("start_animation\r\n");
+
     if (animation.animationStart)
         animation.animationStart();
 
@@ -147,6 +175,8 @@ void start_animation()
 
 void stop_animation()
 {
+	dprintf("stop_animation\r\n");
+
     if (animation.animationStop)
         animation.animationStop();
 

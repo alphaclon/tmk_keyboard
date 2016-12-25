@@ -104,7 +104,7 @@ uint8_t channel_enabled_masked(uint16_t channel)
 
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
 {
-    dprintf("IS_PWM_control %d: %d\n", control->mode, control->amount);
+    dprintf("IS_PWM_control c:%d, %d\n", control->mode, control->amount);
 
     //select_next_bank();
 

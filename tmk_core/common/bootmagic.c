@@ -63,7 +63,6 @@ void bootmagic(void)
 
 
 
-
     debug_config.enable = 1;
     debug_config.matrix = 0;
     debug_config.keyboard = 0;

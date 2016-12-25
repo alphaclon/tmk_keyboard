@@ -20,6 +20,8 @@ void send_command_to_other_side(char const *cmd);
 void communication_watchdog(void);
 matrix_row_t get_other_sides_row(uint8_t row_number);
 
+char this_side_as_char(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern "C" {
 #include "config.h"
-#include "debug.h"
 #include "eeconfig.h"
 #include "backlight.h"
 #include "backlight_kiibohd.h"
@@ -42,6 +41,11 @@ extern "C" {
 #endif
 }
 
+#ifdef DEBUG_BACKLIGHT
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
 
 #define BRIGHTNESS_MAX_LEVEL 8
 

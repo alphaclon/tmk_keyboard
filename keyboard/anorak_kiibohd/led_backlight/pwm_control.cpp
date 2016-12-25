@@ -183,7 +183,7 @@ void IS31FL3731_PWM_control(tLedPWMControlCommand *control)
         break;
     }
 
-    fix_max_pwm();
+    //fix_max_pwm();
 
     /*
     for (uint8_t i = 0; i < 6; i++)

@@ -1,6 +1,8 @@
 #ifndef _BACKLIGHT_KIIBOHD_
 #define _BACKLIGHT_KIIBOHD_
 
+#include <inttypes.h>
+
 #define BACKLIGHT_WASD 0
 #define BACKLIGHT_JUMP 1
 #define BACKLIGHT_CONTROLS 2
@@ -23,6 +25,9 @@ enum backlight_region
 };
 
 #define BACKLIGHT_MAX_REGIONS 5
+
+void backlight_setup(void);
+void backlight_setup_finish(void);
 
 void backlight_initialize_regions(void);
 

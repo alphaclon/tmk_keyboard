@@ -136,7 +136,7 @@ uint8_t const LedMaskCtrl_Left[ISSI_LED_MASK_SIZE] PROGMEM =
   //0x00, 0x00,
 };
 
-/* Logo LED matrix
+/* Cursor keys LED matrix
  *
  *           1  2  3  4  5  6  7
  * Row 0:  ESC,F1,F2,F3,F4,F5,F6    00000000 01111111   01111111
@@ -148,7 +148,7 @@ uint8_t const LedMaskCtrl_Left[ISSI_LED_MASK_SIZE] PROGMEM =
  *
  */
 
-uint8_t const LedMaskLogo_Left[ISSI_LED_MASK_SIZE] PROGMEM =
+uint8_t const LedMaskCurs_Left[ISSI_LED_MASK_SIZE] PROGMEM =
 {
     0x00, 0x00,
     0x00, 0x00,

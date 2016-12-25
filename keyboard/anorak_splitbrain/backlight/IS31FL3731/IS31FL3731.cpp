@@ -437,7 +437,7 @@ void IS31FL3731::dumpConfiguration()
     dprintf("\r\nregister bank\r\n");
     uint8_t reg;
     reg = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN);
-    dprintf("sdd: %s", (reg ? "no" : "yes"));
+    dprintf("sdd: %s\r\n", (reg ? "no" : "yes"));
 
     for (uint8_t i = 0; i < 0x0D; i++)
     {

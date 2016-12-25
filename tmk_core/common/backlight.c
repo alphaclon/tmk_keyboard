@@ -82,7 +82,7 @@ void backlight_step(void)
 
 void backlight_level(uint8_t level)
 {
-    backlight_config.level ^= level;
+    backlight_config.level = level;
     backlight_config.enable = !!backlight_config.level;
     eeconfig_write_backlight(backlight_config.raw);
     backlight_set(backlight_config.level);

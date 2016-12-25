@@ -41,6 +41,7 @@
 #
 # Default fuses (factory) : E:F3, H:99, L:5E
 # Used fuses              : E:F3, H:D9, L:DE
+# Brown out at 3.5V       : E:F1, H:D9, L:DE
 #
 # Flashing the bootloader:
 #  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -D -U flash:w:BootloaderDFU.hex:a
@@ -181,6 +182,7 @@ include $(TMK_DIR)/rules.mk
 debug-on: EXTRAFLAGS += -DDEBUG
 debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
+debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION

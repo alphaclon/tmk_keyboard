@@ -56,6 +56,7 @@ TARGET_DIR = .
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
 	led.c \
+	hooks.c \
 	matrix.c \
 	keymap_common.c \
 	led_backlight/key_led_map.cpp \
@@ -175,8 +176,9 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
-#debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
 debug-on: EXTRAFLAGS += -DDEBUG
+debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
+#debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT

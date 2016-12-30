@@ -42,9 +42,13 @@
 # Default fuses (factory) : E:F3, H:99, L:5E
 # Used fuses              : E:F3, H:D9, L:DE
 # Brown out at 3.5V       : E:F1, H:D9, L:DE
+#                                       L:D1 preserves EEPROM
 #
 # Flashing the bootloader:
 #  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -D -U flash:w:BootloaderDFU.hex:a
+
+# Flashing the fuses: 
+#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -U lfuse:w:0xde:m -U hfuse:w:0xd1:m -U efuse:w:0xf1:m 
 #
 #----------------------------------------------------------------------------
 
@@ -57,7 +61,7 @@ TMK_DIR = ../../tmk_core
 # Directory keyboard dependent files exist
 TARGET_DIR = .
 
-PROGRAM_CMD = avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B 0.1 -U flash:w:anorak_splitbrain_lufa.hex
+PROGRAM_CMD = avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B 0.1 -U flash:w:anorak_splitbrain_lufa.hex:a
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
@@ -79,6 +83,7 @@ SRC += \
 	backlight/IS31FL3731/IS31FL3731.cpp \
 	backlight/IS31FL3731/IS31FL3731_buffered.cpp \
 	backlight/backlight_kiibohd.c \
+	backlight/eeconfig_backlight.c \
 	backlight/control.cpp \
 	backlight/led_control.cpp \
 	backlight/pwm_control.cpp \
@@ -168,7 +173,7 @@ VIRTUAL_SERIAL_ENABLE = no
 #OPT_DEFS += -DNO_ACTION_MACRO
 
 # Do not wait for a connection to an USB host during startup
-OPT_DEFS += -DLUFA_NO_WAIT_FOR_USB
+#OPT_DEFS += -DLUFA_NO_WAIT_FOR_USB
 
 # Search Path
 VPATH += $(TARGET_DIR)

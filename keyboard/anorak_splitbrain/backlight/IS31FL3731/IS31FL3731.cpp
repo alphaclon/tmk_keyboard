@@ -251,10 +251,6 @@ void IS31FL3731::enableLeds(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uin
 
 #elif TWILIB == BUFFTW
 
-    // i2c_command.parts.cmd = 0;
-    // memcpy(i2c_command.parts.data, ledEnableMask, ISSI_LED_MASK_SIZE);
-    // i2cMasterSendNI(_issi_address, ISSI_LED_MASK_SIZE + 1, i2c_command.raw);
-
     i2cMasterSendCommandNI(_issi_address, 0, ISSI_LED_MASK_SIZE, ledEnableMask);
 
 #else
@@ -286,10 +282,7 @@ void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8
 
 #elif TWILIB == BUFFTW
 
-    // i2c_command.parts.cmd = 0x24;
-    // memcpy(i2c_command.parts.data, pwm, ISSI_USED_CHANNELS);
-    // i2cMasterSendNI(_issi_address, ISSI_USED_CHANNELS + 1, i2c_command.raw);
-
+    i2cMasterSendCommandNI(_issi_address, 0x24, ISSI_USED_CHANNELS, pwm);
     i2cMasterSendCommandNI(_issi_address, 0x24, ISSI_USED_CHANNELS, pwm);
 
 #else
@@ -313,9 +306,6 @@ void IS31FL3731::selectBank(uint8_t bank)
 
 #elif TWILIB == BUFFTW
 
-    // uint8_t cmd[2] = {ISSI_COMMANDREGISTER, bank};
-    // i2cMasterSendNI(_issi_address, 2, cmd);
-
     i2cMasterSendCommandNI(_issi_address, ISSI_COMMANDREGISTER, 1, &bank);
 
 #else
@@ -337,9 +327,6 @@ void IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
     TWI_Start_Transceiver_With_Data_1(_issi_address, reg, data);
 
 #elif TWILIB == BUFFTW
-
-    // uint8_t cmd[2] = {reg, data};
-    // i2cMasterSendNI(_issi_address, 2, cmd);
 
     uint8_t retval = i2cMasterSendCommandNI(_issi_address, reg, 1, &data);
 
@@ -368,9 +355,6 @@ void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 
 #elif TWILIB == BUFFTW
 
-    // uint8_t cmd[3] = {reg, data >> 8, data & 0xFF};
-    // i2cMasterSendNI(_issi_address, 3, cmd);
-
     uint8_t retval = i2cMasterSendCommandNI(_issi_address, reg, 2, (uint8_t const *)&data);
 
     if (retval != I2C_OK)
@@ -397,13 +381,11 @@ uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 
 #if TWILIB == AVR315
 
-    TWI_Start_Transceiver_With_Data_2(_issi_address | (1 << TWI_READ_BIT), reg, &data, 1);
+    TWI_Start_Transceiver_With_Data_1(_issi_address, reg, 0);
+    TWI_Start_Transceiver_Read(_issi_address, 1);
     TWI_Get_Data_From_Transceiver(&data, 1);
 
 #elif TWILIB == BUFFTW
-
-    // uint8_t cmd[1] = {reg};
-    // i2cMasterSendNI(_issi_address, 1, cmd);
 
     uint8_t retval = i2cMasterSendCommandNI(_issi_address, reg, 0, 0);
 
@@ -454,6 +436,9 @@ void IS31FL3731::dumpLeds(uint8_t bank)
     selectBank(bank);
 
 #if TWILIB == AVR315
+    TWI_Start_Transceiver_With_Data_1(_issi_address, ISSI__ENABLE_OFFSET, 0);
+    TWI_Start_Transceiver_Read(_issi_address, ISSI_TOTAL_LED_MASK_SIZE);
+    TWI_Get_Data_From_Transceiver(leds, ISSI_TOTAL_LED_MASK_SIZE);
 #elif TWILIB == BUFFTW
     i2cMasterSendCommandNI(_issi_address, ISSI__ENABLE_OFFSET, 0, 0);
     i2cMasterReceiveNI(_issi_address, ISSI_TOTAL_LED_MASK_SIZE, leds);
@@ -487,6 +472,9 @@ void IS31FL3731::dumpBrightness(uint8_t bank)
     selectBank(bank);
 
 #if TWILIB == AVR315
+    TWI_Start_Transceiver_With_Data_1(_issi_address, ISSI__COLOR_OFFSET, 0);
+    TWI_Start_Transceiver_Read(_issi_address, ISSI_TOTAL_CHANNELS);
+    TWI_Get_Data_From_Transceiver(pwm, ISSI_TOTAL_CHANNELS);
 #elif TWILIB == BUFFTW
     i2cMasterSendCommandNI(_issi_address, ISSI__COLOR_OFFSET, 0, 0);
     i2cMasterReceiveNI(_issi_address, ISSI_TOTAL_CHANNELS, pwm);

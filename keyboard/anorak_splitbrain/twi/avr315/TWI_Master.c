@@ -44,7 +44,7 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#include "../../backlight/avr315/TWI_Master.h"
+#include "TWI_Master.h"
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
@@ -106,14 +106,19 @@ void TWI_Start_Transceiver_With_Data_1(unsigned char slave_address, unsigned cha
 
     TWI_data_length = 3; // Number of data to transmit.
     TWI_buf[0] = slave_address;        // Store slave address with R/W setting.
-    TWI_buf[1] = register_address;
 
     if (!(slave_address & (TRUE << TWI_READ_BIT))) // If it is a write operation, then also copy data.
     {
+        TWI_buf[1] = register_address;
     	TWI_buf[2] = data;
     }
 
-    TWI_Start_Transceiver();
+    TWI_statusReg.all = 0;
+    TWI_state = TWI_NO_STATE;
+    TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+           (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+           (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+           (0 << TWWC);
 }
 
 /****************************************************************************
@@ -124,26 +129,29 @@ The function will hold execution (loop) until the TWI_ISR has completed with the
 then initialize the next operation and return.
 ****************************************************************************/
 void TWI_Start_Transceiver_With_Data_2(unsigned char slave_address, unsigned char register_address, const unsigned char *data,
-                                     unsigned char data_length)
+                                       unsigned char data_length)
 {
 	dprintf("I2C: Data_2\r\n");
-
-    unsigned char temp;
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
 
     TWI_data_length = data_length + 2; // Number of data to transmit.
     TWI_buf[0] = slave_address;        // Store slave address with R/W setting.
-    TWI_buf[1] = register_address;
 
     if (!(slave_address & (TRUE << TWI_READ_BIT))) // If it is a write operation, then also copy data.
     {
-        for (temp = 0; temp < data_length; temp++)
+        TWI_buf[1] = register_address;
+        for (unsigned char temp = 0; temp < data_length; temp++)
             TWI_buf[temp + 2] = data[temp];
     }
 
-    TWI_Start_Transceiver();
+    TWI_statusReg.all = 0;
+    TWI_state = TWI_NO_STATE;
+    TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+           (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+           (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+           (0 << TWWC);
 }
 
 /****************************************************************************
@@ -157,8 +165,6 @@ void TWI_Start_Transceiver_With_Data(const unsigned char *data, unsigned char da
 {
 	dprintf("I2C: Data\r\n");
 
-    unsigned char temp;
-
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
 
@@ -167,7 +173,7 @@ void TWI_Start_Transceiver_With_Data(const unsigned char *data, unsigned char da
 
     if (!(data[0] & (TRUE << TWI_READ_BIT))) // If it is a write operation, then also copy data.
     {
-        for (temp = 1; temp < data_length; temp++)
+        for (unsigned char temp = 1; temp < data_length; temp++)
             TWI_buf[temp] = data[temp];
     }
 
@@ -177,6 +183,31 @@ void TWI_Start_Transceiver_With_Data(const unsigned char *data, unsigned char da
            (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
            (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
            (0 << TWWC);                                //
+}
+
+/****************************************************************************
+Call this function to send a prepared message. The first byte must contain the slave address and the
+read/write bit. Consecutive bytes contain the data to be sent, or empty locations for data to be read
+from the slave. Also include how many bytes that should be sent/read including the address byte.
+The function will hold execution (loop) until the TWI_ISR has completed with the previous operation,
+then initialize the next operation and return.
+****************************************************************************/
+void TWI_Start_Transceiver_Read(unsigned char slave_address, unsigned char data_length)
+{
+	dprintf("I2C: Read\r\n");
+
+    while (TWI_Transceiver_Busy())
+        ; // Wait until TWI is ready for next transmission.
+
+    TWI_data_length = data_length + 1; // Number of data to transmit.
+    TWI_buf[0] = slave_address | (TRUE << TWI_READ_BIT);  // Store slave address with R/W setting.
+
+    TWI_statusReg.all = 0;
+    TWI_state = TWI_NO_STATE;
+    TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+           (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+           (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+           (0 << TWWC);
 }
 
 /****************************************************************************
@@ -206,14 +237,12 @@ If there was an error in the previous transmission the function will return the 
 ****************************************************************************/
 unsigned char TWI_Get_Data_From_Transceiver(unsigned char *msg, unsigned char msgSize)
 {
-    unsigned char i;
-
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
 
     if (TWI_statusReg.lastTransOK) // Last transmission competed successfully.
     {
-        for (i = 0; i < msgSize; i++) // Copy data from Transceiver buffer.
+        for (unsigned char i = 0; i < msgSize; i++) // Copy data from Transceiver buffer.
         {
             msg[i] = TWI_buf[i];
         }

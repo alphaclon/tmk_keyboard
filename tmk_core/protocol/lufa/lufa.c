@@ -687,10 +687,22 @@ static void setup_usb(void)
     USB_Device_EnableSOFEvents();
 }
 
+bool is_other_side_connected_to_usb(void) __attribute__ ((weak));
+bool is_other_side_connected_to_usb(void)
+{
+	return false;
+}
+
+void splitbrain_communication_task(void) __attribute__ ((weak));
+void splitbrain_communication_task(void)
+{
+
+}
+
 int main(void)  __attribute__ ((weak));
 int main(void)
 {
-    setup_mcu();
+	setup_mcu();
     hook_early_init();
 
 #ifdef VIRTUAL_SERIAL_ENABLE
@@ -710,16 +722,17 @@ int main(void)
     setup_usb();
     sei();
 
-#ifndef LUFA_NO_WAIT_FOR_USB
     /* wait for USB startup & debug output */
-    while (USB_DeviceState != DEVICE_STATE_Configured) {
+    while (USB_DeviceState != DEVICE_STATE_Configured && !is_other_side_connected_to_usb())
+    {
 #if defined(INTERRUPT_CONTROL_ENDPOINT)
         ;
-#endif
-    }
 #else
-    USB_USBTask();
+        USB_USBTask();
 #endif
+        splitbrain_communication_task();
+    }
+
     print("USB configured.\n");
 
     /* init modules */
@@ -732,16 +745,15 @@ int main(void)
     hook_late_init();
     print("Keyboard start.\n");
 
-    while (1) {
-
-    	/*
-        while (USB_DeviceState == DEVICE_STATE_Suspended) {
+    while (1)
+    {
+        while (USB_DeviceState == DEVICE_STATE_Suspended && !is_other_side_connected_to_usb())
+        {
 #ifdef LUFA_DEBUG
             print("[s]");
 #endif
             hook_usb_suspend_loop();
         }
-        */
 
         keyboard_task();
 

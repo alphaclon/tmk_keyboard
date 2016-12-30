@@ -42,8 +42,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "splitbrain.h"
 #include "LUFA/Drivers/USB/USB.h"
+#include "action.h"
+#include "backlight.h"
+#include "backlight/backlight_kiibohd.h"
+#include "backlight/eeconfig_backlight.h"
 #include "config.h"
 #include "crc8.h"
+#include "eeconfig.h"
+#include "matrix.h"
 #include "nfo_led.h"
 #include "timer.h"
 #include "uart/uart.h"
@@ -77,12 +83,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DATAGRAM_START 0x41
 #define DATAGRAM_STOP 0x45
 
-#define DATAGRAM_CMD_INIT 0x49
-#define DATAGRAM_CMD_INIT_ACK 0x48
+#define DATAGRAM_CMD_CONNECT 0x49
+#define DATAGRAM_CMD_CONNECT_ACK 0x48
 #define DATAGRAM_CMD_PING 0x50
 #define DATAGRAM_CMD_ROW 0x52
 #define DATAGRAM_CMD_ROW_ACK 0x51
 #define DATAGRAM_CMD_SYNC 0x53
+#define DATAGRAM_CMD_SLEEP 0x54
 #define DATAGRAM_CMD_CMD 0x60
 
 #define MAX_MSG_LENGTH 16
@@ -98,6 +105,7 @@ bool _is_left_side_of_keyboard = false;
 bool _is_right_side_of_keyboard = false;
 bool _is_connected_to_other_side = false;
 bool _waiting_for_row_ack = false;
+bool _is_other_side_connected_to_usb = false;
 
 uint16_t last_receive_ts = 0;
 uint16_t last_send_ts = 0;
@@ -133,11 +141,11 @@ struct _row_datagram
 typedef struct _row_datagram row_datagram;
 
 void splitbrain_get_my_side(void);
-void send_init_to_other_side(void);
-void send_init_ack_to_other_side(void);
+void send_connect_request_to_other_side(void);
+void send_connect_ack_to_other_side(void);
 bool is_connected_to_usb(void);
 char is_connected_to_usb_as_char(void);
-bool accept_init_request(uint8_t usb, uint8_t side, uint8_t protocol_version);
+bool accept_connection_request(uint8_t usb, uint8_t side, uint8_t protocol_version);
 char this_side_as_char(void);
 void send_row_ack_to_other_side(bool ack);
 void resend_row_to_other_side(void);
@@ -146,7 +154,7 @@ void reset_other_sides_rows(void);
 
 void splitbrain_config_init()
 {
-    reset_other_sides_rows();
+	reset_other_sides_rows();
     last_init_send_ts = timer_read();
     uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
     splitbrain_get_my_side();
@@ -181,6 +189,11 @@ bool is_connected_to_usb()
     return (USB_DeviceState == DEVICE_STATE_Configured);
 }
 
+bool is_other_side_connected_to_usb(void)
+{
+    return _is_other_side_connected_to_usb;
+}
+
 char is_connected_to_usb_as_char()
 {
     return (is_connected_to_usb() ? 'C' : 'D');
@@ -191,19 +204,51 @@ char this_side_as_char()
     return (_is_left_side_of_keyboard ? 'L' : 'R');
 }
 
-bool accept_init_request(uint8_t usb, uint8_t other_side, uint8_t protocol_version)
+bool accept_connection_request(uint8_t usb, uint8_t other_side, uint8_t protocol_version)
 {
     char this_side = this_side_as_char();
 
-    dprintf("init side: %c, other: %c\r\n", this_side, other_side);
-    dprintf("init  usb: %c, other: %c\r\n", is_connected_to_usb_as_char(), usb);
-    dprintf("init prot: %d, other: %d\r\n", PROTOCOL_VERSION, protocol_version);
+    dprintf("con side: %c, other: %c\r\n", this_side, other_side);
+    dprintf("con  usb: %c, other: %c\r\n", is_connected_to_usb_as_char(), usb);
+    dprintf("con prot: %d, other: %d\r\n", PROTOCOL_VERSION, protocol_version);
 
     bool side_matches = (other_side != this_side);
     bool connect_matches = (usb != is_connected_to_usb_as_char());
     bool protocol_matches = (PROTOCOL_VERSION == protocol_version);
 
     return (side_matches && connect_matches && protocol_matches);
+}
+
+void accept_sync_request(uint8_t const *buffer, uint8_t length)
+{
+#ifdef BACKLIGHT_ENABLE
+    uint8_t backlight = buffer[0];
+    if (backlight != eeconfig_read_backlight())
+    {
+        dprintf("sync: fix backlight %u %u\r\n", backlight, eeconfig_read_backlight());
+        eeconfig_write_backlight(backlight);
+        dprintf("sync: fix backlight %u %u\r\n", backlight, eeconfig_read_backlight());
+    }
+
+    uint8_t regions = buffer[1];
+    if (regions != eeconfig_read_backlight_regions())
+    {
+        dprintf("sync: fix regions %u %u\r\n", regions, eeconfig_read_backlight_regions());
+        eeconfig_write_backlight_regions(regions);
+        dprintf("sync: fix regions %u %u\r\n", regions, eeconfig_read_backlight_regions());
+    }
+
+    for (uint8_t i = 0; i < BACKLIGHT_MAX_REGIONS; i++)
+    {
+        uint8_t region_brightness = buffer[i + 2];
+        if (region_brightness != eeconfig_read_backlight_region_brightness(i))
+        {
+            dprintf("sync: fix brightness %u %u\r\n", region_brightness, eeconfig_read_backlight_region_brightness(i));
+            eeconfig_write_backlight_region_brightness(i, region_brightness);
+            dprintf("sync: fix brightness %u %u\r\n", region_brightness, eeconfig_read_backlight_region_brightness(i));
+        }
+    }
+#endif
 }
 
 void reset_other_sides_rows()
@@ -225,28 +270,36 @@ uint8_t get_datagram_cmd(uint8_t const *buffer)
 void interpret_command(uint8_t const *buffer, uint8_t length)
 {
     uint8_t cmd = get_datagram_cmd(buffer);
-    //dprintf("cmd: %x %c, l:%u\r\n", cmd, cmd, length);
+    // dprintf("cmd: %x %c, l:%u\r\n", cmd, cmd, length);
 
-    if (cmd == DATAGRAM_CMD_INIT)
+    if (cmd == DATAGRAM_CMD_CONNECT)
     {
-        dprintf("recv init\r\n");
+        dprintf("recv connect\r\n");
 
-        if (accept_init_request(buffer[3], buffer[4], buffer[5]))
+        if (accept_connection_request(buffer[3], buffer[4], buffer[5]))
         {
             _is_connected_to_other_side = true;
-            send_init_ack_to_other_side();
-            dprintf("init success!\r\n");
+            send_connect_ack_to_other_side();
+            dprintf("connect success!\r\n");
         }
         else
         {
-            dprintf("init failed!\r\n");
+            dprintf("connect failed!\r\n");
         }
     }
-    else if (cmd == DATAGRAM_CMD_INIT_ACK)
+    else if (cmd == DATAGRAM_CMD_CONNECT_ACK)
     {
-    	uint16_t rtt = timer_elapsed(last_init_send_ts);
+        uint16_t rtt = timer_elapsed(last_init_send_ts);
+
         _is_connected_to_other_side = true;
-        dprintf("init ACKed! rtt %u\r\n", rtt);
+        _is_other_side_connected_to_usb = false;
+
+        send_sync_to_other_side();
+
+        backlight_load_region_states();
+        backlight_init();
+
+        dprintf("connect ACKed! rtt %u\r\n", rtt);
     }
     else if (cmd == DATAGRAM_CMD_ROW)
     {
@@ -258,7 +311,7 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     }
     else if (cmd == DATAGRAM_CMD_ROW_ACK)
     {
-    	uint16_t rtt = timer_elapsed(last_row_send_ts);
+        uint16_t rtt = timer_elapsed(last_row_send_ts);
         _waiting_for_row_ack = false;
         uint8_t ack = buffer[3];
 
@@ -271,11 +324,34 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     }
     else if (cmd == DATAGRAM_CMD_PING)
     {
-        //dprintf("recv ping %u\r\n", timer_read());
+        // dprintf("recv ping %u\r\n", timer_read());
     }
     else if (cmd == DATAGRAM_CMD_SYNC)
     {
         dprintf("recv sync\r\n");
+        accept_sync_request(buffer + 3, length - 3);
+        _is_other_side_connected_to_usb = true;
+    }
+    else if (cmd == DATAGRAM_CMD_SLEEP)
+    {
+        bool sleep = buffer[3];
+        dprintf("recv sleep %u\r\n", sleep);
+
+        if (sleep)
+        {
+            // USB_DeviceState = DEVICE_STATE_Suspended;
+        }
+        else
+        {
+#if 0
+        	matrix_clear();
+        	clear_keyboard();
+#ifdef BACKLIGHT_ENABLE
+        	backlight_init();
+#endif
+#endif
+            // USB_DeviceState = DEVICE_STATE_Unattached;
+        }
     }
     else if (cmd == DATAGRAM_CMD_CMD)
     {
@@ -307,7 +383,7 @@ bool check_crc(uint8_t const *buffer, uint8_t length)
     {
         dprintf("crc error: [%X] [%X]\r\n", crc, buffer[length - 1]);
         dprintf("msg: ");
-		dump_buffer(buffer, length);
+        dump_buffer(buffer, length);
         return false;
     }
 
@@ -345,11 +421,11 @@ void receive_data_from_other_side()
         {
             LedInfo2_On();
             ucData = LOW_BYTE(rd);
-            //dprintf("recv: [%02X] s:%u\r\n", ucData, recv_status);
+            // dprintf("recv: [%02X] s:%u\r\n", ucData, recv_status);
 
             if (ucData == DATAGRAM_START && recv_status == recvStatusIdle)
             {
-                //dprintf("recv: start\r\n");
+                // dprintf("recv: start\r\n");
 
                 buffer_pos = 0;
 
@@ -364,7 +440,7 @@ void receive_data_from_other_side()
                 // start + len + cmd + payload + crc
                 expected_length = ucData + 4;
 
-                //dprintf("recv: expected len %u\r\n", expected_length);
+                // dprintf("recv: expected len %u\r\n", expected_length);
 
                 recv_buffer[buffer_pos] = ucData;
                 buffer_pos++;
@@ -382,7 +458,7 @@ void receive_data_from_other_side()
 
             else if (recv_status == recvStatusRecvPayload && buffer_pos < expected_length)
             {
-                //dprintf("recv: bpos %u\r\n", buffer_pos);
+                // dprintf("recv: bpos %u\r\n", buffer_pos);
 
                 recv_buffer[buffer_pos] = ucData;
                 buffer_pos++;
@@ -393,7 +469,7 @@ void receive_data_from_other_side()
 
             else if (recv_status == recvStatusFindStop && ucData == DATAGRAM_STOP)
             {
-                //dprintf("recv: stop %u\r\n", buffer_pos);
+                // dprintf("recv: stop %u\r\n", buffer_pos);
 
                 if (datagram_is_valid(buffer_pos, expected_length))
                 {
@@ -465,10 +541,10 @@ void send_message_to_other_side(uint8_t length)
     LedInfo2_Off();
 }
 
-void send_init_to_other_side()
+void send_connect_request_to_other_side()
 {
-    //dprintf("send init\r\n");
-    uint8_t pos = fill_message_header(DATAGRAM_CMD_INIT, 3);
+    // dprintf("send init\r\n");
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_CONNECT, 3);
     send_buffer[pos++] = is_connected_to_usb_as_char();
     send_buffer[pos++] = this_side_as_char();
     send_buffer[pos++] = PROTOCOL_VERSION;
@@ -477,10 +553,10 @@ void send_init_to_other_side()
     last_init_send_ts = timer_read();
 }
 
-void send_init_ack_to_other_side()
+void send_connect_ack_to_other_side()
 {
     dprintf("send init ack\r\n");
-    uint8_t pos = fill_message_header(DATAGRAM_CMD_INIT_ACK, 0);
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_CONNECT_ACK, 0);
     pos = fill_message_footer(pos);
     send_message_to_other_side(pos);
     last_init_send_ts = timer_read();
@@ -491,12 +567,25 @@ void send_ping_to_other_side()
     if (!_is_connected_to_other_side)
         return;
 
-    //dprintf("send ping\r\n");
+    // dprintf("send ping\r\n");
     uint8_t pos = fill_message_header(DATAGRAM_CMD_PING, 0);
-    //send_buffer[pos++] = is_connected_to_usb() ? 'C' : 'D';
-    //send_buffer[pos++] = is_right_side_of_keyboard() ? 'R' : 'L';
+    // send_buffer[pos++] = is_connected_to_usb() ? 'C' : 'D';
+    // send_buffer[pos++] = is_right_side_of_keyboard() ? 'R' : 'L';
     pos = fill_message_footer(pos);
     send_message_to_other_side(pos);
+}
+
+void send_sleep_to_other_side(bool sleep)
+{
+    if (!_is_connected_to_other_side || !is_connected_to_usb())
+        return;
+
+    dprintf("send sleep %u\r\n", sleep);
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_SLEEP, 1);
+    send_buffer[pos++] = sleep;
+    pos = fill_message_footer(pos);
+    send_message_to_other_side(pos);
+    last_init_send_ts = timer_read();
 }
 
 void send_sync_to_other_side()
@@ -505,7 +594,21 @@ void send_sync_to_other_side()
         return;
 
     dprintf("send sync\r\n");
+
+#ifdef BACKLIGHT_ENABLE
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 1 + 1 + BACKLIGHT_MAX_REGIONS);
+    dprintf("sync: bl:%u\r\n", eeconfig_read_backlight());
+    send_buffer[pos++] = eeconfig_read_backlight();
+    send_buffer[pos++] = eeconfig_read_backlight_regions();
+    dprintf("sync: rg:%u\r\n", eeconfig_read_backlight_regions());
+    for (uint8_t i = 0; i < BACKLIGHT_MAX_REGIONS; i++)
+    {
+    	dprintf("sync: rg%u:%u\r\n", i, eeconfig_read_backlight_region_brightness(i));
+        send_buffer[pos++] = eeconfig_read_backlight_region_brightness(i);
+    }
+#else
     uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 0);
+#endif
     pos = fill_message_footer(pos);
     send_message_to_other_side(pos);
 }
@@ -560,14 +663,14 @@ void send_command_to_other_side(char const *cmd)
 
 void resend_row_to_other_side()
 {
-	if (row_resend_count)
-	{
-		row_resend_count--;
-	}
-	else
-	{
-		return;
-	}
+    if (row_resend_count)
+    {
+        row_resend_count--;
+    }
+    else
+    {
+        return;
+    }
 
     row_resend_counter++;
     dprintf("resend row! %u\r\n", row_resend_counter);
@@ -578,6 +681,7 @@ void reset_connection_on_timeout()
 {
     dprintf("connection broken!\r\n");
     _is_connected_to_other_side = false;
+    _is_other_side_connected_to_usb = false;
     _waiting_for_row_ack = false;
     reset_other_sides_rows();
     last_receive_ts = timer_read();
@@ -604,9 +708,9 @@ void communication_watchdog()
     }
     else
     {
-        if (timer_elapsed(last_init_send_ts) > INIT_TIMEOUT)
+        if (is_connected_to_usb() && timer_elapsed(last_init_send_ts) > INIT_TIMEOUT)
         {
-            send_init_to_other_side();
+            send_connect_request_to_other_side();
         }
     }
 }

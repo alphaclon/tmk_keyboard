@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 extern "C" {
 #endif
 #include "eeconfig.h"
+#include "eeconfig_backlight.h"
 #ifdef __cplusplus
 }
 #endif
@@ -302,12 +303,12 @@ void backlight_toggle_region(uint8_t region)
 
 void backlight_selected_region_on(void)
 {
-	backlight_enable_region(current_region);
+    backlight_enable_region(current_region);
 }
 
 void backlight_selected_region_off(void)
 {
-	backlight_disable_region(current_region);
+    backlight_disable_region(current_region);
 }
 
 void backlight_toggle_selected_region()
@@ -387,7 +388,7 @@ extern "C" {
 // Defined in tmk_core/common/backlight.h
 void backlight_set(uint8_t level)
 {
-    dprintf("bl_set %d\n", level);
+    dprintf("backlight_set level:%d\n", level);
 
     if (level == 0)
     {
@@ -403,6 +404,11 @@ void backlight_setup()
 {
     dprintf("backlight_setup\r\n");
 
+    if (!eeconfig_is_enabled())
+    {
+    	eeconfig_backlight_init();
+    }
+
     IS31FL3731_init();
     IS31FL3731_set_power_target_I_max(100);
 
@@ -417,7 +423,7 @@ void backlight_setup()
 
     if (backlight_config.level == 0)
     {
-    	dprintf("fix level\r\n");
+        dprintf("fix level\r\n");
         backlight_config.level = BACKLIGHT_LEVELS - 1;
         eeconfig_write_backlight(backlight_config.raw);
     }
@@ -432,7 +438,7 @@ void backlight_setup_finish()
 {
     IS31FL3731_set_power_target_I_max(200);
 
-    // wait for interface to be ready
+// wait for interface to be ready
 #if 0
 #if TWILIB == AVR315
 	while (TWI_Transceiver_Busy() /*i2cGetState()*/)

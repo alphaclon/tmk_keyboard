@@ -1,9 +1,14 @@
 
 #include "control.h"
-#include "debug.h"
 #include "../twi/twi_config.h"
 #include <avr/interrupt.h>
+#include <util/delay.h>
 
+#ifdef DEBUG_BACKLIGHT
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
 
 IS31FL3731Buffered issi;
 
@@ -11,7 +16,7 @@ void IS31FL3731_init()
 {
 #if TWILIB == AVR315
 
-	TWI_Master_Initialise();
+    TWI_Master_Initialise();
 
 #elif TWILIB == BUFFTW
 
@@ -25,35 +30,16 @@ void IS31FL3731_init()
 #endif
 
     issi.begin();
-}
 
-extern "C" {
-#if TWILIB == AVR315
-void testInterruptDrivenI2C()
-{
+#if TWILIB == AVR315 && defined(DEBUG_BACKLIGHT)
+    issi.dumpConfiguration();
+    issi.dumpLeds(0);
 
-}
-#elif TWILIB == BUFFTW
-void testInterruptDrivenI2C()
-{
-	dprintf("I2C: test\r\n");
-
-	/*
-	uint8_t cmd1[2] = {0xFD, 0};
-	i2cMasterSend((ISSI_ADDR_DEFAULT << 1), 2, cmd1);
-
-    uint8_t cmd2[ISSI_USED_CHANNELS + 1] = { 64 };
-    cmd2[0] = 0x24;
-    i2cMasterSend((ISSI_ADDR_DEFAULT << 1), ISSI_USED_CHANNELS + 1, cmd2);
-    */
-
-	/*
-	uint8_t cmd[ISSI_USED_CHANNELS] = { 64 };
-
-	TWI_Master_Initialise();
-	TWI_Start_Transceiver_With_Data_1((ISSI_ADDR_DEFAULT << 1), 0xFD, 0);
-	TWI_Start_Transceiver_With_Data_2((ISSI_ADDR_DEFAULT << 1), 0x24, cmd, ISSI_USED_CHANNELS);
-	*/
-}
+    dprintf("I2C: wait\r\n");
+    while (TWI_Transceiver_Busy())
+    {
+        _delay_ms(1);
+    }
+    dprintf("I2C: wait done\r\n");
 #endif
 }

@@ -580,6 +580,18 @@ int uart_data_available(void)
     return (UART_RX_BUFFER_MASK + UART_RxHead - UART_RxTail) % UART_RX_BUFFER_MASK;
 }/* uart_available */
 
+/*************************************************************************
+Function: uart_tx_buffer_empty()
+Purpose:  Check if send buffer is empty
+Input:    None
+Returns:  1 = empty
+**************************************************************************/
+unsigned char uart_tx_buffer_empty(void)
+{
+    return ( (UART0_CONTROL & (1 << UART0_UDRIE )) == 0
+            && (UART0_STATUS & (1 << TXC1 )) );
+}
+
 /*
  * these functions are only for ATmegas with two USART
  */

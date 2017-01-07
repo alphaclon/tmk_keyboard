@@ -58,8 +58,8 @@ ifeq (yes,$(strip $(COMMAND_ENABLE)))
     OPT_DEFS += -DCOMMAND_ENABLE
 endif
 
-ifeq (yes,$(strip $(VIRTUAL_SERIAL_ENABLE)))    
-    OPT_DEFS += -DVIRTUAL_SERIAL_ENABLE
+ifeq (yes,$(strip $(VIRTSER_ENABLE)))    
+    OPT_DEFS += -DVIRTSER_ENABLE
 endif
 
 ifeq (yes,$(strip $(NKRO_ENABLE)))

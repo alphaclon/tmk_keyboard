@@ -70,11 +70,11 @@ SRC += \
 	matrix.c \
 	keymap_splitbrain.c \
 	splitbrain.c \
-	infodisplay.c \
 	hooks.c \
 	command.c \
 	uart/uart.c \
-	twi/twi/twi_master.c \
+	twi/avr315/TWI_Master.c \
+	matrixdisplay/infodisplay.c \
 	backlight/gfx/new.cpp \
 	backlight/gfx/glcdfont.c \
 	backlight/gfx/Adafruit_GFX.cpp \
@@ -166,7 +166,7 @@ COMMAND_ENABLE = yes        # Commands for debug and configuration
 NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
 BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
-VIRTUAL_SERIAL_ENABLE = no
+#VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -185,11 +185,14 @@ include $(TMK_DIR)/rules.mk
 
 
 debug-on: EXTRAFLAGS += -DDEBUG
+debug-on: EXTRAFLAGS += -DDEBUG_ISSI
+#debug-on: EXTRAFLAGS += -DDEBUG_I2C
 debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
+debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
 debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-#debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
-#debug-on: EXTRAFLAGS += -DLUFA_DEBUG
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all
 

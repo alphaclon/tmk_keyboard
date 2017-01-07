@@ -29,6 +29,8 @@ public:
     bool begin(uint8_t issi_slave_address = ISSI_ADDR_DEFAULT);
     void reset();
 
+    bool is_initialized();
+
     virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
 
     void enableLed(uint8_t lednum, uint8_t enabled, uint8_t bank = 0);
@@ -127,6 +129,8 @@ protected:
 
     uint8_t _issi_address;
     uint8_t _frame;
+
+    bool _is_initialized;
 };
 
 #endif

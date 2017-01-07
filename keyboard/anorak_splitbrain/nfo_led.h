@@ -28,5 +28,5 @@
 #define LedInfo2_Init()     do { } while (0)
 #define LedInfo2_On()       do { } while (0)
 #define LedInfo2_Off()      do { } while (0)
-#define LED_YELLOW_TGL()    do { } while (0)
+#define LedInfo2_Toggle()    do { } while (0)
 #endif

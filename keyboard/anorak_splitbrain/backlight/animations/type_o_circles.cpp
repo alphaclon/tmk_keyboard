@@ -4,12 +4,15 @@
 #include "../key_led_map.h"
 #include "animation_utils.h"
 #include "config.h"
-#include "matrix.h"
 
 #define RADIUS_COUNT 15
 
 static uint8_t *pressed_keys = 0;
 static uint8_t animation_frame = 1;
+
+void type_o_circles_typematrix_row(uint8_t row_number, matrix_row_t row)
+{
+}
 
 void type_o_circles_animation_start()
 {

@@ -54,6 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "timer.h"
 #include "uart/uart.h"
 #include <avr/io.h>
+#include <stdbool.h>
 #include <string.h>
 #include <util/delay.h>
 
@@ -78,10 +79,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LOW_BYTE(x) (x & 0xff)         // 16Bit 	--> 8Bit
 #define HIGH_BYTE(x) ((x >> 8) & 0xff) // 16Bit 	--> 8Bit
 
-#define PROTOCOL_VERSION 1
+#define PROTOCOL_VERSION 2
 
-#define DATAGRAM_START 0x41
-#define DATAGRAM_STOP 0x45
+//#define DATAGRAM_START 0x41
+//#define DATAGRAM_STOP 0x45
+
+#define DATAGRAM_START 0x02
+#define DATAGRAM_STOP 0x03
 
 #define DATAGRAM_CMD_CONNECT 0x49
 #define DATAGRAM_CMD_CONNECT_ACK 0x48
@@ -94,18 +98,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MAX_MSG_LENGTH 16
 
-#define INIT_TIMEOUT 500
-#define PING_TIMEOUT 1000
-#define CONNECTION_TIMEOUT (PING_TIMEOUT * 2)
-#define ROW_ACK_TIMEOUT 30
+#define INIT_TIMEOUT 250
+#define PING_TIMEOUT 500
+#define CONNECTION_TIMEOUT (PING_TIMEOUT * 2 + (PING_TIMEOUT / 2))
+#define ROW_ACK_TIMEOUT 10
 
 #define MAX_ROW_RESEND 3
+
+#ifdef DEBUG_SPLITBRAIN
+#undef INIT_TIMEOUT
+#define INIT_TIMEOUT 5000
+#undef PING_TIMEOUT
+#define PING_TIMEOUT 10000
+#endif
 
 bool _is_left_side_of_keyboard = false;
 bool _is_right_side_of_keyboard = false;
 bool _is_connected_to_other_side = false;
 bool _waiting_for_row_ack = false;
 bool _is_other_side_connected_to_usb = false;
+bool _is_other_side_sleeping = false;
 
 uint16_t last_receive_ts = 0;
 uint16_t last_send_ts = 0;
@@ -152,10 +164,27 @@ void resend_row_to_other_side(void);
 void reset_connection_on_timeout(void);
 void reset_other_sides_rows(void);
 
-void splitbrain_config_init()
+void splitbrain_init()
 {
-	reset_other_sides_rows();
-    last_init_send_ts = timer_read();
+    _is_left_side_of_keyboard = false;
+    _is_right_side_of_keyboard = false;
+    _is_connected_to_other_side = false;
+    _waiting_for_row_ack = false;
+    _is_other_side_connected_to_usb = false;
+    _is_other_side_sleeping = false;
+
+    last_receive_ts = 0;
+    last_send_ts = 0;
+    last_init_send_ts = 0;
+    last_row_send_ts = 0;
+
+    last_row_number = 0;
+    last_row = 0;
+    row_resend_counter = 0;
+    row_resend_count = 0;
+
+    reset_other_sides_rows();
+    last_init_send_ts = timer_read() - INIT_TIMEOUT;
     uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
     splitbrain_get_my_side();
     recv_status = recvStatusIdle;
@@ -184,6 +213,13 @@ bool is_right_side_of_keyboard()
     return _is_right_side_of_keyboard;
 }
 
+bool has_usb(void)
+{
+    USBCON |= (1 << OTGPADE); // enables VBUS pad
+    _delay_us(5);
+    return (USBSTA & (1 << VBUS)); // checks state of VBUS
+}
+
 bool is_connected_to_usb()
 {
     return (USB_DeviceState == DEVICE_STATE_Configured);
@@ -192,6 +228,11 @@ bool is_connected_to_usb()
 bool is_other_side_connected_to_usb(void)
 {
     return _is_other_side_connected_to_usb;
+}
+
+bool is_other_side_sleeping(void)
+{
+    return _is_other_side_sleeping;
 }
 
 char is_connected_to_usb_as_char()
@@ -227,7 +268,6 @@ void accept_sync_request(uint8_t const *buffer, uint8_t length)
     {
         dprintf("sync: fix backlight %u %u\r\n", backlight, eeconfig_read_backlight());
         eeconfig_write_backlight(backlight);
-        dprintf("sync: fix backlight %u %u\r\n", backlight, eeconfig_read_backlight());
     }
 
     uint8_t regions = buffer[1];
@@ -235,7 +275,6 @@ void accept_sync_request(uint8_t const *buffer, uint8_t length)
     {
         dprintf("sync: fix regions %u %u\r\n", regions, eeconfig_read_backlight_regions());
         eeconfig_write_backlight_regions(regions);
-        dprintf("sync: fix regions %u %u\r\n", regions, eeconfig_read_backlight_regions());
     }
 
     for (uint8_t i = 0; i < BACKLIGHT_MAX_REGIONS; i++)
@@ -245,7 +284,6 @@ void accept_sync_request(uint8_t const *buffer, uint8_t length)
         {
             dprintf("sync: fix brightness %u %u\r\n", region_brightness, eeconfig_read_backlight_region_brightness(i));
             eeconfig_write_backlight_region_brightness(i, region_brightness);
-            dprintf("sync: fix brightness %u %u\r\n", region_brightness, eeconfig_read_backlight_region_brightness(i));
         }
     }
 #endif
@@ -339,17 +377,14 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
 
         if (sleep)
         {
+            _is_other_side_sleeping = true;
+            // backlight_sleep_led_enable();
             // USB_DeviceState = DEVICE_STATE_Suspended;
         }
         else
         {
-#if 0
-        	matrix_clear();
-        	clear_keyboard();
-#ifdef BACKLIGHT_ENABLE
-        	backlight_init();
-#endif
-#endif
+            _is_other_side_sleeping = false;
+            // backlight_sleep_led_enable();
             // USB_DeviceState = DEVICE_STATE_Unattached;
         }
     }
@@ -603,7 +638,7 @@ void send_sync_to_other_side()
     dprintf("sync: rg:%u\r\n", eeconfig_read_backlight_regions());
     for (uint8_t i = 0; i < BACKLIGHT_MAX_REGIONS; i++)
     {
-    	dprintf("sync: rg%u:%u\r\n", i, eeconfig_read_backlight_region_brightness(i));
+        dprintf("sync: rg%u:%u\r\n", i, eeconfig_read_backlight_region_brightness(i));
         send_buffer[pos++] = eeconfig_read_backlight_region_brightness(i);
     }
 #else

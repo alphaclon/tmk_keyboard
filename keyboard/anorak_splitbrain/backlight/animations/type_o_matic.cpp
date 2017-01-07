@@ -4,11 +4,13 @@
 #include "../key_led_map.h"
 #include "animation_utils.h"
 #include "config.h"
-#include "matrix.h"
 
-// const uint8_t PROGMEM type_o_matic_gamma_lot[] = {1, 2, 3, 4, 6, 8, 10, 15, 20, 30, 40, 60, 60, 40, 30, 20, 15, 10,
-// 8, 6, 4, 3, 2, 1};
 static uint8_t animation_frame = 1;
+
+void type_o_matic_typematrix_row(uint8_t row_number, matrix_row_t row)
+{
+
+}
 
 void type_o_matic_animation_start()
 {

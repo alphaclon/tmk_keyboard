@@ -19,13 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef EECONFIG_BACKLIGHT_H
 #define EECONFIG_BACKLIGHT_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
+#define EECONFIG_BACKLIGHT_MAGIC_NUMBER (uint16_t)0xAFFE
+#define EECONFIG_BACKLIGHT_DEFAULT_BRIGHTNESS 3
 /* eeprom parameteter address */
-#define EECONFIG_BACKLIGHT_REGIONS                  (uint8_t *)7
-#define EECONFIG_BACKLIGHT_REGION_PWM               (uint8_t *)8
+#define EECONFIG_BACKLIGHT_MAGIC (uint16_t *)7
+#define EECONFIG_BACKLIGHT_REGIONS (uint8_t *)9
+#define EECONFIG_BACKLIGHT_REGION_PWM (uint8_t *)10
 
+bool eeconfig_backlight_is_enabled(void);
 void eeconfig_backlight_init(void);
 
 #ifdef BACKLIGHT_ENABLE

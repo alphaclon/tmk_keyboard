@@ -26,6 +26,7 @@ void set_animation_sweep()
     animation.animationStart = &sweep_animation_start;
     animation.animationStop = &sweep_animation_stop;
     animation.animationLoop = &sweep_animation_loop;
+    animation.animation_typematrix_row = 0;
 }
 
 void set_animation_type_o_matic()
@@ -39,6 +40,7 @@ void set_animation_type_o_matic()
     animation.animationStart = &type_o_matic_animation_start;
     animation.animationStop = &type_o_matic_animation_stop;
     animation.animationLoop = &type_o_matic_animation_loop;
+    animation.animation_typematrix_row = &type_o_matic_typematrix_row;
 }
 
 void set_animation_type_o_circles()
@@ -52,6 +54,7 @@ void set_animation_type_o_circles()
     animation.animationStart = &type_o_circles_animation_start;
     animation.animationStop = &type_o_circles_animation_stop;
     animation.animationLoop = &type_o_circles_animation_loop;
+    animation.animation_typematrix_row = &type_o_circles_typematrix_row;
 }
 
 void set_animation_breathing()
@@ -65,6 +68,7 @@ void set_animation_breathing()
     animation.animationStart = &breathing_animation_start;
     animation.animationStop = &breathing_animation_stop;
     animation.animationLoop = 0;
+    animation.animation_typematrix_row = 0;
 }
 
 void set_animation(uint8_t animation_number)
@@ -198,4 +202,10 @@ void animate()
 
     animation.loop_timer = timer_read();
     animation.animationLoop();
+}
+
+void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
+{
+	if (animation.animation_typematrix_row)
+		animation.animation_typematrix_row(row_number, row);
 }

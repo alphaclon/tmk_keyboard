@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backlight/backlight_kiibohd.h"
 #include "sleep_led.h"
 #include "backlight/animations/animation.h"
+#include "matrixdisplay/infodisplay.h"
 
 /*
  *  Keymaps
@@ -80,7 +81,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *     A     B     C     D     E     F     G     H     I     J     K     L     M     N     O     P     Q     R
      */
     KEYMAP_ISO(\
-         ESC,   F1,   F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9, F10,   F11,  F12,    A,    B, PSCR, SLCK,  BRK,   \
+         ESC,   F1,   F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9, F10,   F11,  F12, VOLD, VOLU, PSCR, SLCK,  BRK,   \
          GRV,    1,    2,    3,    4,    5,    6,    7,    8,    9,    0, MINS,  EQL, BSPC,        INS, HOME, PGUP,   \
          TAB,    Q,    W,    E,    R,    T,    Y,    U,    I,    O,    P, LBRC, RBRC,              DEL,  END, PGDN,   \
         CAPS,    A,    S,    D,    F,    G,    H,    J,    K,    L, SCLN, QUOT, NUHS,  ENT,                           \
@@ -92,8 +93,8 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *     A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P    Q     R
      */
     KEYMAP_ISO(\
-         FN8, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, VOLD, VOLU, MUTE, TRNS, TRNS,   \
-		 FN6, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, MUTE, VOLD, VOLU, TRNS,       TRNS, TRNS, TRNS,   \
+         FN8, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, MUTE, MUTE, TRNS, TRNS, TRNS,   \
+		 FN6, FN24, FN25, FN26, FN27, FN28, TRNS, FN24, FN25, FN26, FN27, FN28, TRNS, TRNS,       TRNS, TRNS, TRNS,   \
 		 FN5, FN19, FN20, FN21, FN22, FN23, FN19, FN20, FN21, FN22, FN23, TRNS, TRNS,             TRNS, TRNS, TRNS,   \
          FN4,  FN9, FN10, FN11, FN12, TRNS,  FN9, FN10, FN11, FN12, TRNS, TRNS, TRNS, TRNS,                           \
          FN3, FN13, FN14, TRNS, TRNS, TRNS, TRNS, FN13, FN14, TRNS, TRNS, TRNS, TRNS,              FN4,  FN6, TRNS,   \
@@ -108,7 +109,6 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
  *
  */
 
-/* id for user defined function/macro */
 /* id for user defined function/macro */
 enum function_id {
 	KIIBOHD_FUNCTION_Backlight_Region_On,
@@ -125,7 +125,12 @@ enum function_id {
 	KIIBOHD_FUNCTION_Backlight_Animate_Next,
 	KIIBOHD_FUNCTION_Backlight_Animate_Prev,
 	KIIBOHD_FUNCTION_Backlight_Breath,
-	KIIBOHD_FUNCTION_Backlight_Dump
+	KIIBOHD_FUNCTION_Backlight_Dump,
+	KIIBOHD_FUNCTION_Matrix_Animate,
+	KIIBOHD_FUNCTION_Matrix_Animation_Next,
+	KIIBOHD_FUNCTION_Matrix_Animation_Prev,
+	KIIBOHD_FUNCTION_Matrix_Brightness_Dec,
+	KIIBOHD_FUNCTION_Matrix_Brightness_Inc,
 };
 
 enum macro_id
@@ -163,6 +168,11 @@ const action_t PROGMEM fn_actions[] =
    [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Next),
    [22] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed),
    [23] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed),
+   [24] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Matrix_Animate),
+   [25] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Matrix_Animation_Prev),
+   [26] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Matrix_Animation_Next),
+   [27] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Matrix_Brightness_Dec),
+   [28] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Matrix_Brightness_Inc)
 };
 
 /*
@@ -228,6 +238,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             break;
         case KIIBOHD_FUNCTION_Backlight_Dump:
         	backlight_dump_issi_state();
+        	mcpu_read_and_dump_config();
         	break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
             animation_toggle();
@@ -244,6 +255,21 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         case KIIBOHD_FUNCTION_Backlight_Animate_Prev:
         	animation_previous();
             break;
+        case KIIBOHD_FUNCTION_Matrix_Animate:
+        	mcpu_animation_toggle();
+        	break;
+        case KIIBOHD_FUNCTION_Matrix_Animation_Next:
+        	mcpu_animation_next();
+        	break;
+        case KIIBOHD_FUNCTION_Matrix_Animation_Prev:
+        	mcpu_animation_prev();
+        	break;
+        case KIIBOHD_FUNCTION_Matrix_Brightness_Dec:
+        	mcpu_send_brightness_dec();
+        	break;
+        case KIIBOHD_FUNCTION_Matrix_Brightness_Inc:
+        	mcpu_send_brightness_inc();
+        	break;
         }
     }
 }

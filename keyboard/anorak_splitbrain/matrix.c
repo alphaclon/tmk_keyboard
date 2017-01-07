@@ -33,7 +33,7 @@
 #include "backlight/backlight_kiibohd.h"
 #include "backlight/animations/animation.h"
 #include "splitbrain.h"
-#include "infodisplay.h"
+#include "matrixdisplay/infodisplay.h"
 #include "uart/uart.h"
 
 #ifndef DEBOUNCE_TIME
@@ -135,6 +135,7 @@ uint8_t matrix_scan(void)
 
 				send_row_to_other_side(row, matrix[row]);
 				mcpu_send_typematrix_row(row, matrix[row]);
+				animation_typematrix_row(row, matrix[row]);
 			}
 		}
 		else

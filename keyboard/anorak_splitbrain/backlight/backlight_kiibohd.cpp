@@ -51,6 +51,17 @@ uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
 uint8_t current_region = backlight_region_ALL;
 
+#ifdef DEBUG_BACKLIGHT_NAMES
+const char REGION1[] PROGMEM = "WASD";
+const char REGION2[] PROGMEM = "Controls";
+const char REGION3[] PROGMEM = "Cursor";
+const char REGION4[] PROGMEM = "Other";
+const char REGION5[] PROGMEM = "ALL";
+
+PGM_P region_names_table[] = {REGION1, REGION2, REGION3, REGION4, REGION5};
+static char stringBuffer[64];
+#endif
+
 void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE])
 {
     if (is_left_side_of_keyboard())
@@ -149,7 +160,12 @@ uint8_t get_index_for_region(uint8_t region)
 
 void set_region_mode(uint8_t region, tLedRegionControlMode mode)
 {
+#ifdef DEBUG_BACKLIGHT_NAMES
+    strcpy_P(stringBuffer, region_names_table[region]);
+    dprintf("set_region_mode r:%d [%s] m:%d\n", region, stringBuffer, mode);
+#else
     dprintf("set_region_mode r:%d m:%d\n", region, mode);
+#endif
     tLedRegionControlCommand control;
     control.mode = mode;
     set_region_mask_for_control(region, control.mask);
@@ -159,7 +175,7 @@ void set_region_mode(uint8_t region, tLedRegionControlMode mode)
 
 void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMControlMode mode)
 {
-    dprintf("set bri %d\n", brightness);
+    dprintf("set_brightness_for_region r:%u bri:%u\n", region, brightness);
     tLedPWMControlCommand control;
     control.mode = mode;
     control.amount = gamma_correction_table[brightness];
@@ -186,7 +202,7 @@ void set_brightness_for_all_regions(uint8_t brightness, tLedPWMControlMode mode)
 
 void backlight_increase_brightness_for_region(uint8_t region)
 {
-    dprintf("bl_inc_bri_for_region %d\n", region);
+    dprintf("backlight_increase_brightness_for_region %d\n", region);
 
     if ((regions & region) == 0)
     {
@@ -203,7 +219,7 @@ void backlight_increase_brightness_for_region(uint8_t region)
     if (brightness < (GAMMA_STEPS - 1))
         brightness++;
 
-    dprintf("bri %d\n", brightness);
+    dprintf("new brightness %d\n", brightness);
 
     set_and_save_brightness_for_region(region, pos, brightness);
 }
@@ -215,7 +231,7 @@ void backlight_increase_brightness_selected_region()
 
 void backlight_decrease_brightness_for_region(uint8_t region)
 {
-    dprintf("bl_dec_bri_for_region %d\n", region);
+    dprintf("backlight_decrease_brightness_for_region %d\n", region);
 
     if ((regions & region) == 0)
     {
@@ -229,7 +245,7 @@ void backlight_decrease_brightness_for_region(uint8_t region)
     if (brightness > 0)
         brightness--;
 
-    dprintf("bri %d\n", brightness);
+    dprintf("new brightness %d\n", brightness);
 
     set_and_save_brightness_for_region(region, pos, brightness);
 }
@@ -278,26 +294,43 @@ void backlight_decrease_brightness()
 void backlight_select_region(uint8_t region)
 {
     current_region = region;
-    dprintf("bl_sel_region %u on=%u\n", region, (regions & region) ? 1 : 0);
+
+#ifdef DEBUG_BACKLIGHT_NAMES
+    strcpy_P(stringBuffer, region_names_table[get_index_for_region(region)]);
+    dprintf("backlight_select_region %u [%s] on=%u\n", region, stringBuffer, (regions & region) ? 1 : 0);
+#else
+    dprintf("backlight_select_region %u on=%u\n", region, (regions & region) ? 1 : 0);
+#endif
 }
 
 void backlight_toggle_region(uint8_t region)
 {
-    dprintf("bl_tog_region %d\n", region);
-
     current_region = region;
 
     if (regions & region)
     {
         regions &= ~region;
         set_region_mode(region, LedControlMode_disable_mask);
-        dprintf("region %d: off\n", region);
+
+#ifdef DEBUG_BACKLIGHT_NAMES
+    strcpy_P(stringBuffer, region_names_table[get_index_for_region(region)]);
+    dprintf("toggle_region %u [%s]: off\n", region, stringBuffer);
+#else
+    dprintf("toggle_region %u: off\n", region);
+#endif
     }
     else
     {
         regions |= region;
         set_region_mode(region, LedControlMode_enable_mask);
-        dprintf("region %d: on\n", region);
+
+#ifdef DEBUG_BACKLIGHT_NAMES
+    strcpy_P(stringBuffer, region_names_table[get_index_for_region(region)]);
+    dprintf("toggle_region %u [%s]: on\n", region, stringBuffer);
+#else
+    dprintf("toggle_region %u: on\n", region);
+#endif
+
     }
 }
 
@@ -320,16 +353,28 @@ void backlight_disable_region(uint8_t region)
 {
     regions &= ~region;
     current_region = region;
-    dprintf("region %u: off\n", region);
     set_region_mode(region, LedControlMode_disable_mask);
+
+#ifdef DEBUG_BACKLIGHT_NAMES
+    strcpy_P(stringBuffer, region_names_table[region]);
+    dprintf("disable_region %u [%s]: off\n", region, stringBuffer);
+#else
+    dprintf("disable_region %u: off\n", region);
+#endif
 }
 
 void backlight_enable_region(uint8_t region)
 {
     regions |= region;
     current_region = region;
-    dprintf("region %u: on\n", region);
     set_region_mode(region, LedControlMode_enable_mask);
+
+#ifdef DEBUG_BACKLIGHT_NAMES
+    strcpy_P(stringBuffer, region_names_table[region]);
+    dprintf("enable_region %u [%s]: on\n", region, stringBuffer);
+#else
+    dprintf("enable_region %u: on\n", region);
+#endif
 }
 
 void backlight_save_region_states()
@@ -363,7 +408,7 @@ void backlight_set_regions_from_saved_state(void)
 {
     set_region_mode(backlight_region_ALL, LedControlMode_disable_mask);
 
-    dprintf("region states: 0x%X\n", regions);
+    dprintf("saved region states: 0x%X\n", regions);
 
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {
@@ -404,13 +449,13 @@ void backlight_setup()
 {
     dprintf("backlight_setup\r\n");
 
-    if (!eeconfig_is_enabled())
+    if (!eeconfig_backlight_is_enabled())
     {
-    	eeconfig_backlight_init();
+        eeconfig_backlight_init();
     }
 
     IS31FL3731_init();
-    IS31FL3731_set_power_target_I_max(100);
+    IS31FL3731_set_power_target_I_max(50);
 
     regions = 0;
     current_region = backlight_region_ALL;
@@ -419,7 +464,7 @@ void backlight_setup()
     backlight_config_t backlight_config;
     backlight_config.raw = eeconfig_read_backlight();
 
-    dprintf("bl on: %u, level: %u\r\n", backlight_config.enable, backlight_config.level);
+    dprintf("backlight_setup on:%u, level:%u\r\n", backlight_config.enable, backlight_config.level);
 
     if (backlight_config.level == 0)
     {
@@ -436,29 +481,7 @@ void backlight_setup()
 
 void backlight_setup_finish()
 {
-    IS31FL3731_set_power_target_I_max(200);
-
-// wait for interface to be ready
-#if 0
-#if TWILIB == AVR315
-	while (TWI_Transceiver_Busy() /*i2cGetState()*/)
-	{
-		LED_GREEN_OFF();
-		_delay_ms(100);
-		LED_GREEN_ON();
-		_delay_ms(100);
-	}
-#elif TWILIB == BUFFTW
-	while (i2cGetState())
-	{
-		LED_GREEN_OFF();
-		_delay_ms(100);
-		LED_GREEN_ON();
-		_delay_ms(100);
-	}
-#endif
-#endif
-
+    IS31FL3731_set_power_target_I_max(150);
     dprintf("backlight_setup_finish\r\n");
 }
 

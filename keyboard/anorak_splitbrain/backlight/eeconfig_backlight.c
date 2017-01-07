@@ -3,18 +3,28 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+void eeconfig_backlight_enable(void)
+{
+    eeprom_write_word(EECONFIG_BACKLIGHT_MAGIC, EECONFIG_BACKLIGHT_MAGIC_NUMBER);
+}
+
+void eeconfig_backlight_disable(void)
+{
+    eeprom_write_word(EECONFIG_BACKLIGHT_MAGIC, 0xFFFF);
+}
+
+bool eeconfig_backlight_is_enabled(void)
+{
+    return (eeprom_read_word(EECONFIG_BACKLIGHT_MAGIC) == EECONFIG_BACKLIGHT_MAGIC_NUMBER);
+}
+
 void eeconfig_backlight_init(void)
 {
 #ifdef BACKLIGHT_ENABLE
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGIONS, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + 1, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + 2, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + 3, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + 4, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + 5, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + 6, 0);
-    eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + 7, 0);
+	eeconfig_backlight_enable();
+    eeprom_write_byte(EECONFIG_BACKLIGHT_REGIONS, 0xFF);
+    for (uint8_t i = 0; i < 8; i++)
+    	eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + i, EECONFIG_BACKLIGHT_DEFAULT_BRIGHTNESS);
 #endif
 }
 

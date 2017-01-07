@@ -36,6 +36,7 @@ void backlight_sleep_led_enable(void)
 {
     dprintf("backlight_sleep_led_enable\n");
     breathing = 1;
+
     /*
     issi.enableLed(14, 1, SLEEP_LED_BANK);
     issi.setLedBrightness(14, 255, SLEEP_LED_BANK);
@@ -45,7 +46,8 @@ void backlight_sleep_led_enable(void)
     issi.setBreathMode(1);
     */
 
-    // issi.enableSoftwareShutdown(true);
+    if (issi.is_initialized())
+        issi.enableSoftwareShutdown(true);
     send_sleep_to_other_side(true);
 }
 
@@ -53,13 +55,15 @@ void backlight_sleep_led_disable(void)
 {
     dprintf("backlight_sleep_led_disable\n");
     breathing = 0;
+
     /*
     issi.setBreathMode(0);
     issi.setPictureMode();
     issi.displayFrame(0);
     */
 
-    // issi.enableSoftwareShutdown(false);
+    if (issi.is_initialized())
+        issi.enableSoftwareShutdown(false);
     send_sleep_to_other_side(false);
 }
 

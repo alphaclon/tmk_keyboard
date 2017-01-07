@@ -5,9 +5,9 @@
 #define BUFFTW 2
 #define I2CMAS 3
 
-#define TWILIB BUFFTW
+#define TWILIB AVR315
 
-#define TWI_SEND_DATA_BUFFER_SIZE 150
+#define TWI_SEND_DATA_BUFFER_SIZE 144+2
 
 #if TWILIB == AVR315
 #include "avr315/TWI_Master.h"

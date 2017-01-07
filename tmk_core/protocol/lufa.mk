@@ -16,6 +16,10 @@ endif
 LUFA_SRC = $(LUFA_DIR)/lufa.c \
 	   $(LUFA_DIR)/descriptor.c \
 	   $(LUFA_SRC_USB)
+	   
+ifeq ($(strip $(VIRTSER_ENABLE)), yes)
+	LUFA_SRC += $(LUFA_ROOT_PATH)/Drivers/USB/Class/Device/CDCClassDevice.c
+endif
 
 SRC += $(LUFA_SRC)
 

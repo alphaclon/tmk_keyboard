@@ -192,6 +192,14 @@ extern void uart_puts_p(const char *s );
  */
 extern int uart_data_available(void);
 
+/**
+ *  @brief   Check if send buffer is empty
+ *  @param   none
+ *  @return  Return 1 if send buffer is empty, otherwise 0
+ */
+unsigned char uart_tx_buffer_empty(void);
+
+
 
 
 /** @brief  Initialize USART1 (only available on selected ATmegas) @see uart_init */

@@ -40,7 +40,10 @@ void IS31FL3731_region_control(tLedRegionControlCommand *control)
         break;
     }
 
-    issi.enableLeds(LedMask, current_led_bank);
-    //issi.displayFrame(current_led_bank);
+    if (issi.is_initialized())
+    {
+    	issi.enableLeds(LedMask, current_led_bank);
+    	//issi.displayFrame(current_led_bank);
+    }
 }
 

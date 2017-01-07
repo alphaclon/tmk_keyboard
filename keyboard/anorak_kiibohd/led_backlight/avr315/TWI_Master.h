@@ -76,10 +76,10 @@ void TWI_Master_Initialise( void );
 unsigned char TWI_Transceiver_Busy( void );
 unsigned char TWI_Get_State_Info( void );
 void TWI_Start_Transceiver_With_Data_1( unsigned char slave_address, unsigned char register_address, const unsigned char data);
-void TWI_Start_Transceiver_With_Data_2( unsigned char slave_address, unsigned char register_address, const unsigned char *data, unsigned char data_length);
+void TWI_write_data_to_register( unsigned char slave_address, unsigned char register_address, const unsigned char *data, unsigned char data_length);
 void TWI_Start_Transceiver_With_Data( const unsigned char *data, unsigned char data_length);
 void TWI_Start_Transceiver( void );
-unsigned char TWI_Get_Data_From_Transceiver( unsigned char *, unsigned char );
+unsigned char TWI_get_data_from_transceiver( unsigned char *, unsigned char );
 
 /****************************************************************************
   Bit and byte definitions

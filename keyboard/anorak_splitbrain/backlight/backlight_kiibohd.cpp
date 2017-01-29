@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "backlight.h"
+#include "../matrixdisplay/infodisplay.h"
 #include "../nfo_led.h"
 #include "../splitbrain.h"
 #include "../twi/twi_config.h"
@@ -51,16 +52,14 @@ uint8_t regions = 0;
 uint8_t region_brightness[8] = {0};
 uint8_t current_region = backlight_region_ALL;
 
-#ifdef DEBUG_BACKLIGHT_NAMES
-const char REGION1[] PROGMEM = "WASD";
-const char REGION2[] PROGMEM = "Controls";
-const char REGION3[] PROGMEM = "Cursor";
-const char REGION4[] PROGMEM = "Other";
-const char REGION5[] PROGMEM = "ALL";
+const char region_wasd[] PROGMEM = "WASD";
+const char region_ctrl[] PROGMEM = "Ctrl";
+const char region_cursor[] PROGMEM = "Curs";
+const char region_other[] PROGMEM = "other";
+const char region_all[] PROGMEM = "all";
+const char region_none[] PROGMEM = "xxx";
 
-PGM_P region_names_table[] = {REGION1, REGION2, REGION3, REGION4, REGION5};
-static char stringBuffer[64];
-#endif
+PGM_P region_names[] = {region_wasd, region_ctrl, region_cursor, region_other, region_all, region_none};
 
 void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE])
 {
@@ -158,14 +157,57 @@ uint8_t get_index_for_region(uint8_t region)
     return pos;
 }
 
+void show_region_info(uint8_t region)
+{
+    char infotext[32];
+    char fmt[16];
+    uint8_t index = get_index_for_region(region);
+
+    strcpy_P(fmt, region_names[index]);
+    strcat_P(fmt, PSTR(" %s %u"));
+
+    sprintf(infotext, fmt, (regions & region ? "on" : "off"), region_brightness[index]);
+
+    dprintf("info: %s", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
+void show_region_enabled(uint8_t region)
+{
+    char infotext[32];
+    char fmt[16];
+    uint8_t index = get_index_for_region(region);
+
+    strcpy_P(fmt, region_names[index]);
+    strcat_P(fmt, PSTR(" %s"));
+
+    sprintf(infotext, fmt, (regions & region ? "on" : "off"));
+
+    dprintf("info: %s", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
+void show_region_brightness(uint8_t region)
+{
+    char infotext[32];
+    char fmt[16];
+    uint8_t index = get_index_for_region(region);
+
+    strcpy_P(fmt, region_names[index]);
+    strcat_P(fmt, PSTR(" %u"));
+
+    sprintf(infotext, fmt, region_brightness[index]);
+
+    dprintf("info: %s", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
 void set_region_mode(uint8_t region, tLedRegionControlMode mode)
 {
-#ifdef DEBUG_BACKLIGHT_NAMES
-    strcpy_P(stringBuffer, region_names_table[region]);
-    dprintf("set_region_mode r:%d [%s] m:%d\n", region, stringBuffer, mode);
-#else
     dprintf("set_region_mode r:%d m:%d\n", region, mode);
-#endif
     tLedRegionControlCommand control;
     control.mode = mode;
     set_region_mask_for_control(region, control.mask);
@@ -181,6 +223,7 @@ void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMContro
     control.amount = gamma_correction_table[brightness];
     set_region_mask_for_control(region, control.mask);
     IS31FL3731_PWM_control(&control);
+    show_region_brightness(region);
 }
 
 void set_and_save_brightness_for_region(uint8_t region, uint8_t pos, uint8_t brightness)
@@ -294,13 +337,8 @@ void backlight_decrease_brightness()
 void backlight_select_region(uint8_t region)
 {
     current_region = region;
-
-#ifdef DEBUG_BACKLIGHT_NAMES
-    strcpy_P(stringBuffer, region_names_table[get_index_for_region(region)]);
-    dprintf("backlight_select_region %u [%s] on=%u\n", region, stringBuffer, (regions & region) ? 1 : 0);
-#else
     dprintf("backlight_select_region %u on=%u\n", region, (regions & region) ? 1 : 0);
-#endif
+    show_region_info(region);
 }
 
 void backlight_toggle_region(uint8_t region)
@@ -311,27 +349,15 @@ void backlight_toggle_region(uint8_t region)
     {
         regions &= ~region;
         set_region_mode(region, LedControlMode_disable_mask);
-
-#ifdef DEBUG_BACKLIGHT_NAMES
-    strcpy_P(stringBuffer, region_names_table[get_index_for_region(region)]);
-    dprintf("toggle_region %u [%s]: off\n", region, stringBuffer);
-#else
-    dprintf("toggle_region %u: off\n", region);
-#endif
+        dprintf("toggle_region %u: off\n", region);
     }
     else
     {
         regions |= region;
         set_region_mode(region, LedControlMode_enable_mask);
-
-#ifdef DEBUG_BACKLIGHT_NAMES
-    strcpy_P(stringBuffer, region_names_table[get_index_for_region(region)]);
-    dprintf("toggle_region %u [%s]: on\n", region, stringBuffer);
-#else
-    dprintf("toggle_region %u: on\n", region);
-#endif
-
+        dprintf("toggle_region %u: on\n", region);
     }
+    show_region_enabled(region);
 }
 
 void backlight_selected_region_on(void)
@@ -354,13 +380,8 @@ void backlight_disable_region(uint8_t region)
     regions &= ~region;
     current_region = region;
     set_region_mode(region, LedControlMode_disable_mask);
-
-#ifdef DEBUG_BACKLIGHT_NAMES
-    strcpy_P(stringBuffer, region_names_table[region]);
-    dprintf("disable_region %u [%s]: off\n", region, stringBuffer);
-#else
     dprintf("disable_region %u: off\n", region);
-#endif
+    show_region_enabled(region);
 }
 
 void backlight_enable_region(uint8_t region)
@@ -368,13 +389,8 @@ void backlight_enable_region(uint8_t region)
     regions |= region;
     current_region = region;
     set_region_mode(region, LedControlMode_enable_mask);
-
-#ifdef DEBUG_BACKLIGHT_NAMES
-    strcpy_P(stringBuffer, region_names_table[region]);
-    dprintf("enable_region %u [%s]: on\n", region, stringBuffer);
-#else
     dprintf("enable_region %u: on\n", region);
-#endif
+    show_region_enabled(region);
 }
 
 void backlight_save_region_states()

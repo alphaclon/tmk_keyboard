@@ -7,13 +7,14 @@
 #include <util/delay.h>
 
 static uint8_t cmd_buffer[MAX_MSG_LENGTH];
-static uint8_t current_animation = 0;
+static uint8_t current_animation = MATRIX_FIRST_ANIMATION;
 
 void matrixcpu_init()
 {
     dprintf("matrixcpu_init");
 
     mcpu_send_command(MATRIX_CMD_INITIALIZE, 0, 0);
+    _delay_ms(10);
     mcpu_read_config();
 
     mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 5);
@@ -26,6 +27,7 @@ uint8_t mcpu_read_config_register8(uint8_t reg)
 #if TWILIB == AVR315
 
     TWI_write_byte_to_register(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, reg);
+    _delay_ms(10);
     TWI_read_data(MATRIX_TWI_ADDRESS, 1);
     TWI_get_data_from_transceiver(&data, 1);
 
@@ -49,7 +51,7 @@ uint8_t mcpu_read_config_register8(uint8_t reg)
 
 void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length)
 {
-    dprintf("mcpu_send_command: c:%u l:%u\n\r", command, data_length);
+    dprintf("mcpu_send_command: c:0x%X l:%u\n\r", command, data_length);
 
 #if TWILIB == AVR315
 
@@ -89,7 +91,7 @@ void mcpu_read_config()
 #if TWILIB == AVR315
 
     TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
-    _delay_ms(10);
+    //_delay_ms(10);
     TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
     bool lastTransOK = TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
 
@@ -107,32 +109,22 @@ void mcpu_read_config()
 
 #endif
 
-    current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
+    // current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
+
+    dprintf("mcpu v%u.%u\r\n", cfg[MATRIX_CFG_REG_MAJOR_VERSION], cfg[MATRIX_CFG_REG_MINOR_VERSION]);
 }
 
 void mcpu_read_and_dump_config()
 {
-    unsigned char cfg[MATRIX_MAX_CFG_REG];
-
-    dprintf("mcpu cfg\r\n");
-
-#if TWILIB == AVR315
-
-    TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
-    TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
-    TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
-
-#elif TWILIB == BUFFTW
-
-    i2cMasterSendCommandNI(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, 0, 0);
-    i2cMasterReceiveNI(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG, &cfg[0]);
-
-#endif
+    dprintf("mcpu dmp\r\n");
 
     for (uint8_t i = 0; i < MATRIX_MAX_CFG_REG; ++i)
     {
-        dprintf("%u: %u 0x%X\r\n", i, cfg[i], cfg[i]);
+        uint8_t cfg = mcpu_read_config_register8(i);
+        dprintf("%u: %u 0x%X\r\n", i, cfg, cfg);
     }
+
+    dprintf("running: %u\r\n", mcpu_read_config_register8(MATRIX_CFG_REG_ANIMATION_STATE));
 }
 
 void mcpu_send_text(char const *msg)
@@ -142,7 +134,7 @@ void mcpu_send_text(char const *msg)
 
     cmd_text *txt = (cmd_text *)cmd_buffer;
 
-    uint8_t length = strlen(msg);
+    uint8_t length = strlen_P(msg);
     strncpy_P(txt->msg.text, msg, MAX_TEXT_LENGTH);
     txt->msg.text[MAX_TEXT_LENGTH - 1] = '\0';
 
@@ -156,7 +148,7 @@ void mcpu_send_scroll_text(char const *msg, uint8_t direction, uint8_t duration)
 
     cmd_scroll_text *txt = (cmd_scroll_text *)cmd_buffer;
 
-    uint8_t length = strlen(msg);
+    uint8_t length = strlen_P(msg);
     strncpy_P(txt->msg.text, msg, MAX_TEXT_LENGTH);
     txt->msg.text[MAX_TEXT_LENGTH - 1] = '\0';
 
@@ -174,6 +166,7 @@ void mcpu_send_lock_state(uint8_t lock_state)
 void mcpu_send_animation(uint8_t animation, uint8_t speed, uint8_t direction, uint8_t duration, uint8_t color,
                          uint8_t font)
 {
+    dprintf("mcpu_send_animation: c:0x%X %u\n\r", animation, animation);
     cmd_animation *cmd = (cmd_animation *)cmd_buffer;
     prepare_command(cmd, speed, direction, duration, color, font);
     mcpu_send_command(animation, cmd_buffer, sizeof(cmd_animation));
@@ -181,48 +174,63 @@ void mcpu_send_animation(uint8_t animation, uint8_t speed, uint8_t direction, ui
 
 void mcpu_send_animation_sweep(uint8_t direction, uint8_t duration)
 {
+    dprintf("sweep\r\n");
     mcpu_send_animation(MATRIX_CMD_ANIMATE_SWEEP, 3, direction, duration, 3, 0);
+}
+
+void mcpu_send_animation_box(uint8_t direction, uint8_t duration)
+{
+    dprintf("box\r\n");
+    mcpu_send_animation(MATRIX_CMD_ANIMATE_BOX, 3, direction, duration, 3, 0);
 }
 
 void mcpu_send_animation_typematrix()
 {
+    dprintf("typematrix\r\n");
     mcpu_send_animation(MATRIX_CMD_ANIMATE_TYPEMATRIX, 3, MATRIX_ANIMATION_DIRECTION_LEFT, MATRIX_ANIMATION_RUN_FOREVER,
                         3, 0);
 }
 
 void mcpu_send_animation_stop()
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_STOP, 0, 0);
 }
 
 void mcpu_send_animation_faster()
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_FASTER, 0, 0);
 }
 
 void mcpu_send_animation_slower()
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_SLOWER, 0, 0);
 }
 
 void mcpu_send_brightness_inc()
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_BRIGHTNESS_INC, 0, 0);
 }
 
 void mcpu_send_brightness_dec()
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_BRIGHTNESS_DEC, 0, 0);
 }
 
 void mcpu_send_brightness_set(uint8_t brightness)
 {
+	_delay_ms(10);
     cmd_buffer[0] = brightness;
     mcpu_send_command(MATRIX_CMD_BRIGHTNESS_INC, cmd_buffer, 1);
 }
 
 void mcpu_send_sleep(uint8_t sleep)
 {
+	_delay_ms(10);
     cmd_buffer[0] = sleep;
     mcpu_send_command(MATRIX_CMD_SLEEP_SET, cmd_buffer, 1);
 }
@@ -236,27 +244,64 @@ void mcpu_send_typematrix_row(uint8_t row_number, matrix_row_t row)
     mcpu_send_command(MATRIX_CMD_ANIMATE_TYPEMATRIX_KEY, cmd_buffer, sizeof(cmd_typematrix_key));
 }
 
+void mcpu_send_info_text_P(char const *msg)
+{
+    cmd_animation *cmd = (cmd_animation *)cmd_buffer;
+    prepare_command(cmd, 0, 0, 0, 3, 0);
+
+    cmd_text *txt = (cmd_text *)cmd_buffer;
+
+    uint8_t length = strlen_P(msg);
+    strncpy_P(txt->msg.text, msg, MAX_TEXT_LENGTH);
+    txt->msg.text[MAX_TEXT_LENGTH - 1] = '\0';
+
+    mcpu_send_command(MATRIX_CMD_ANIMATE_INFO_TEXT, cmd_buffer, sizeof(cmd_animation) + length + 1);
+}
+
+void mcpu_send_info_text(char const *msg)
+{
+    cmd_animation *cmd = (cmd_animation *)cmd_buffer;
+    prepare_command(cmd, 0, 0, 0, 3, 0);
+
+    cmd_text *txt = (cmd_text *)cmd_buffer;
+
+    uint8_t length = strlen(msg);
+    strncpy(txt->msg.text, msg, MAX_TEXT_LENGTH);
+    txt->msg.text[MAX_TEXT_LENGTH - 1] = '\0';
+
+    mcpu_send_command(MATRIX_CMD_ANIMATE_INFO_TEXT, cmd_buffer, sizeof(cmd_animation) + length + 1);
+}
+
 void mcpu_send_animation_next(void)
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_START_NEXT, 0, 0);
 }
 
 void mcpu_send_animation_prev(void)
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_START_PREV, 0, 0);
 }
 
 void mcpu_send_animation_toggle(void)
 {
+	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_TOGGLE, 0, 0);
 }
 
 void mcpu_start_animation(uint8_t animation_number)
 {
+    mcpu_send_animation_stop();
+    _delay_ms(10);
+
     switch (animation_number)
     {
     case MATRIX_CMD_ANIMATE_SWEEP:
         mcpu_send_animation_sweep(MATRIX_ANIMATION_DIRECTION_LEFT, MATRIX_ANIMATION_RUN_FOREVER);
+        break;
+    case MATRIX_CMD_ANIMATE_BOX:
+        mcpu_send_animation_box(MATRIX_ANIMATION_DIRECTION_LEFT, MATRIX_ANIMATION_RUN_FOREVER);
         break;
     case MATRIX_CMD_ANIMATE_TYPEMATRIX:
         mcpu_send_animation_typematrix();
@@ -265,8 +310,6 @@ void mcpu_start_animation(uint8_t animation_number)
         dprintf("set_animation: not found: %u\r\n", animation_number);
         break;
     }
-
-    mcpu_send_animation_stop();
 }
 
 void mcpu_animation_toggle(void)
@@ -281,7 +324,7 @@ void mcpu_animation_toggle(void)
     }
     else
     {
-    	mcpu_start_animation(current_animation);
+        mcpu_start_animation(current_animation);
     }
 }
 
@@ -298,7 +341,7 @@ void mcpu_animation_next()
 
 void mcpu_animation_prev()
 {
-    if (current_animation == MATRIX_FIRST_ANIMATION)
+    if (current_animation <= MATRIX_FIRST_ANIMATION)
         current_animation = MATRIX_LAST_ANIMATION;
     else
         current_animation--;

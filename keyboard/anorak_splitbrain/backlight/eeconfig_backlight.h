@@ -29,6 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EECONFIG_BACKLIGHT_REGIONS (uint8_t *)9
 #define EECONFIG_BACKLIGHT_REGION_PWM (uint8_t *)10
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool eeconfig_backlight_is_enabled(void);
 void eeconfig_backlight_init(void);
 
@@ -38,6 +42,10 @@ void eeconfig_write_backlight_regions(uint8_t val);
 
 uint8_t eeconfig_read_backlight_region_brightness(uint8_t region);
 void eeconfig_write_backlight_region_brightness(uint8_t region, uint8_t brightness);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

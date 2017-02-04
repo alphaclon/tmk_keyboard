@@ -65,8 +65,6 @@ void matrix_setup(void)
 
     LedInfo2_On();
     LedInfo1_On();
-
-	dprintf("matrix_setup\r\n");
 }
 
 void matrix_init(void)

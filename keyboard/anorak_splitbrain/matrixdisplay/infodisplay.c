@@ -14,7 +14,7 @@ void matrixcpu_init()
     dprintf("matrixcpu_init");
 
     mcpu_send_command(MATRIX_CMD_INITIALIZE, 0, 0);
-    _delay_ms(10);
+    _delay_ms(5);
     mcpu_read_config();
 
     mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 5);
@@ -27,7 +27,6 @@ uint8_t mcpu_read_config_register8(uint8_t reg)
 #if TWILIB == AVR315
 
     TWI_write_byte_to_register(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, reg);
-    _delay_ms(10);
     TWI_read_data(MATRIX_TWI_ADDRESS, 1);
     TWI_get_data_from_transceiver(&data, 1);
 
@@ -91,7 +90,6 @@ void mcpu_read_config()
 #if TWILIB == AVR315
 
     TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
-    //_delay_ms(10);
     TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
     bool lastTransOK = TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
 
@@ -193,44 +191,37 @@ void mcpu_send_animation_typematrix()
 
 void mcpu_send_animation_stop()
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_STOP, 0, 0);
 }
 
 void mcpu_send_animation_faster()
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_FASTER, 0, 0);
 }
 
 void mcpu_send_animation_slower()
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_SLOWER, 0, 0);
 }
 
 void mcpu_send_brightness_inc()
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_BRIGHTNESS_INC, 0, 0);
 }
 
 void mcpu_send_brightness_dec()
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_BRIGHTNESS_DEC, 0, 0);
 }
 
 void mcpu_send_brightness_set(uint8_t brightness)
 {
-	_delay_ms(10);
     cmd_buffer[0] = brightness;
     mcpu_send_command(MATRIX_CMD_BRIGHTNESS_INC, cmd_buffer, 1);
 }
 
 void mcpu_send_sleep(uint8_t sleep)
 {
-	_delay_ms(10);
     cmd_buffer[0] = sleep;
     mcpu_send_command(MATRIX_CMD_SLEEP_SET, cmd_buffer, 1);
 }
@@ -274,26 +265,22 @@ void mcpu_send_info_text(char const *msg)
 
 void mcpu_send_animation_next(void)
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_START_NEXT, 0, 0);
 }
 
 void mcpu_send_animation_prev(void)
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_START_PREV, 0, 0);
 }
 
 void mcpu_send_animation_toggle(void)
 {
-	_delay_ms(10);
     mcpu_send_command(MATRIX_CMD_ANIMATE_TOGGLE, 0, 0);
 }
 
 void mcpu_start_animation(uint8_t animation_number)
 {
     mcpu_send_animation_stop();
-    _delay_ms(10);
 
     switch (animation_number)
     {

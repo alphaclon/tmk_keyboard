@@ -99,22 +99,22 @@ static void print_eeconfig(void)
 static void command_common_splitbrain_help(void)
 {
     print("\n\t- Magic -\n"
-          "d:	debug\n"
-          "x:	debug matrix\n"
-          "k:	debug keyboard\n"
+          "d/u:	debug\n"
+          "x/l:	debug matrix\n"
+          "k/j:	debug keyboard\n"
           "m:	debug mouse\n"
-          "v:	version\n"
-          "s:	status\n"
-          "c:	console mode\n"
+          "v/i:	version\n"
+          "s/7:	status\n"
+          "c/o:	console mode\n"
           "0-4:	layer0-4(F10-F4)\n"
-          "Paus:	bootloader\n"
+          "Paus/F6:	bootloader\n"
 
 #ifdef KEYBOARD_LOCK_ENABLE
           "Caps:	Lock\n"
 #endif
 
 #ifdef BOOTMAGIC_ENABLE
-          "e:	eeprom\n"
+          "e/p:	eeprom\n"
 #endif
 
 #ifdef NKRO_ENABLE
@@ -122,7 +122,7 @@ static void command_common_splitbrain_help(void)
 #endif
 
 #ifdef SLEEP_LED_ENABLE
-          "z:	sleep LED test\n"
+          "z/y:	sleep LED test\n"
 #endif
     );
 }
@@ -138,6 +138,7 @@ static bool command_common_splitbrain(uint8_t code)
     switch (code) {
 #ifdef SLEEP_LED_ENABLE
         case KC_Z:
+        case KC_Y:
             // test breathing sleep LED
             print("Sleep LED test\n");
             if (sleep_led_test) {
@@ -151,6 +152,7 @@ static bool command_common_splitbrain(uint8_t code)
 #endif
 #ifdef BOOTMAGIC_ENABLE
         case KC_E:
+        case KC_P:
             print("eeconfig:\n");
             print_eeconfig();
             break;
@@ -174,6 +176,7 @@ static bool command_common_splitbrain(uint8_t code)
             command_common_splitbrain_help();
             break;
         case KC_C:
+        case KC_O:
             debug_matrix   = false;
             debug_keyboard = false;
             debug_mouse    = false;
@@ -183,12 +186,14 @@ static bool command_common_splitbrain(uint8_t code)
             command_state = CONSOLE;
             break;
         case KC_PAUSE:
+        case KC_ESC:
             clear_keyboard();
             print("\n\nbootloader... ");
             wait_ms(1000);
             bootloader_jump(); // not return
             break;
         case KC_D:
+        case KC_U:
             if (debug_enable) {
                 print("\ndebug: off\n");
                 debug_matrix   = false;
@@ -201,6 +206,7 @@ static bool command_common_splitbrain(uint8_t code)
             }
             break;
         case KC_X: // debug matrix toggle
+        case KC_L: // debug matrix toggle
             debug_matrix = !debug_matrix;
             if (debug_matrix) {
                 print("\nmatrix: on\n");
@@ -210,6 +216,7 @@ static bool command_common_splitbrain(uint8_t code)
             }
             break;
         case KC_K: // debug keyboard toggle
+        case KC_J: // debug keyboard toggle
             debug_keyboard = !debug_keyboard;
             if (debug_keyboard) {
                 print("\nkeyboard: on\n");
@@ -228,6 +235,7 @@ static bool command_common_splitbrain(uint8_t code)
             }
             break;
         case KC_V: // print version & information
+        case KC_I: // print version & information
             print("\n\t- Version -\n");
             print("DESC: " STR(DESCRIPTION) "\n");
             print("VID: " STR(VENDOR_ID) "(" STR(MANUFACTURER) ") "
@@ -281,6 +289,7 @@ static bool command_common_splitbrain(uint8_t code)
 #endif
             break;
         case KC_S:
+        case KC_9:
             print("\n\t- Status -\n");
             print_val_hex8(host_keyboard_leds());
             print_val_hex8(keyboard_protocol);
@@ -315,16 +324,15 @@ static bool command_common_splitbrain(uint8_t code)
             }
             break;
 #endif
-        case KC_ESC:
         case KC_GRV:
         case KC_0:
         case KC_F10:
             switch_default_layer(0);
             break;
-        case KC_1 ... KC_9:
+        case KC_1 ... KC_8:
             switch_default_layer((code - KC_1) + 1);
             break;
-        case KC_F1 ... KC_F9:
+        case KC_F1 ... KC_F8:
             switch_default_layer((code - KC_F1) + 1);
             break;
         default:

@@ -689,7 +689,6 @@ static void setup_usb(void)
 {
     // Leonardo needs. Without this USB device is not recognized.
     USB_Disable();
-    printf("USB_Init\r\n");
     USB_Init();
 
     // for Console_Task
@@ -719,7 +718,7 @@ int main(void)
 #endif
 
     print_set_sendchar(sendchar);
-    print("\r\ninit\r\n");
+    //print("\r\ninit\r\n");
 
     keyboard_setup();
     setup_usb();
@@ -735,7 +734,7 @@ int main(void)
 #else
         USB_USBTask();
 #endif
-        splitbrain_communication_task();
+        //splitbrain_communication_task();
     }
     print("USB configured.\n");
 
@@ -800,6 +799,7 @@ __attribute__((weak)) void hook_usb_suspend_entry(void)
 #ifdef SLEEP_LED_ENABLE
     sleep_led_enable();
 #endif
+    printf("X");
 }
 
 __attribute__((weak)) void hook_usb_suspend_loop(void)

@@ -30,7 +30,7 @@ void i2c_init(void)
 
 void hook_early_init(void)
 {
-    i2c_init();
+	i2c_init();
     splitbrain_init();
 }
 

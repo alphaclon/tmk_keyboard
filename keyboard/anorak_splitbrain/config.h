@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VENDOR_ID       0xBADE
 #define PRODUCT_ID      0xAFFE
-#define DEVICE_VER      0x0100
+#define DEVICE_VER      0x0101
 #define MANUFACTURER    Anorak
-#define PRODUCT         spitbrain
+#define PRODUCT         splitbrain
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak splitbrain
 
 
@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BACKLIGHT_LEVELS 8
 
 /* key combination for command */
-#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_LCTRL)) || keyboard_report->mods == (MOD_BIT(KC_RSHIFT) | MOD_BIT(KC_RCTRL)))
+#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LGUI) | MOD_BIT(KC_LCTRL)) || keyboard_report->mods == (MOD_BIT(KC_RGUI) | MOD_BIT(KC_RCTRL)))
 
 /* period of tapping(ms) */
 #define TAPPING_TERM    300

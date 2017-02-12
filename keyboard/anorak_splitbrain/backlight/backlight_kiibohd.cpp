@@ -55,8 +55,8 @@ uint8_t current_region = backlight_region_ALL;
 const char region_wasd[] PROGMEM = "WASD";
 const char region_ctrl[] PROGMEM = "Ctrl";
 const char region_cursor[] PROGMEM = "Curs";
-const char region_other[] PROGMEM = "other";
-const char region_all[] PROGMEM = "all";
+const char region_other[] PROGMEM = "Other";
+const char region_all[] PROGMEM = "All";
 const char region_none[] PROGMEM = "xxx";
 
 PGM_P region_names[] = {region_wasd, region_ctrl, region_cursor, region_other, region_all, region_none};
@@ -159,6 +159,9 @@ uint8_t get_index_for_region(uint8_t region)
 
 void show_region_info(uint8_t region)
 {
+	if (!mcpu_is_initialized())
+		return;
+
     char infotext[32];
     char fmt[16];
     uint8_t index = get_index_for_region(region);
@@ -166,7 +169,7 @@ void show_region_info(uint8_t region)
     strcpy_P(fmt, region_names[index]);
     strcat_P(fmt, PSTR(" %s %u"));
 
-    sprintf(infotext, fmt, (regions & region ? "on" : "off"), region_brightness[index]);
+    sprintf(infotext, fmt, (regions & region ? "on" : "off"), region_brightness[index] + 1);
 
     dprintf("info: %s", infotext);
 
@@ -175,6 +178,9 @@ void show_region_info(uint8_t region)
 
 void show_region_enabled(uint8_t region)
 {
+	if (!mcpu_is_initialized())
+		return;
+
     char infotext[32];
     char fmt[16];
     uint8_t index = get_index_for_region(region);
@@ -189,8 +195,43 @@ void show_region_enabled(uint8_t region)
     mcpu_send_info_text(infotext);
 }
 
+void show_region_increase_brightness(uint8_t region)
+{
+	if (!mcpu_is_initialized())
+		return;
+
+    char infotext[32];
+    uint8_t index = get_index_for_region(region);
+
+    strcpy_P(infotext, region_names[index]);
+    strcat_P(infotext, PSTR(" inc"));
+
+    dprintf("info: %s", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
+void show_region_decrease_brightness(uint8_t region)
+{
+	if (!mcpu_is_initialized())
+		return;
+
+    char infotext[32];
+    uint8_t index = get_index_for_region(region);
+
+    strcpy_P(infotext, region_names[index]);
+    strcat_P(infotext, PSTR(" dec"));
+
+    dprintf("info: %s", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
 void show_region_brightness(uint8_t region)
 {
+	if (!mcpu_is_initialized())
+		return;
+
     char infotext[32];
     char fmt[16];
     uint8_t index = get_index_for_region(region);
@@ -198,7 +239,20 @@ void show_region_brightness(uint8_t region)
     strcpy_P(fmt, region_names[index]);
     strcat_P(fmt, PSTR(" %u"));
 
-    sprintf(infotext, fmt, region_brightness[index]);
+    sprintf(infotext, fmt, region_brightness[index] + 1);
+
+    dprintf("info: %s", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
+void show_regions_saved()
+{
+	if (!mcpu_is_initialized())
+		return;
+
+    char infotext[32];
+    strcat_P(infotext, PSTR("saved"));
 
     dprintf("info: %s", infotext);
 
@@ -223,7 +277,6 @@ void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMContro
     control.amount = gamma_correction_table[brightness];
     set_region_mask_for_control(region, control.mask);
     IS31FL3731_PWM_control(&control);
-    show_region_brightness(region);
 }
 
 void set_and_save_brightness_for_region(uint8_t region, uint8_t pos, uint8_t brightness)
@@ -270,6 +323,7 @@ void backlight_increase_brightness_for_region(uint8_t region)
 void backlight_increase_brightness_selected_region()
 {
     backlight_increase_brightness_for_region(current_region);
+    show_region_brightness(current_region);
 }
 
 void backlight_decrease_brightness_for_region(uint8_t region)
@@ -296,6 +350,7 @@ void backlight_decrease_brightness_for_region(uint8_t region)
 void backlight_decrease_brightness_selected_region()
 {
     backlight_decrease_brightness_for_region(current_region);
+    show_region_brightness(current_region);
 }
 
 void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness)
@@ -303,11 +358,16 @@ void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness)
     dprintf("bl_bri_set_by_mask %d\n", brightness);
     uint8_t pos = get_index_for_region(current_region);
     set_and_save_brightness_for_region(current_region, pos, brightness);
+    show_region_brightness(region);
 }
 
 void backlight_brightness_set_all(uint8_t brightness)
 {
     dprintf("bl_bri_set_all %d\n", brightness);
+
+    uint8_t index = get_index_for_region(backlight_region_ALL);
+    region_brightness[index] = brightness;
+    show_region_brightness(backlight_region_ALL);
 
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {
@@ -318,6 +378,8 @@ void backlight_brightness_set_all(uint8_t brightness)
 
 void backlight_increase_brightness()
 {
+    show_region_increase_brightness(backlight_region_ALL);
+
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {
         uint8_t region = (1 << pos);
@@ -327,6 +389,8 @@ void backlight_increase_brightness()
 
 void backlight_decrease_brightness()
 {
+	show_region_decrease_brightness(backlight_region_ALL);
+
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {
         uint8_t region = (1 << pos);
@@ -404,6 +468,8 @@ void backlight_save_region_states()
     {
         eeconfig_write_backlight_region_brightness(pos, region_brightness[pos]);
     }
+
+    show_regions_saved();
 #endif
 }
 
@@ -451,14 +517,20 @@ void backlight_set(uint8_t level)
 {
     dprintf("backlight_set level:%d\n", level);
 
+    uint8_t index = get_index_for_region(backlight_region_ALL);
+
     if (level == 0)
     {
         set_region_mode(backlight_region_ALL, LedControlMode_disable_mask);
+        regions &= ~backlight_region_ALL;
     }
     else
     {
         backlight_set_regions_from_saved_state();
+        regions |= backlight_region_ALL;
     }
+
+    show_region_enabled(backlight_region_ALL);
 }
 
 void backlight_setup()

@@ -1,23 +1,35 @@
 
 #include "infodisplay.h"
 #include "commands.h"
-#include "debug.h"
 #include "twi/twi_config.h"
 #include <string.h>
 #include <util/delay.h>
 
+#ifdef DEBUG_INFODISPLAY
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
+
+static bool _is_initialized = false;
 static uint8_t cmd_buffer[MAX_MSG_LENGTH];
 static uint8_t current_animation = MATRIX_FIRST_ANIMATION;
 
-void matrixcpu_init()
+void mcpu_init()
 {
-    dprintf("matrixcpu_init");
+    dprintf("mcpu_init");
 
     mcpu_send_command(MATRIX_CMD_INITIALIZE, 0, 0);
-    _delay_ms(5);
     mcpu_read_config();
 
-    mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 5);
+    //mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 5);
+
+    _is_initialized = true;
+}
+
+bool mcpu_is_initialized()
+{
+	return _is_initialized;
 }
 
 uint8_t mcpu_read_config_register8(uint8_t reg)
@@ -27,6 +39,7 @@ uint8_t mcpu_read_config_register8(uint8_t reg)
 #if TWILIB == AVR315
 
     TWI_write_byte_to_register(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, reg);
+    _delay_ms(2);
     TWI_read_data(MATRIX_TWI_ADDRESS, 1);
     TWI_get_data_from_transceiver(&data, 1);
 
@@ -90,6 +103,7 @@ void mcpu_read_config()
 #if TWILIB == AVR315
 
     TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
+    _delay_ms(2);
     TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
     bool lastTransOK = TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
 
@@ -281,6 +295,7 @@ void mcpu_send_animation_toggle(void)
 void mcpu_start_animation(uint8_t animation_number)
 {
     mcpu_send_animation_stop();
+    _delay_ms(2);
 
     switch (animation_number)
     {

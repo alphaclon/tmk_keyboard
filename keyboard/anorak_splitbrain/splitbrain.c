@@ -578,7 +578,7 @@ void send_message_to_other_side(uint8_t length)
 
 void send_connect_request_to_other_side()
 {
-    // dprintf("send init\r\n");
+    dprintf("send init\r\n");
     uint8_t pos = fill_message_header(DATAGRAM_CMD_CONNECT, 3);
     send_buffer[pos++] = is_connected_to_usb_as_char();
     send_buffer[pos++] = this_side_as_char();

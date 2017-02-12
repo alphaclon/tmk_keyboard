@@ -718,13 +718,10 @@ int main(void)
 #endif
 
     print_set_sendchar(sendchar);
-    //print("\r\ninit\r\n");
 
     keyboard_setup();
     setup_usb();
     sei();
-
-    print("\r\nwait\r\n");
 
     /* wait for USB startup & debug output */
     while (USB_DeviceState != DEVICE_STATE_Configured && !is_other_side_connected_to_usb())
@@ -736,7 +733,7 @@ int main(void)
 #endif
         //splitbrain_communication_task();
     }
-    print("USB configured.\n");
+    print("USB configured\n");
 
     /* init modules */
     hook_late_init();
@@ -749,8 +746,8 @@ int main(void)
     virtser_init();
 #endif
 
-    print("Keyboard start.\n");
-    dprintf("has usb: %u\r\n", has_usb());
+    print("Keyboard start\n");
+    printf("has usb: %u\r\n", has_usb());
 
     while (1)
     {
@@ -799,12 +796,10 @@ __attribute__((weak)) void hook_usb_suspend_entry(void)
 #ifdef SLEEP_LED_ENABLE
     sleep_led_enable();
 #endif
-    printf("X");
 }
 
 __attribute__((weak)) void hook_usb_suspend_loop(void)
 {
-	printf("s");
     suspend_power_down();
     if (USB_Device_RemoteWakeupEnabled && suspend_wakeup_condition())
     {

@@ -19,18 +19,18 @@ uint8_t breathing = 0;
 
 void backlight_sleep_led_init(void)
 {
-    //dprintf("backlight_sleep_led_init\n");
+    dprintf("backlight_sleep_led_init\n");
     breathing = 0;
 }
 
 void backlight_sleep_led_on(void)
 {
-    //dprintf("backlight_sleep_led_on\n");
+    dprintf("backlight_sleep_led_on\n");
 }
 
 void backlight_sleep_led_off(void)
 {
-    //dprintf("backlight_sleep_led_off\n");
+    dprintf("backlight_sleep_led_off\n");
 }
 
 void backlight_sleep_led_enable(void)
@@ -47,13 +47,18 @@ void backlight_sleep_led_enable(void)
     issi.setBreathMode(1);
     */
 
-    /*
+
     if (issi.is_initialized())
         issi.enableSoftwareShutdown(true);
+
+    if (mcpu_is_initialized())
+    {
+    	mcpu_send_animation_stop();
+    	mcpu_send_sleep(1);
+    }
+
     send_sleep_to_other_side(true);
-    mcpu_send_animation_stop();
-    mcpu_send_sleep(1);
-    */
+
 }
 
 void backlight_sleep_led_disable(void)
@@ -67,12 +72,13 @@ void backlight_sleep_led_disable(void)
     issi.displayFrame(0);
     */
 
-    /*
     if (issi.is_initialized())
         issi.enableSoftwareShutdown(false);
+
+    if (mcpu_is_initialized())
+    	mcpu_send_sleep(0);
+
     send_sleep_to_other_side(false);
-    mcpu_send_sleep(0);
-    */
 }
 
 void backlight_sleep_led_toggle(void)

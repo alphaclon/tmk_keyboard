@@ -61,11 +61,12 @@ void bootmagic(void)
     if (debug_config.raw != eeconfig_read_debug())
     	eeconfig_write_debug(debug_config.raw);
 
-    debug_config.enable = 1;
+#if 0
 #ifdef DEBUG
     debug_config.enable = 1;
     debug_config.matrix = 0;
     debug_config.keyboard = 0;
+#endif
 #endif
 
 

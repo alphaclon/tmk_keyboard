@@ -9,7 +9,9 @@
 extern "C" {
 #endif
 
-void matrixcpu_init(void);
+void mcpu_init(void);
+bool mcpu_is_initialized(void);
+
 void mcpu_read_config(void);
 void mcpu_read_and_dump_config(void);
 

@@ -104,10 +104,10 @@ static void command_common_splitbrain_help(void)
           "k/j:	debug keyboard\n"
           "m:	debug mouse\n"
           "v/i:	version\n"
-          "s/7:	status\n"
+          "s/9:	status\n"
           "c/o:	console mode\n"
-          "0-4:	layer0-4(F10-F4)\n"
-          "Paus/F6:	bootloader\n"
+          "0-4:	layer0-4(F1-F4)\n"
+          "Paus/ESC: bootloader\n"
 
 #ifdef KEYBOARD_LOCK_ENABLE
           "Caps:	Lock\n"
@@ -118,7 +118,7 @@ static void command_common_splitbrain_help(void)
 #endif
 
 #ifdef NKRO_ENABLE
-          "n:	NKRO\n"
+          "n/f:	NKRO\n"
 #endif
 
 #ifdef SLEEP_LED_ENABLE
@@ -315,6 +315,7 @@ static bool command_common_splitbrain(uint8_t code)
             break;
 #ifdef NKRO_ENABLE
         case KC_N:
+        case KC_F:
             clear_keyboard(); //Prevents stuck keys.
             keyboard_nkro = !keyboard_nkro;
             if (keyboard_nkro) {

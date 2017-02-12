@@ -36,10 +36,7 @@ void hook_early_init(void)
 
 void hook_late_init(void)
 {
-    matrixcpu_init();
+    mcpu_init();
     backlight_setup();
     backlight_setup_finish();
-
-    while (!uart_tx_buffer_empty())
-        _delay_ms(50);
 }

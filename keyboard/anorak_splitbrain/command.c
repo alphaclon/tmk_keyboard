@@ -101,7 +101,7 @@ static void command_common_splitbrain_help(void)
     print("\n\t- Magic -\n"
           "d/u:	debug\n"
           "x/l:	debug matrix\n"
-          "k/j:	debug keyboard\n"
+          "k/t:	debug keyboard\n"
           "m:	debug mouse\n"
           "v/i:	version\n"
           "s/9:	status\n"
@@ -115,6 +115,7 @@ static void command_common_splitbrain_help(void)
 
 #ifdef BOOTMAGIC_ENABLE
           "e/p:	eeprom\n"
+    	  "r/j: reset eeprom\n"
 #endif
 
 #ifdef NKRO_ENABLE
@@ -156,6 +157,11 @@ static bool command_common_splitbrain(uint8_t code)
             print("eeconfig:\n");
             print_eeconfig();
             break;
+        case KC_J:
+        case KC_R:
+        	print("reset eeprom:\n");
+        	eeconfig_init();
+        	break;
 #endif
 #ifdef KEYBOARD_LOCK_ENABLE
         case KC_CAPSLOCK:
@@ -216,7 +222,7 @@ static bool command_common_splitbrain(uint8_t code)
             }
             break;
         case KC_K: // debug keyboard toggle
-        case KC_J: // debug keyboard toggle
+        case KC_T: // debug keyboard toggle
             debug_keyboard = !debug_keyboard;
             if (debug_keyboard) {
                 print("\nkeyboard: on\n");

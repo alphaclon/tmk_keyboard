@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sleep_led.h"
 #include "backlight/animations/animation.h"
 #include "matrixdisplay/infodisplay.h"
+#include "splitbrain.h"
 
 /*
  *  Keymaps
@@ -239,6 +240,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         case KIIBOHD_FUNCTION_Backlight_Dump:
         	backlight_dump_issi_state();
         	mcpu_read_and_dump_config();
+        	splitbrain_dump_state();
         	break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
             animation_toggle();

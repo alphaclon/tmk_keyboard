@@ -22,6 +22,7 @@ void communication_watchdog(void);
 char this_side_as_char(void);
 bool is_other_side_connected_to_usb(void);
 bool is_other_side_sleeping(void);
+void splitbrain_dump_state(void);
 
 bool has_usb(void);
 

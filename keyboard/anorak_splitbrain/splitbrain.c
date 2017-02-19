@@ -41,6 +41,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "splitbrain.h"
+#include "matrixdisplay/infodisplay.h"
+#include "backlight/animations/animation.h"
 #include "LUFA/Drivers/USB/USB.h"
 #include "action.h"
 #include "backlight.h"
@@ -96,7 +98,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DATAGRAM_CMD_SLEEP 0x54
 #define DATAGRAM_CMD_CMD 0x60
 
-#define MAX_MSG_LENGTH 16
+#define MAX_SPLIT_MSG_LENGTH 16
 
 #define INIT_TIMEOUT 250
 #define PING_TIMEOUT 500
@@ -105,7 +107,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MAX_ROW_RESEND 3
 
-#ifdef DEBUG_SPLITBRAIN
+#ifdef DEBUG_SPLITBRAIN_SLOW_INIT
 #undef INIT_TIMEOUT
 #define INIT_TIMEOUT 5000
 #undef PING_TIMEOUT
@@ -131,8 +133,8 @@ uint8_t row_resend_count = 0;
 
 matrix_row_t other_sides_rows[MATRIX_ROWS];
 
-uint8_t recv_buffer[MAX_MSG_LENGTH];
-uint8_t send_buffer[MAX_MSG_LENGTH];
+uint8_t recv_buffer[MAX_SPLIT_MSG_LENGTH];
+uint8_t send_buffer[MAX_SPLIT_MSG_LENGTH];
 
 enum recvStatus
 {
@@ -286,7 +288,12 @@ void accept_sync_request(uint8_t const *buffer, uint8_t length)
             eeconfig_write_backlight_region_brightness(i, region_brightness);
         }
     }
+    debug_config.raw = buffer[BACKLIGHT_MAX_REGIONS + 2];
+    eeconfig_write_debug(debug_config.raw);
 #endif
+
+    debug_config.raw = buffer[0];
+    eeconfig_write_debug(debug_config.raw);
 }
 
 void reset_other_sides_rows()
@@ -346,6 +353,9 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
         if (rd->row_number < MATRIX_ROWS)
             other_sides_rows[rd->row_number] = rd->row;
         send_row_ack_to_other_side(rd->row_number < MATRIX_ROWS);
+
+        mcpu_send_typematrix_row(rd->row_number, other_sides_rows[rd->row_number]);
+		animation_typematrix_row(rd->row_number, other_sides_rows[rd->row_number]);
     }
     else if (cmd == DATAGRAM_CMD_ROW_ACK)
     {
@@ -482,7 +492,7 @@ void receive_data_from_other_side()
 
                 recv_status = recvStatusRecvPayload;
 
-                if (expected_length >= MAX_MSG_LENGTH)
+                if (expected_length >= MAX_SPLIT_MSG_LENGTH)
                 {
                     // bail out
                     buffer_pos = 0;
@@ -525,7 +535,7 @@ void receive_data_from_other_side()
             }
 
             if ((recv_status == recvStatusRecvPayload || recv_status == recvStatusFindStop) &&
-                (buffer_pos > expected_length || buffer_pos >= MAX_MSG_LENGTH))
+                (buffer_pos > expected_length || buffer_pos >= MAX_SPLIT_MSG_LENGTH))
             {
                 buffer_pos = 0;
                 expected_length = 0;
@@ -631,7 +641,7 @@ void send_sync_to_other_side()
     dprintf("send sync\r\n");
 
 #ifdef BACKLIGHT_ENABLE
-    uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 1 + 1 + BACKLIGHT_MAX_REGIONS);
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 1 + 1 + BACKLIGHT_MAX_REGIONS + 1);
     dprintf("sync: bl:%u\r\n", eeconfig_read_backlight());
     send_buffer[pos++] = eeconfig_read_backlight();
     send_buffer[pos++] = eeconfig_read_backlight_regions();
@@ -642,8 +652,9 @@ void send_sync_to_other_side()
         send_buffer[pos++] = eeconfig_read_backlight_region_brightness(i);
     }
 #else
-    uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 0);
+    uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 1);
 #endif
+    send_buffer[pos++] = eeconfig_read_debug();
     pos = fill_message_footer(pos);
     send_message_to_other_side(pos);
 }
@@ -720,6 +731,15 @@ void reset_connection_on_timeout()
     _waiting_for_row_ack = false;
     reset_other_sides_rows();
     last_receive_ts = timer_read();
+}
+
+void splitbrain_dump_state()
+{
+	dprintf("this side: %c\r\n", this_side_as_char());
+	dprintf("has usb: %u\r\n", has_usb());
+	dprintf("is conn to usb: %u\r\n", is_connected_to_usb());
+	dprintf("is conn to other side: %u\r\n", _is_connected_to_other_side);
+	dprintf("is other side conn to usb: %u\r\n", is_other_side_connected_to_usb());
 }
 
 void communication_watchdog()

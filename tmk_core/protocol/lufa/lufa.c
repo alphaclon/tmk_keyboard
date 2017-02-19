@@ -731,7 +731,7 @@ int main(void)
 #else
         USB_USBTask();
 #endif
-        //splitbrain_communication_task();
+        splitbrain_communication_task();
     }
     print("USB configured\n");
 
@@ -747,7 +747,7 @@ int main(void)
 #endif
 
     print("Keyboard start\n");
-    printf("has usb: %u\r\n", has_usb());
+    //printf("has usb: %u\r\n", has_usb());
 
     while (1)
     {

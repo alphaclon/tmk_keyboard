@@ -1,6 +1,7 @@
 #ifndef KEYBOARD_ANORAK_SPLITBRAIN_BACKLIGHT_ANIMATIONS_ANIMATION_H_
 #define KEYBOARD_ANORAK_SPLITBRAIN_BACKLIGHT_ANIMATIONS_ANIMATION_H_
 
+#include "matrix.h"
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -9,12 +10,12 @@ extern "C"
 {
 #endif
 
-#define ANIMATION_SWEEP 0
-#define ANIMATION_BREATHING 1
-#define ANIMATION_TYPE_O_MATIC 2
-#define ANIMATION_TYPE_O_CIRCLES 3
+#define ANIMATION_TYPE_O_MATIC 1
+#define ANIMATION_TYPE_O_CIRCLES 2
+#define ANIMATION_BREATHING 3
+//#define ANIMATION_SWEEP 4
 
-#define ANIMATIONS_COUNT 4
+#define ANIMATIONS_COUNT 3
 
 void set_animation_sweep(void);
 void set_animation_type_o_matic(void);
@@ -33,6 +34,7 @@ void decrease_animation_speed(void);
 bool animation_is_running(void);
 
 void animate(void);
+void animation_typematrix_row(uint8_t row_number, matrix_row_t row);
 
 
 #ifdef __cplusplus

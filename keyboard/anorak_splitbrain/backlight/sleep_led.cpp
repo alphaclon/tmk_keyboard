@@ -47,7 +47,6 @@ void backlight_sleep_led_enable(void)
     issi.setBreathMode(1);
     */
 
-
     if (issi.is_initialized())
         issi.enableSoftwareShutdown(true);
 

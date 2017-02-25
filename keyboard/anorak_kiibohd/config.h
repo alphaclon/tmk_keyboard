@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VENDOR_ID       0xDEAD
 #define PRODUCT_ID      0xBEEF
-#define DEVICE_VER      0x0202
+#define DEVICE_VER      0x0203
 #define MANUFACTURER    Anorak
 #define PRODUCT         kiibohd
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
@@ -58,7 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* disable action features */
 //#define NO_ACTION_LAYER
 //#define NO_ACTION_TAPPING
-//#define NO_ACTION_ONESHOT
+#define NO_ACTION_ONESHOT
 //#define NO_ACTION_MACRO
 //#define NO_ACTION_FUNCTION
 

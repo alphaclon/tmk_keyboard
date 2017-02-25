@@ -537,11 +537,6 @@ void backlight_setup()
 {
     dprintf("backlight_setup\r\n");
 
-    if (!eeconfig_backlight_is_enabled())
-    {
-        eeconfig_backlight_init();
-    }
-
     IS31FL3731_init();
     IS31FL3731_set_power_target_I_max(50);
 
@@ -549,6 +544,11 @@ void backlight_setup()
     current_region = backlight_region_ALL;
 
 #ifdef BACKLIGHT_ENABLE
+    if (!eeconfig_backlight_is_enabled())
+    {
+        eeconfig_backlight_init();
+    }
+
     backlight_config_t backlight_config;
     backlight_config.raw = eeconfig_read_backlight();
 

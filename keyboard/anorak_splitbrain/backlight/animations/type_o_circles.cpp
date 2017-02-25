@@ -12,6 +12,7 @@ static uint8_t animation_frame = 1;
 
 void type_o_circles_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+	type_o_circles_animation_loop();
 }
 
 void type_o_circles_animation_start()
@@ -45,7 +46,7 @@ void type_o_circles_animation_loop()
             {
                 uint8_t r = RADIUS_COUNT - pressed_keys[row * MATRIX_ROWS + col];
                 getLedPosByMatrixKey(row, col, &led_row, &led_col);
-                issi.drawCircle(led_row, led_col, r, 128);
+                issi.drawCircle(led_col, led_row, r, 128);
                 pressed_keys[row * MATRIX_ROWS + col]--;
             }
         }

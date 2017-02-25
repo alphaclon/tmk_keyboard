@@ -2,11 +2,12 @@
 #define _ADAFRUIT_IS31FL3731_H_
 
 #include <inttypes.h>
+
 #include "../gfx/Adafruit_GFX.h"
 #include "../IS31FL3732_config.h"
 
 /*
- * IS31FL3731 supports 144 = 8*9 * 2 LEDs
+ * IS31FL3731 supports 144 = 9*16 LEDs
  *
  */
 
@@ -26,6 +27,9 @@ public:
     virtual ~IS31FL3731();
 
     bool begin(uint8_t issi_slave_address = ISSI_ADDR_DEFAULT);
+    void reset();
+
+    bool is_initialized();
 
     virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
 
@@ -91,9 +95,22 @@ public:
      */
     void enableSoftwareShutdown(bool enabled);
 
+    /** set hardware shutdown (pin SDB)
+     *  enable/disable hardware shutdown
+     */
+    void enableHardwareShutdown(bool enabled);
+
+
+
+    void test();
+    void dumpConfiguration();
+    void dumpLeds(uint8_t bank);
+    void dumpBrightness(uint8_t bank);
+
+
+
 protected:
 #if TWILIB == BUFFTW
-    /*
     union _i2c_command
     {
         struct _data
@@ -103,7 +120,6 @@ protected:
         } parts;
         uint8_t raw[ISSI_USED_CHANNELS + 1];
     } i2c_command;
-    */
 #endif
 
     void selectBank(uint8_t bank);
@@ -113,6 +129,8 @@ protected:
 
     uint8_t _issi_address;
     uint8_t _frame;
+
+    bool _is_initialized;
 };
 
 #endif

@@ -33,6 +33,6 @@ typedef struct _tLedPWMControlCommand
 } tLedPWMControlCommand;
 
 void IS31FL3731_PWM_control(tLedPWMControlCommand *control);
-void IS31FL3731_set_power_target(uint16_t value);
+void IS31FL3731_set_power_target_I_max(uint16_t value);
 
 #endif

@@ -9,7 +9,7 @@ static uint8_t animation_frame = 1;
 
 void type_o_matic_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
-
+	type_o_matic_animation_loop();
 }
 
 void type_o_matic_animation_start()
@@ -38,7 +38,7 @@ void type_o_matic_animation_loop()
 
             if (matrix_is_on(row, col))
             {
-                issi.drawPixel(led_row, led_col, animation.brightness);
+                issi.drawPixel(led_col, led_row, animation.brightness);
             }
 
             else
@@ -48,7 +48,7 @@ void type_o_matic_animation_loop()
             	if (color >= 5)
             		color -= 5;
 
-                issi.drawPixel(led_row, led_col, color);
+                issi.drawPixel(led_col, led_row, color);
             }
         }
     }

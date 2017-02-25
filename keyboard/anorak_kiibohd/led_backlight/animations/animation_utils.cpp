@@ -13,20 +13,6 @@ void get_full_led_mask(uint8_t mask[ISSI_LED_MASK_SIZE])
     memcpy_P(mask, LedMaskFull, ISSI_LED_MASK_SIZE);
 }
 
-/*
-void get_full_led_mask(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE])
-{
-        if (is_left_side_of_keyboard())
-        {
-                memcpy_P(mask, LedMaskFull_Left, ISSI_LED_MASK_SIZE);
-        }
-        else
-        {
-                memcpy_P(mask, LedMaskFull_Right, ISSI_LED_MASK_SIZE);
-        }
-}
-*/
-
 void animation_prepare(uint8_t animation_frame)
 {
     uint8_t led_row;

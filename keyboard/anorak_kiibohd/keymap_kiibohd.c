@@ -97,22 +97,24 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      *
      */
     KEYMAP_KIIBOHD(
-        PAUS, FN17, FN18, FN19, FN20, FN21, \
+    	TRNS, FN17, FN18, FN19, FN20, FN21, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
         TRNS, TRNS, FN14, TRNS, TRNS, TRNS, TRNS),
     /*
+     * Team Fortres 2
+     *
      * 4: layer 4, TF2 F-key layer, thumb key
      *    activated by FN2 (leftmost thumb key)
-     *    FN22: lock macro for A-key
+     *    FN22: lock macro for W-key
      *
      */
     KEYMAP_KIIBOHD(
         TRNS,   F1,   F2,   F5,   F6, TRNS, \
+        TRNS,    H, FN22,    L, TRNS, TRNS, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
-        TRNS, TRNS, FN22, TRNS, TRNS, TRNS, \
-        TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, \
+        TRNS,    N,    M, COMM,  DOT,    I, \
         TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS),
     /*
      * 5: layer 5, media and backlight layer,
@@ -161,7 +163,6 @@ enum function_id
     KIIBOHD_FUNCTION_Backlight_Increase_Region,
     KIIBOHD_FUNCTION_Backlight_Decrease_Region,
     KIIBOHD_FUNCTION_Backlight_Save_Current_State,
-    KIIBOHD_FUNCTION_Backlight_Breath,
 	KIIBOHD_FUNCTION_Backlight_Animate,
 	KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed,
 	KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed,
@@ -172,7 +173,7 @@ enum function_id
 enum macro_id
 {
     KIIBOHD_MACRO_DUCK_JUMP,
-	KIIBOHD_MACRO_A_KEY_LOCK
+	KIIBOHD_MACRO_W_KEY_LOCK
 };
 
 /*
@@ -200,9 +201,9 @@ const action_t PROGMEM fn_actions[] =
    [17] = ACTION_DEFAULT_LAYER_SET(KBLAYER_DEFAULT),
    [18] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SPC_ENT),
    [19] = ACTION_DEFAULT_LAYER_SET(KBLAYER_SHIFTED_TQWER),
-   [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Breath),
-   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
-   [22] = ACTION_MACRO(KIIBOHD_MACRO_A_KEY_LOCK),
+   [20] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate), // layer x
+   [21] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate), // layer y
+   [22] = ACTION_MACRO(KIIBOHD_MACRO_W_KEY_LOCK),
    [23] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate),
    [24] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed),
    [25] = ACTION_FUNCTION(KIIBOHD_FUNCTION_Backlight_Animate_Decrease_Speed),
@@ -221,8 +222,9 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
     case KIIBOHD_MACRO_DUCK_JUMP:
         return (record->event.pressed ? MACRO(D(SPC), D(LCTL), END) : MACRO(U(LCTL), U(SPC), END));
         break;
-    case KIIBOHD_MACRO_A_KEY_LOCK:
-        return (record->event.pressed ? MACRO(D(A), END) : MACRO_NONE);
+    case KIIBOHD_MACRO_W_KEY_LOCK:
+    	return MACRO(D(W), END);
+        //return (record->event.pressed ? MACRO(D(W), END) : MACRO_NONE);
         break;
     }
     return MACRO_NONE;
@@ -264,9 +266,6 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             break;
         case KIIBOHD_FUNCTION_Backlight_Save_Current_State:
             backlight_save_region_states();
-            break;
-        case KIIBOHD_FUNCTION_Backlight_Breath:
-        	//backlight_sleep_led_toggle();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
             animation_toggle();

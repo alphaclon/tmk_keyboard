@@ -22,23 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "pwm_control.h"
 #include "led_control.h"
 #include "led_masks.h"
+#include "twi_config.h"
 
 extern "C" {
 #include "config.h"
 #include "eeconfig.h"
+#include "eeconfig_backlight.h"
 #include "backlight.h"
 #include "backlight_kiibohd.h"
 #include "../nfo_led.h"
-}
-
-extern "C" {
-#if TWILIB == AVR315
-#include "avr315/TWI_Master.h"
-#elif TWILIB == BUFFTW
-#include "twi/twi_master.h"
-#else
-#include "i2cmaster/i2cmaster.h"
-#endif
 }
 
 #ifdef DEBUG_BACKLIGHT
@@ -85,6 +77,20 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
         //dprintf("unknown region %d\n", region);
         break;
     }
+
+#ifdef DEBUG_BACKLIGHT_EXTENDED
+    dprintf("selected mask: %u\r\n", region);
+    for (uint8_t r = 0; r < ISSI_USED_ROWS; ++r)
+    {
+        dprintf("%02u: ", r);
+        for (uint8_t c = 0; c < 2; ++c)
+        {
+            dprintf("%02X ", mask[r * 2 + c]);
+        }
+        dprintf("\r\n");
+    }
+    dprintf("\r\n");
+#endif
 }
 
 uint8_t get_index_for_region(uint8_t region)
@@ -143,13 +149,11 @@ void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMContro
 
 void set_and_save_brightness_for_region(uint8_t region, uint8_t pos, uint8_t brightness)
 {
-    //dprintf("set bri %d\n", brightness);
     if (brightness >= GAMMA_STEPS)
         brightness = GAMMA_STEPS - 1;
 
     set_brightness_for_region(region, brightness, LedControlMode_brightness_set_by_mask);
     region_brightness[pos] = brightness;
-    //eeconfig_write_backlight_region_brightness(pos, brightness);
 }
 
 void set_brightness_for_all_regions(uint8_t brightness, tLedPWMControlMode mode)
@@ -347,9 +351,10 @@ void backlight_set_regions_from_saved_state(void)
     }
 }
 
+// Defined in tmk_core/common/backlight.h
 void backlight_set(uint8_t level)
 {
-    //dprintf("bl_set %d\n", level);
+    dprintf("bl_set %d\n", level);
 
     if (level == 0)
     {
@@ -361,41 +366,23 @@ void backlight_set(uint8_t level)
     }
 }
 
-/*
-void backlight_initialize_regions(void)
-{
-    backlight_load_region_states();
-    backlight_set_regions_from_saved_state();
-}
-*/
-
 void backlight_setup()
 {
-/*
-    LED_GREEN_INIT();
-    LED_YELLOW_INIT();
-
-    LED_GREEN_ON();
-    LED_YELLOW_ON();
-
-    _delay_ms(500);
-    _delay_ms(500);
-
-    _delay_ms(500);
-	LED_GREEN_OFF();
-	_delay_ms(500);
-	LED_GREEN_ON();
-
-	_delay_ms(500);
-	_delay_ms(500);
-*/
+	dprintf("bl_setup\n");
 
     IS31FL3731_init();
-    //IS31FL3731_set_maximum_power_consumption(320);
+    IS31FL3731_set_power_target_I_max(500);
 
-#ifdef BACKLIGHT_ENABLE
     regions = 0;
     current_region = backlight_region_ALL;
+
+#ifdef BACKLIGHT_ENABLE
+    dprintf("bl_setup\n");
+
+    if (!eeconfig_backlight_is_enabled())
+    {
+        eeconfig_backlight_init();
+    }
 
     backlight_config_t backlight_config;
     backlight_config.raw = eeconfig_read_backlight();
@@ -412,48 +399,6 @@ void backlight_setup()
 
 void backlight_setup_finish()
 {
-/*
-	LED_GREEN_OFF();
-	LED_YELLOW_OFF();
-
-	_delay_ms(500);
-	_delay_ms(500);
-
-    // wait for interface to be ready
-#if TWILIB == AVR315
-	while (TWI_Transceiver_Busy())
-	{
-		LED_GREEN_OFF();
-		_delay_ms(100);
-		LED_GREEN_ON();
-		_delay_ms(100);
-	}
-#elif TWILIB == BUFFTW
-	while (i2cGetState())
-	{
-		LED_GREEN_OFF();
-		_delay_ms(100);
-		LED_GREEN_ON();
-		_delay_ms(100);
-	}
-#endif
-
-
-	_delay_ms(500);
-	LED_YELLOW_ON();
-	_delay_ms(500);
-	LED_YELLOW_OFF();
-
-
-	_delay_ms(500);
-	_delay_ms(500);
-*/
-}
-
-void backlight_test()
-{
-	backlight_load_region_states();
-	backlight_set_regions_from_saved_state();
 }
 
 } /* C */

@@ -60,7 +60,7 @@ SRC += \
 	matrix.c \
 	keymap_common.c \
 	led_backlight/key_led_map.cpp \
-	led_backlight/twi/twi_master.c \
+	led_backlight/avr315/TWI_Master.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
@@ -74,6 +74,7 @@ SRC += \
 	led_backlight/pwm_control.cpp \
 	led_backlight/led_masks.cpp \
 	led_backlight/sleep_led.cpp \
+	led_backlight/eeconfig_backlight.c \
 	led_backlight/animations/animation.cpp \
 	led_backlight/animations/animation_utils.cpp \
 	led_backlight/animations/sweep.cpp \
@@ -157,7 +158,6 @@ SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 #OPT_DEFS += -DNO_ACTION_LAYER
 #OPT_DEFS += -DNO_ACTION_MACRO
 
-
 #
 # Keymap file
 #
@@ -177,10 +177,17 @@ include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
 debug-on: EXTRAFLAGS += -DDEBUG
-debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
+#debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
+#debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
+#debug-on: EXTRAFLAGS += -DDEBUG_ISSI
+#debug-on: EXTRAFLAGS += -DDEBUG_I2C
+#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
+#debug-on: OPT_DEFS := $(filter-out -DCOMMAND_ENABLE,$(OPT_DEFS))
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
 debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
+#debug-off: EXTRAFLAGS += -DNO_DEBUG
 debug-off: all

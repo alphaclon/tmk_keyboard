@@ -20,7 +20,7 @@ void set_animation_sweep()
 	dprintf("sweep\r\n");
 
     animation.brightness = 0;
-    animation.delay_in_ms = 500;
+    animation.delay_in_ms = 50;
     animation.duration_in_ms = 0;
 
     animation.animationStart = &sweep_animation_start;
@@ -33,8 +33,8 @@ void set_animation_type_o_matic()
 {
 	dprintf("type_o_matic\r\n");
 
-    animation.brightness = 130;
-    animation.delay_in_ms = 500;
+    animation.brightness = 255;
+    animation.delay_in_ms = 250;
     animation.duration_in_ms = 0;
 
     animation.animationStart = &type_o_matic_animation_start;
@@ -47,8 +47,8 @@ void set_animation_type_o_circles()
 {
 	dprintf("type_o_circles\r\n");
 
-    animation.brightness = 128;
-    animation.delay_in_ms = 500;
+    animation.brightness = 255;
+    animation.delay_in_ms = 250;
     animation.duration_in_ms = 0;
 
     animation.animationStart = &type_o_circles_animation_start;
@@ -61,8 +61,8 @@ void set_animation_breathing()
 {
 	dprintf("breathing\r\n");
 
-    animation.brightness = 0;
-    animation.delay_in_ms = 1000;
+    animation.brightness = 255;
+    animation.delay_in_ms = 0;
     animation.duration_in_ms = 0;
 
     animation.animationStart = &breathing_animation_start;
@@ -126,13 +126,15 @@ void animation_previous()
 
 void animation_increase_speed(void)
 {
-    if (animation.delay_in_ms > 100)
-        animation.delay_in_ms -= 100;
+    if (animation.delay_in_ms > 10)
+        animation.delay_in_ms -= 50;
+    else
+    	animation.delay_in_ms = 10;
 }
 
 void animation_decrease_speed(void)
 {
-    animation.delay_in_ms += 100;
+    animation.delay_in_ms += 50;
 }
 
 void animation_test()
@@ -194,11 +196,14 @@ void animate()
     if (animation.animationLoop == 0)
         return;
 
-    if (animation.duration_timer > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_timer)
-        return;
-
     if (timer_elapsed(animation.loop_timer) < animation.delay_in_ms)
         return;
+
+    if (animation.duration_in_ms > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_in_ms)
+    {
+    	stop_animation();
+		return;
+    }
 
     animation.loop_timer = timer_read();
     animation.animationLoop();
@@ -207,5 +212,8 @@ void animate()
 void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
 	if (animation.animation_typematrix_row)
+	{
+		animation.loop_timer = timer_read();
 		animation.animation_typematrix_row(row_number, row);
+	}
 }

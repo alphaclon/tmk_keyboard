@@ -115,7 +115,7 @@ static void command_common_splitbrain_help(void)
 
 #ifdef BOOTMAGIC_ENABLE
           "e/p:	eeprom\n"
-    	  "r/j: reset eeprom\n"
+    	  "r/j:	reset eeprom\n"
 #endif
 
 #ifdef NKRO_ENABLE

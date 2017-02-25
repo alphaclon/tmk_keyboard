@@ -76,11 +76,6 @@ void set_animation(uint8_t animation_number)
 {
     switch (animation_number)
     {
-#ifdef ANIMATION_SWEEP
-    case ANIMATION_SWEEP:
-        set_animation_sweep();
-        break;
-#endif
     case ANIMATION_BREATHING:
         set_animation_breathing();
         break;
@@ -90,6 +85,11 @@ void set_animation(uint8_t animation_number)
     case ANIMATION_TYPE_O_CIRCLES:
         set_animation_type_o_circles();
         break;
+#ifdef ANIMATION_SWEEP
+    case ANIMATION_SWEEP:
+        set_animation_sweep();
+        break;
+#endif
     }
 }
 

@@ -10,12 +10,12 @@ extern "C"
 {
 #endif
 
-#define ANIMATION_TYPE_O_MATIC 1
-#define ANIMATION_TYPE_O_CIRCLES 2
-#define ANIMATION_BREATHING 3
-//#define ANIMATION_SWEEP 4
+#define ANIMATION_TYPE_O_MATIC 0
+#define ANIMATION_TYPE_O_CIRCLES 1
+#define ANIMATION_BREATHING 2
+#define ANIMATION_SWEEP 3
 
-#define ANIMATIONS_COUNT 3
+#define ANIMATIONS_COUNT 4
 
 void set_animation_sweep(void);
 void set_animation_type_o_matic(void);

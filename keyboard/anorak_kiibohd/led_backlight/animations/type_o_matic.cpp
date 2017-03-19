@@ -26,6 +26,7 @@ void type_o_matic_animation_stop()
 
 void type_o_matic_animation_loop()
 {
+#if 1
     uint8_t led_row;
     uint8_t led_col;
 
@@ -55,4 +56,5 @@ void type_o_matic_animation_loop()
     }
 
     issi.blitToFrame(animation_frame);
+#endif
 }

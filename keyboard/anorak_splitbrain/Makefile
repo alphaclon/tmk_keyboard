@@ -40,15 +40,16 @@
 # To rebuild project do "make clean" then "make all".
 #
 # Default fuses (factory) : E:F3, H:99, L:5E
-# Used fuses              : E:F3, H:D9, L:DE
-# Brown out at 3.5V       : E:F1, H:D9, L:DE
+# Used fuses              : E:F7, H:D9, L:DE
+
 #                                       L:D1 preserves EEPROM
+# 
 #
 # Flashing the bootloader:
 #  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -D -U flash:w:BootloaderDFU.hex:a
 
 # Flashing the fuses: 
-#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -U lfuse:w:0xde:m -U hfuse:w:0xd1:m -U efuse:w:0xf1:m 
+#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -U lfuse:w:0xde:m -U hfuse:w:0xd9:m -U efuse:w:0xf7:m
 #
 #----------------------------------------------------------------------------
 
@@ -152,14 +153,13 @@ OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 #   Atmel DFU loader 4096	(TMK Alt Controller)
 #   LUFA bootloader  4096
 #   USBaspLoader     2048
-OPT_DEFS += -DBOOTLOADER_SIZE=4096
+OPT_DEFS += -DBOOTLOADER_SIZE=8192
 
 
 # Build Options
 #   comment out to disable the options.
 #
 BOOTMAGIC_ENABLE = yes      # Virtual DIP switch configuration(+1000)
-#MOUSEKEY_ENABLE = yes       # Mouse keys(+4700)
 EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
 CONSOLE_ENABLE = yes        # Console for debug(+400)
 COMMAND_ENABLE = yes        # Commands for debug and configuration
@@ -167,6 +167,7 @@ NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
 BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 #VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
+#MOUSEKEY_ENABLE = yes       # Mouse keys(+4700)
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -190,8 +191,9 @@ debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
-debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
+debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN_SLOW_INIT
+#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+#debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION

@@ -24,6 +24,10 @@
 // include project-specific configuration
 #include "i2cconf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // defines and constants
 #define TWCR_CMD_MASK 0x0F
 #define TWSR_STATUS_MASK 0xF8
@@ -87,5 +91,9 @@ uint8_t i2cMasterSendCommandNI(uint8_t deviceAddr, uint8_t cmd, uint8_t length, 
 
 //! Get the current high-level state of the I2C interface
 eI2cStateType i2cGetState(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

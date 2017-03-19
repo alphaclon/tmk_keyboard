@@ -26,7 +26,6 @@
 #
 # make flip-ee = Download the eeprom file to the device, using Atmel FLIP
 #                (must have Atmel FLIP installed).
-#
 # make dfu-start = Restart using dfu-programmer
 #                  (must have dfu-programmer installed).
 #
@@ -40,57 +39,41 @@
 #
 # To rebuild project do "make clean" then "make all".
 #
-# avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
+# Default fuses (factory) : E:F3, H:99, L:5E
+# Used fuses              : E:F7, H:D9, L:DE
+
+#                                       L:D1 preserves EEPROM
+# 
+#
+# Flashing the bootloader:
+#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -D -U flash:w:BootloaderDFU.hex:a
+
+# Flashing the fuses: 
+#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -U lfuse:w:0xde:m -U hfuse:w:0xd9:m -U efuse:w:0xf7:m # brownout disabled
+#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -U lfuse:w:0xde:m -U hfuse:w:0xd9:m -U efuse:w:0xf0:m # brownout at 4.3V
 #
 #----------------------------------------------------------------------------
 
 # Target file name (without extension).
-TARGET = anorak_kiibohd_lufa
+TARGET = anorak_at90usb1286_lufa
 
-# Directory common source files exist
+# Directory common source filess exist
 TMK_DIR = ../../tmk_core
 
 # Directory keyboard dependent files exist
 TARGET_DIR = .
 
+PROGRAM_CMD = avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B 0.1 -U flash:w:anorak_at90usb1286_lufa.hex:a
+
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
-	led.c \
-	hooks.c \
+	uart/uart.c \
 	matrix.c \
-	command.c \
-	keymap_common.c \
-	led_backlight/key_led_map.cpp \
-	led_backlight/avr315/TWI_Master.c \
-	led_backlight/i2cmaster/twimaster.c \
-	led_backlight/gfx/new.cpp \
-	led_backlight/gfx/glcdfont.c \
-	led_backlight/gfx/Adafruit_GFX.cpp \
-	led_backlight/gfx/WString.cpp \
-	led_backlight/gfx/Print.cpp \
-	led_backlight/IS31FL3731/IS31FL3731.cpp \
-	led_backlight/IS31FL3731/IS31FL3731_buffered.cpp \
-	led_backlight/backlight_kiibohd.c \
-	led_backlight/control.cpp \
-	led_backlight/led_control.cpp \
-	led_backlight/pwm_control.cpp \
-	led_backlight/led_masks.cpp \
-	led_backlight/sleep_led.cpp \
-	led_backlight/eeconfig_backlight.c \
-	led_backlight/animations/animation.cpp \
-	led_backlight/animations/animation_utils.cpp \
-	led_backlight/animations/sweep.cpp \
-	led_backlight/animations/breathing.cpp \
-	led_backlight/animations/type_o_matic.cpp \
-	led_backlight/animations/type_o_circles.cpp
+	hooks.c \
+	led.c \
+	keymap_splitbrain.c \
 	
 
-#	led_backlight/twi/twi_master.c \
-#	led_backlight/i2cmaster/twimaster.c \
-#	led_backlight/avr315/TWI_Master.c \
-
-PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
-	
 CONFIG_H = config.h
 
 
@@ -98,7 +81,7 @@ CONFIG_H = config.h
 # PJRC Teensy++ 2.0
 # MCU = at90usb1286
 # TMK Alt Controller or PJRC Teensy 2.0
-MCU = atmega32u4
+MCU = at90usb1286
 
 # Processor frequency.
 #     This will define a symbol, F_CPU, in all source code files equal to the
@@ -141,34 +124,28 @@ OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 #   Atmel DFU loader 4096	(TMK Alt Controller)
 #   LUFA bootloader  4096
 #   USBaspLoader     2048
-OPT_DEFS += -DBOOTLOADER_SIZE=4096
+OPT_DEFS += -DBOOTLOADER_SIZE=8192
 
 
 # Build Options
 #   comment out to disable the options.
 #
-BOOTMAGIC_ENABLE = yes		# Virtual DIP switch configuration
-#MOUSEKEY_ENABLE = yes		# Mouse keys
-EXTRAKEY_ENABLE = yes		# Audio control and System control
-CONSOLE_ENABLE = yes		# Console for debug
-COMMAND_ENABLE = yes    	# Commands for debug and configuration
-BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
-#NKRO_ENABLE = yes		    # USB Nkey Rollover
-SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+BOOTMAGIC_ENABLE = yes      # Virtual DIP switch configuration(+1000)
+EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
+CONSOLE_ENABLE = yes        # Console for debug(+400)
+COMMAND_ENABLE = yes        # Commands for debug and configuration
+NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
+#BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
+#SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+#VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
+#MOUSEKEY_ENABLE = yes       # Mouse keys(+4700)
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
 #OPT_DEFS += -DNO_ACTION_MACRO
 
-#
-# Keymap file
-#
-ifdef KEYMAP
-    SRC := keymap_$(KEYMAP).c $(SRC)
-else
-    SRC := keymap_kiibohd.c $(SRC)
-endif
-
+# Do not wait for a connection to an USB host during startup
+#OPT_DEFS += -DLUFA_NO_WAIT_FOR_USB
 
 # Search Path
 VPATH += $(TARGET_DIR)
@@ -178,18 +155,31 @@ include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
+
 debug-on: EXTRAFLAGS += -DDEBUG
-#debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
-#debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
-#debug-on: EXTRAFLAGS += -DDEBUG_ISSI
-#debug-on: EXTRAFLAGS += -DDEBUG_I2C
-#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-#debug-on: EXTRAFLAGS += -DLUFA_DEBUG
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
-#debug-on: OPT_DEFS := $(filter-out -DCOMMAND_ENABLE,$(OPT_DEFS))
 debug-on: all
 
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
 debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
-#debug-off: EXTRAFLAGS += -DNO_DEBUG
 debug-off: all
+
+dfu-hex: $(TARGET).hex
+	@echo -n dfu-programmer: waiting
+	@until dfu-programmer $(MCU) get bootloader-version > /dev/null 2>&1; do \
+		echo  -n "."; \
+		sleep 1; \
+	done
+	@echo
+	dfu-programmer $(MCU) erase --force
+	dfu-programmer $(MCU) flash $(TARGET).hex
+	dfu-programmer $(MCU) launch --no-reset
+	
+dfu-launch:
+	dfu-programmer $(MCU) launch --no-reset
+
+dfu-eep: $(TARGET).hex $(TARGET).eep
+	dfu-programmer $(MCU) flash --eeprom $(TARGET).eep
+	dfu-programmer $(MCU) launch --no-reset

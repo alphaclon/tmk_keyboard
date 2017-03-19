@@ -14,24 +14,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define VENDOR_ID       0xDEAD
-#define PRODUCT_ID      0xBEEF
-#define DEVICE_VER      0x0203
+#define VENDOR_ID       0xBADE
+#define PRODUCT_ID      0xAFFE
+#define DEVICE_VER      0x0101
 #define MANUFACTURER    Anorak
-#define PRODUCT         kiibohd
-#define DESCRIPTION     t.m.k. keyboard firmware for Anorak kiibohd
+#define PRODUCT         at90usb1286
+#define DESCRIPTION     t.m.k. keyboard firmware for Anorak at90usb1286 test
+
 
 /* matrix size */
-#define MATRIX_ROWS 5
-#define MATRIX_COLS 7
+#define MATRIX_ROWS 6
+#define MATRIX_COLS 18
 
 #define BACKLIGHT_LEVELS 8
 
 /* key combination for command */
-#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LCTRL) | MOD_BIT(KC_LSHIFT)))
+#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LGUI) | MOD_BIT(KC_LCTRL)) || keyboard_report->mods == (MOD_BIT(KC_RGUI) | MOD_BIT(KC_RCTRL)))
 
 /* period of tapping(ms) */
 #define TAPPING_TERM    300
@@ -43,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* Boot Magic salt key: Space */
 #define BOOTMAGIC_KEY_SALT      KC_SPACE
 
+#define LAYOUT_ISO_CURSORKEYS_RIGHT
 
 /*
  * Feature disable options
@@ -50,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /* disable debug print */
 //#define NO_DEBUG
-#define NO_DEBUG_LEDS
+//#define NO_DEBUG_LEDS
 
 /* disable print */
 //#define NO_PRINT

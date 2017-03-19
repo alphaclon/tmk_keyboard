@@ -115,7 +115,7 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
     }
 
 #ifdef DEBUG_BACKLIGHT_EXTENDED
-    dprintf("selected mask: %u\r\n", region);
+    dprintf("selected mask: %u\n", region);
     for (uint8_t r = 0; r < ISSI_USED_ROWS; ++r)
     {
         dprintf("%02u: ", r);
@@ -123,9 +123,9 @@ void set_region_mask_for_control(uint8_t region, uint8_t mask[ISSI_LED_MASK_SIZE
         {
             dprintf("%02X ", mask[r * 2 + c]);
         }
-        dprintf("\r\n");
+        dprintf("\n");
     }
-    dprintf("\r\n");
+    dprintf("\n");
 #endif
 }
 
@@ -171,7 +171,7 @@ void show_region_info(uint8_t region)
 
     sprintf(infotext, fmt, (regions & region ? "on" : "off"), region_brightness[index] + 1);
 
-    dprintf("info: %s", infotext);
+    dprintf("info: %s\n", infotext);
 
     mcpu_send_info_text(infotext);
 }
@@ -190,7 +190,7 @@ void show_region_enabled(uint8_t region)
 
     sprintf(infotext, fmt, (regions & region ? "on" : "off"));
 
-    dprintf("info: %s", infotext);
+    dprintf("info: %s\n", infotext);
 
     mcpu_send_info_text(infotext);
 }
@@ -206,7 +206,7 @@ void show_region_increase_brightness(uint8_t region)
     strcpy_P(infotext, region_names[index]);
     strcat_P(infotext, PSTR(" inc"));
 
-    dprintf("info: %s", infotext);
+    dprintf("info: %s\n", infotext);
 
     mcpu_send_info_text(infotext);
 }
@@ -222,7 +222,7 @@ void show_region_decrease_brightness(uint8_t region)
     strcpy_P(infotext, region_names[index]);
     strcat_P(infotext, PSTR(" dec"));
 
-    dprintf("info: %s", infotext);
+    dprintf("info: %s\n", infotext);
 
     mcpu_send_info_text(infotext);
 }
@@ -241,7 +241,7 @@ void show_region_brightness(uint8_t region)
 
     sprintf(infotext, fmt, region_brightness[index] + 1);
 
-    dprintf("info: %s", infotext);
+    dprintf("info: %s\n", infotext);
 
     mcpu_send_info_text(infotext);
 }
@@ -254,7 +254,7 @@ void show_regions_saved()
     char infotext[32];
     strcat_P(infotext, PSTR("saved"));
 
-    dprintf("info: %s", infotext);
+    dprintf("info: %s\n", infotext);
 
     mcpu_send_info_text(infotext);
 }
@@ -513,6 +513,7 @@ extern "C" {
 #endif
 
 // Defined in tmk_core/common/backlight.h
+// called by backlight_init()
 void backlight_set(uint8_t level)
 {
     dprintf("backlight_set level:%d\n", level);
@@ -535,7 +536,7 @@ void backlight_set(uint8_t level)
 
 void backlight_setup()
 {
-    dprintf("backlight_setup\r\n");
+    dprintf("backlight_setup\n");
 
     IS31FL3731_init();
     IS31FL3731_set_power_target_I_max(50);
@@ -552,11 +553,11 @@ void backlight_setup()
     backlight_config_t backlight_config;
     backlight_config.raw = eeconfig_read_backlight();
 
-    dprintf("backlight_setup on:%u, level:%u\r\n", backlight_config.enable, backlight_config.level);
+    dprintf("backlight_setup on:%u, level:%u\n", backlight_config.enable, backlight_config.level);
 
     if (backlight_config.level == 0)
     {
-        dprintf("fix level\r\n");
+        dprintf("fix level\n");
         backlight_config.level = BACKLIGHT_LEVELS - 1;
         eeconfig_write_backlight(backlight_config.raw);
     }
@@ -564,13 +565,13 @@ void backlight_setup()
     backlight_load_region_states();
 #endif
 
-    dprintf("backlight_setup done\r\n");
+    dprintf("backlight_setup done\n");
 }
 
 void backlight_setup_finish()
 {
     IS31FL3731_set_power_target_I_max(150);
-    dprintf("backlight_setup_finish\r\n");
+    dprintf("backlight_setup_finish\n");
 }
 
 #ifdef __cplusplus

@@ -109,7 +109,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef DEBUG_SPLITBRAIN_SLOW_INIT
 #undef INIT_TIMEOUT
-#define INIT_TIMEOUT 5000
+#define INIT_TIMEOUT 1000
 #undef PING_TIMEOUT
 #define PING_TIMEOUT 10000
 #endif
@@ -186,10 +186,12 @@ void splitbrain_init()
     row_resend_count = 0;
 
     reset_other_sides_rows();
-    last_init_send_ts = timer_read() - INIT_TIMEOUT;
-    uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
     splitbrain_get_my_side();
+
     recv_status = recvStatusIdle;
+    last_init_send_ts = timer_read() - INIT_TIMEOUT;
+
+    uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
 }
 
 void splitbrain_get_my_side()

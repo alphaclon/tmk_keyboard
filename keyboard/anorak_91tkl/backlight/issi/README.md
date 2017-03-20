@@ -4,7 +4,7 @@ To work with library you need to declare an instance of IS31FL3733:
 
 `IS31FL3733 is31fl3733_0;`
 
-Multiple instances with differnt I2C addresses on same or different I2C buses can be declared.
+Multiple instances with diffrent I2C addresses on same or different I2C buses can be declared.
 
 Implement an `i2c_write_reg` function (example for STM32):
 

@@ -74,8 +74,6 @@ void matrix_init(void)
 
     LedInfo1_Off();
     LedInfo2_Off();
-
-    dprintf("matrix_init\r\n");
 }
 
 void matrix_clear(void)

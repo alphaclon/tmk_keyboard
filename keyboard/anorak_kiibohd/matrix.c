@@ -167,7 +167,9 @@ uint8_t matrix_scan(void)
         }
     }
 
+#ifdef BACKLIGHT_ENABLE
     animate();
+#endif
 
     return 1;
 }

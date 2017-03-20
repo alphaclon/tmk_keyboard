@@ -22,7 +22,7 @@
 #define LedInfo2_Init()  do { DDRC |= (1<<7); PORTC &= ~(1<<7);} while (0)
 #define LedInfo2_On()    do { PORTC |= (1<<7);} while (0)
 #define LedInfo2_Off()   do { PORTC &= ~(1<<7); } while (0)
-#define LedInfo2_Toggle()   do { PIND |= (1<<7); } while (0)
+#define LedInfo2_Toggle()   do { PINC |= (1<<7); } while (0)
 #else
 #define LedInfo1_Init()  do { } while (0)
 #define LedInfo1_On()    do { } while (0)
@@ -32,5 +32,5 @@
 #define LedInfo2_Init()  do { } while (0)
 #define LedInfo2_On()    do { } while (0)
 #define LedInfo2_Off()   do { } while (0)
-#define LED_YELLOW_TGL()   do { } while (0)
+#define LedInfo2_Toggle()   do { } while (0)
 #endif

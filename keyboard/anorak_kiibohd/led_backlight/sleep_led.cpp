@@ -2,7 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
-
+#include "../nfo_led.h"
 #include "control.h"
 #include "debug.h"
 
@@ -33,8 +33,9 @@ void backlight_sleep_led_off(void)
 
 void backlight_sleep_led_enable(void)
 {
-	dprintf("backlight_sleep_led_enable\n");
+	//dprintf("backlight_sleep_led_enable\n");
 	breathing = 1;
+	LedInfo1_Toggle();
 
 	/*
 	// breathing for current configuration
@@ -52,13 +53,15 @@ void backlight_sleep_led_enable(void)
 	issi.setBreathMode(true);
 	*/
 
+#if TWILIB == AVR315_SYNC || TWILIB == BUFFTW || TWILIB == I2CMAS
 	if (issi.is_initialized())
 		issi.enableSoftwareShutdown(true);
+#endif
 }
 
 void backlight_sleep_led_disable(void)
 {
-	dprintf("backlight_sleep_led_disable\n");
+	//dprintf("backlight_sleep_led_disable\n");
 	breathing = 0;
 
 	/*
@@ -67,8 +70,10 @@ void backlight_sleep_led_disable(void)
 	issi.displayFrame(0);
 	*/
 
+#if TWILIB == AVR315_SYNC || TWILIB == BUFFTW || TWILIB == I2CMAS
 	if (issi.is_initialized())
 		issi.enableSoftwareShutdown(false);
+#endif
 }
 
 void backlight_sleep_led_toggle(void)

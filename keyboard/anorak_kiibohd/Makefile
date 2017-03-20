@@ -58,9 +58,11 @@ SRC += \
 	led.c \
 	hooks.c \
 	matrix.c \
+	command.c \
 	keymap_common.c \
 	led_backlight/key_led_map.cpp \
 	led_backlight/avr315/TWI_Master.c \
+	led_backlight/i2cmaster/twimaster.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
 	led_backlight/gfx/Adafruit_GFX.cpp \
@@ -151,7 +153,7 @@ EXTRAKEY_ENABLE = yes		# Audio control and System control
 CONSOLE_ENABLE = yes		# Console for debug
 COMMAND_ENABLE = yes    	# Commands for debug and configuration
 BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
-NKRO_ENABLE = yes		    # USB Nkey Rollover
+#NKRO_ENABLE = yes		    # USB Nkey Rollover
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 
 #OPT_DEFS += -DNO_ACTION_TAPPING

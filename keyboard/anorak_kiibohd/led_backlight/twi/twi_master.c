@@ -60,11 +60,18 @@
 #include "debug.h"
 #include "i2c.h"
 
+#ifdef DEBUG_I2C
+#include "debug.h"
+#define I2C_DEBUG
+#else
+#include "nodebug.h"
+#endif
+
 // Standard I2C bit rates are:
 // 100KHz for slow speed
 // 400KHz for high speed
 
-//#define I2C_DEBUG
+
 
 // I2C state and address variables
 static volatile eI2cStateType I2cState;
@@ -374,6 +381,8 @@ uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint8_t length, uint8_t *data)
     return retval;
 }
 
+#ifdef TWI_WITH_INTERRUPTS
+
 //! I2C (TWI) interrupt service routine
 ISR(TWI_vect)
 {
@@ -478,6 +487,8 @@ ISR(TWI_vect)
         break;
     }
 }
+
+#endif
 
 eI2cStateType i2cGetState(void)
 {

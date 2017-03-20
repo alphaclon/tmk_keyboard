@@ -356,6 +356,8 @@ void backlight_set(uint8_t level)
 {
     dprintf("bl_set %d\n", level);
 
+    LedInfo2_Toggle();
+
     if (level == 0)
     {
         set_region_mode(backlight_region_ALL, LedControlMode_disable_mask);

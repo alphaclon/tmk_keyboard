@@ -61,6 +61,8 @@
 #include "descriptor.h"
 #include "lufa.h"
 
+#include "nfo_led.h"
+
 //#define LUFA_DEBUG
 
 #ifdef LUFA_DEBUG_UART
@@ -70,7 +72,7 @@ extern void uart_putc(unsigned char data);
 uint8_t keyboard_idle = 0;
 /* 0: Boot Protocol, 1: Report Protocol(default) */
 uint8_t keyboard_protocol = 1;
-static uint8_t keyboard_led_stats = 0;
+/*static*/ uint8_t keyboard_led_stats = 0;
 
 static report_keyboard_t keyboard_report_sent;
 
@@ -200,7 +202,6 @@ void EVENT_USB_Device_Connect(void)
 
 void EVENT_USB_Device_Disconnect(void)
 {
-    print("[D]");
     /* For battery powered device */
     USB_IsInitialized = false;
     /* TODO: This doesn't work. After several plug in/outs can not be enumerated.
@@ -675,6 +676,24 @@ int8_t sendchar(uint8_t c)
 /*******************************************************************************
  * main
  ******************************************************************************/
+
+#ifdef ENABLE_MCUSR
+/*
+ * MCUSR stuff
+ */
+
+void get_mcusr(void) __attribute__((naked)) __attribute__((section(".init3")));
+
+uint8_t mcusr_mirror __attribute__((section(".noinit")));
+
+void get_mcusr(void)
+{
+    mcusr_mirror = MCUSR;
+    //MCUSR = 0;
+    wdt_disable();
+}
+#endif
+
 static void setup_mcu(void)
 {
     /* Disable watchdog if enabled by bootloader/fuses */
@@ -733,7 +752,7 @@ int main(void)
 #endif
         splitbrain_communication_task();
     }
-    print("USB configured\n");
+    print("USB\n");
 
     /* init modules */
     hook_late_init();
@@ -746,8 +765,7 @@ int main(void)
     virtser_init();
 #endif
 
-    print("Keyboard start\n");
-    //printf("has usb: %u\r\n", has_usb());
+    print("Start\n");
 
     while (1)
     {

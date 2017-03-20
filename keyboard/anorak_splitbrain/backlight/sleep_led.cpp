@@ -4,14 +4,19 @@
 #include <stdint.h>
 
 #include "../backlight/control.h"
-#include "debug.h"
 
 extern "C" {
+#include "../matrixdisplay/infodisplay.h"
 #include "../splitbrain.h"
 #include "led.h"
 #include "sleep_led.h"
-#include "../matrixdisplay/infodisplay.h"
 }
+
+#ifdef DEBUG_HOOKS
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
 
 #define SLEEP_LED_BANK 6
 
@@ -48,16 +53,17 @@ void backlight_sleep_led_enable(void)
     */
 
     if (issi.is_initialized())
-        issi.enableSoftwareShutdown(true);
+        issi.enableHardwareShutdown(true);
 
+    /*
     if (mcpu_is_initialized())
     {
-    	mcpu_send_animation_stop();
-    	mcpu_send_sleep(1);
+        mcpu_send_animation_stop();
+        mcpu_send_sleep(1);
     }
+    */
 
     send_sleep_to_other_side(true);
-
 }
 
 void backlight_sleep_led_disable(void)
@@ -72,12 +78,16 @@ void backlight_sleep_led_disable(void)
     */
 
     if (issi.is_initialized())
-        issi.enableSoftwareShutdown(false);
+        issi.enableHardwareShutdown(false);
 
+    /*
     if (mcpu_is_initialized())
-    	mcpu_send_sleep(0);
+        mcpu_send_sleep(0);
+	*/
 
     send_sleep_to_other_side(false);
+
+    dprintf("backlight_sleep_led_disable\n");
 }
 
 void backlight_sleep_led_toggle(void)

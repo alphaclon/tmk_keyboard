@@ -45,6 +45,7 @@
  */
 
 #include "TWI_Master.h"
+#include "twi_transmit_queue.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
 
@@ -55,10 +56,14 @@
 #endif
 
 static unsigned char TWI_buf[TWI_BUFFER_SIZE]; // Transceiver buffer
+static unsigned char *TWI_buf_ptr;             // Transceiver buffer pointer
 static unsigned char TWI_data_length;          // Number of bytes to be transmitted.
 static unsigned char TWI_state = TWI_NO_STATE; // State byte. Default set to TWI_NO_STATE.
 
 union TWI_statusReg TWI_statusReg = {0}; // TWI_statusReg is defined in TWI_Master.h
+
+static tx_queue_data_t *tail = 0;
+static tx_queue_data_t *head = 0;
 
 /****************************************************************************
 Call this function to set up the TWI master to its initial standby state.
@@ -79,7 +84,7 @@ Call this function to test if the TWI_ISR is busy transmitting.
 ****************************************************************************/
 unsigned char TWI_Transceiver_Busy(void)
 {
-    return (TWCR & (1 << TWIE)); // IF TWI Interrupt is enabled then the Transceiver is busy
+    return (TWCR & (1 << TWIE)); // If TWI Interrupt is enabled then the Transceiver is busy
 }
 
 /****************************************************************************
@@ -106,7 +111,10 @@ void TWI_write_byte(unsigned char slave_address, unsigned char data_byte)
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("I2C: TWI_write_byte 0x%u\r\n", data_byte);
+    dprintf("TWI_write_byte 0x%u\n", data_byte);
+
+    while (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
@@ -114,6 +122,8 @@ void TWI_write_byte(unsigned char slave_address, unsigned char data_byte)
     TWI_data_length = 2;        // Number of data to transmit.
     TWI_buf[0] = slave_address; // Store slave address with R/W setting.
     TWI_buf[1] = data_byte;
+
+    TWI_buf_ptr = TWI_buf;
 
     TWI_statusReg.all = 0;
     TWI_state = TWI_NO_STATE;
@@ -135,7 +145,7 @@ void TWI_write_byte_to_register(unsigned char slave_address, unsigned char regis
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("I2C: TWI_write_byte_to_register %u %u\r\n", register_address, data_byte);
+    dprintf("TWI_write_byte_to_register %u %u\n", register_address, data_byte);
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
@@ -144,6 +154,8 @@ void TWI_write_byte_to_register(unsigned char slave_address, unsigned char regis
     TWI_buf[0] = slave_address; // Store slave address with R/W setting.
     TWI_buf[1] = register_address;
     TWI_buf[2] = data_byte;
+
+    TWI_buf_ptr = TWI_buf;
 
     TWI_statusReg.all = 0;
     TWI_state = TWI_NO_STATE;
@@ -166,7 +178,10 @@ void TWI_write_data_to_register(unsigned char slave_address, unsigned char regis
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("I2C: TWI_write_data_to_register l:%u\r\n", data_length);
+    dprintf("TWI_write_data_to_register l:%u\n", data_length);
+
+    while (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
@@ -176,6 +191,8 @@ void TWI_write_data_to_register(unsigned char slave_address, unsigned char regis
     TWI_buf[1] = register_address;
     for (unsigned char temp = 0; temp < data_length; temp++)
         TWI_buf[temp + 2] = data[temp];
+
+    TWI_buf_ptr = TWI_buf;
 
     TWI_statusReg.all = 0;
     TWI_state = TWI_NO_STATE;
@@ -194,7 +211,10 @@ then initialize the next operation and return.
 ****************************************************************************/
 void TWI_Start_Transceiver_With_Data(const unsigned char *data, unsigned char data_length)
 {
-    dprintf("I2C: TWI_Start_Transceiver_With_Data l:%u\r\n", data_length);
+    dprintf("TWI_Start_Transceiver_With_Data l:%u\n", data_length);
+
+    while (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
@@ -207,6 +227,8 @@ void TWI_Start_Transceiver_With_Data(const unsigned char *data, unsigned char da
         for (unsigned char temp = 1; temp < data_length; temp++)
             TWI_buf[temp] = data[temp];
     }
+
+    TWI_buf_ptr = TWI_buf;
 
     TWI_statusReg.all = 0;
     TWI_state = TWI_NO_STATE;
@@ -225,13 +247,18 @@ then initialize the next operation and return.
 ****************************************************************************/
 void TWI_read_data(unsigned char slave_address, unsigned char data_length)
 {
-    dprintf("I2C: TWI_read_data l:%u\r\n", data_length);
+    dprintf("TWI_read_data l:%u\n", data_length);
+
+    while (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
 
     TWI_data_length = data_length + 1;                   // Number of data to transmit.
     TWI_buf[0] = slave_address | (TRUE << TWI_READ_BIT); // Store slave address with R/W setting.
+
+    TWI_buf_ptr = TWI_buf;
 
     TWI_statusReg.all = 0;
     TWI_state = TWI_NO_STATE;
@@ -248,10 +275,16 @@ then initialize the next operation and return.
 ****************************************************************************/
 void TWI_Start_Transceiver(void)
 {
-    dprintf("I2C: TWI_Start_Transceiver\r\n");
+    dprintf("TWI_Start_Transceiver\n");
+
+    while (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
+
+    TWI_buf_ptr = TWI_buf;
+
     TWI_statusReg.all = 0;
     TWI_state = TWI_NO_STATE;
     TWCR = (1 << TWEN) |                               // TWI Interface enabled.
@@ -270,10 +303,13 @@ If there was an error in the previous transmission the function will return the 
 ****************************************************************************/
 unsigned char TWI_get_data_from_transceiver(unsigned char *msg, unsigned char msgSize)
 {
+    while (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
+
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
 
-    dprintf("I2C: TWI_get_data_from_transceiver l:%u, ok:%u\r\n", msgSize, TWI_statusReg.lastTransOK);
+    dprintf("TWI_get_data_from_transceiver l:%u, ok:%u\n", msgSize, TWI_statusReg.lastTransOK);
 
     if (TWI_statusReg.lastTransOK) // Last transmission competed successfully.
     {
@@ -285,6 +321,119 @@ unsigned char TWI_get_data_from_transceiver(unsigned char *msg, unsigned char ms
     return (TWI_statusReg.lastTransOK);
 }
 
+/*
+ *
+ *
+ * Queued TX
+ *
+ *
+ *
+ */
+
+void queued_twi_start_transceiver(void)
+{
+    dprintf("queued_twi_start_transceiver\n");
+
+    if (tx_queue_is_empty())
+        return;
+
+    while (TWI_Transceiver_Busy())
+        ; // Wait until TWI is ready for next transmission.
+
+    tx_queue_front(&head);
+
+    TWI_buf_ptr = head->data;
+    TWI_data_length = head->data_length;
+
+    TWI_statusReg.all = 0;
+    TWI_state = TWI_NO_STATE;
+    TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+           (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+           (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+           (0 << TWWC);                                //
+}
+
+void queued_twi_write_byte(unsigned char slave_address, unsigned char data_byte)
+{
+    dprintf("queued_twi_write_byte 0x%u\n", data_byte);
+
+    if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
+        return;
+
+    while (tx_queue_is_full())
+        ; // Wait until there is a free buffer in the queue
+
+    bool queue_was_empty = tx_queue_is_empty();
+
+    tx_queue_get_empty_tail(&tail);
+
+    tail->data_length = 2; // Number of data to transmit.
+
+    tail->data[0] = slave_address; // Store slave address with R/W setting.
+    tail->data[1] = data_byte;
+
+    tx_queue_push_tail();
+
+    if (queue_was_empty)
+        queued_twi_start_transceiver();
+}
+
+void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned char register_address,
+                                       unsigned char data_byte)
+{
+    dprintf("queued_twi_write_byte_to_register %u %u\n", register_address, data_byte);
+
+    if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
+        return;
+
+    while (tx_queue_is_full())
+        ; // Wait until there is a free buffer in the queue
+
+    bool queue_was_empty = tx_queue_is_empty();
+
+    tx_queue_get_empty_tail(&tail);
+
+    tail->data_length = 3; // Number of data to transmit.
+
+    tail->data[0] = slave_address; // Store slave address with R/W setting.
+    tail->data[1] = register_address;
+    tail->data[2] = data_byte;
+
+    tx_queue_push_tail();
+
+    if (queue_was_empty)
+        queued_twi_start_transceiver();
+}
+
+void queued_twi_write_data_to_register(unsigned char slave_address, unsigned char register_address,
+                                       const unsigned char *data, unsigned char data_length)
+{
+    dprintf("queued_twi_write_data_to_register l:%u\n", data_length);
+
+    if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
+        return;
+
+    while (tx_queue_is_full())
+        ; // Wait until there is a free buffer in the queue
+
+    bool queue_was_empty = tx_queue_is_empty();
+
+    tx_queue_get_empty_tail(&tail);
+
+    tail->data_length = data_length + 2; // Number of data to transmit.
+
+    tail->data[0] = slave_address; // Store slave address with R/W setting.
+    tail->data[1] = register_address;
+
+    for (unsigned char pos = 0; pos < data_length; pos++)
+        tail->data[pos + 2] = data[pos];
+
+    tx_queue_push_tail();
+
+    if (queue_was_empty)
+        queued_twi_start_transceiver();
+}
+
 // ********** Interrupt Handlers ********** //
 /****************************************************************************
 This function is the Interrupt Service Routine (ISR), and called when the TWI interrupt is triggered;
@@ -294,17 +443,19 @@ application.
 ISR(TWI_vect)
 {
     static unsigned char TWI_bufPtr;
+    static tx_queue_data_t *head = 0;
 
     switch (TWSR)
     {
     case TWI_START:        // START has been transmitted
     case TWI_REP_START:    // Repeated START has been transmitted
         TWI_bufPtr = 0;    // Set buffer pointer to the TWI Address location
+        // NO BREAK
     case TWI_MTX_ADR_ACK:  // SLA+W has been transmitted and ACK received
     case TWI_MTX_DATA_ACK: // Data byte has been transmitted and ACK received
         if (TWI_bufPtr < TWI_data_length)
         {
-            TWDR = TWI_buf[TWI_bufPtr++];
+            TWDR = TWI_buf_ptr[TWI_bufPtr++];
             TWCR = (1 << TWEN) |                               // TWI Interface enabled
                    (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag to send byte
                    (0 << TWEA) | (0 << TWSTA) | (0 << TWSTO) | //
@@ -312,15 +463,32 @@ ISR(TWI_vect)
         }
         else // Send STOP after last byte
         {
-            TWI_statusReg.lastTransOK = TRUE;                  // Set status bits to completed successfully.
-            TWCR = (1 << TWEN) |                               // TWI Interface enabled
-                   (0 << TWIE) | (1 << TWINT) |                // Disable TWI Interrupt and clear the flag
-                   (0 << TWEA) | (0 << TWSTA) | (1 << TWSTO) | // Initiate a STOP condition.
-                   (0 << TWWC);                                //
+        	TWCR = (1 << TWEN) |                               // TWI Interface enabled
+				   (0 << TWIE) | (1 << TWINT) |                // Disable TWI Interrupt and clear the flag
+				   (0 << TWEA) | (0 << TWSTA) | (1 << TWSTO) | // Initiate a STOP condition.
+				   (0 << TWWC);                                //
+
+        	TWI_statusReg.lastTransOK = TRUE; // Set status bits to completed successfully.
+
+        	tx_queue_pop();
+
+			if (tx_queue_front(&head))
+			{
+				TWI_buf_ptr = head->data;
+				TWI_data_length = head->data_length;
+
+				TWI_statusReg.all = 0;
+				TWI_state = TWI_NO_STATE;
+				TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+					   (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+					   (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+					   (0 << TWWC);                                //
+			}
         }
         break;
     case TWI_MRX_DATA_ACK: // Data byte has been received and ACK transmitted
         TWI_buf[TWI_bufPtr++] = TWDR;
+        // NO BREAK
     case TWI_MRX_ADR_ACK:                       // SLA+R has been transmitted and ACK received
         if (TWI_bufPtr < (TWI_data_length - 1)) // Detect the last byte to NACK it.
         {

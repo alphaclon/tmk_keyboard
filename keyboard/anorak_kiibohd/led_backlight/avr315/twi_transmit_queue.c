@@ -157,7 +157,7 @@ bool tx_queue_pop()
     return true;
 }
 
-void tx_queue_print_status()
+void tx_queue_print_status(void)
 {
     LV_("read: %u\n", tx_queue.read);
     LV_("write: %u\n", tx_queue.write);
@@ -167,8 +167,10 @@ void tx_queue_print_status()
 
 void tx_queue_test()
 {
-    char buffer[16];
+    uint8_t buffer[16];
     tx_queue_data_t *data;
+
+    char *stringptr = (char *)buffer;
 
     LS_("start\n");
     tx_queue_print_status();
@@ -176,18 +178,18 @@ void tx_queue_test()
     LV_("pop empty: %d\n", tx_queue_pop());
 
     LS_("push\n");
-    strcpy_P(buffer, PSTR("Element1"));
-    tx_queue_push(buffer, strlen(buffer));
+    strcpy_P(stringptr, PSTR("Element1"));
+    tx_queue_push(buffer, strlen(stringptr));
     tx_queue_print_status();
 
     LS_("push\n");
-    strcpy_P(buffer, PSTR("Element2"));
-    tx_queue_push(buffer, strlen(buffer));
+    strcpy_P(stringptr, PSTR("Element2"));
+    tx_queue_push(buffer, strlen(stringptr));
     tx_queue_print_status();
 
     LS_("push\n");
-    strcpy_P(buffer, PSTR("Element3"));
-    tx_queue_push(buffer, strlen(buffer));
+    strcpy_P(stringptr, PSTR("Element3"));
+    tx_queue_push(buffer, strlen(stringptr));
     tx_queue_print_status();
 
     LS_("front\n");
@@ -196,8 +198,8 @@ void tx_queue_test()
     tx_queue_print_status();
 
     LS_("push\n");
-    strcpy_P(buffer, PSTR("Element4"));
-    tx_queue_push(buffer, strlen(buffer));
+    strcpy_P(stringptr, PSTR("Element4"));
+    tx_queue_push(buffer, strlen(stringptr));
     tx_queue_print_status();
 
     LS_("front\n");
@@ -217,8 +219,8 @@ void tx_queue_test()
     }
 
     LS_("push\n");
-    strcpy_P(buffer, PSTR("Element5"));
-    tx_queue_push(buffer, strlen(buffer));
+    strcpy_P(stringptr, PSTR("Element5"));
+    tx_queue_push(buffer, strlen(stringptr));
     tx_queue_print_status();
 
     LS_("front\n");
@@ -227,8 +229,8 @@ void tx_queue_test()
     tx_queue_print_status();
 
     tx_queue_get_empty_tail(&data);
-    strcpy_P(data->data, PSTR("Element6"));
-    data->data_length = strlen(data->data);
+    strcpy_P((char*)data->data, PSTR("Element6"));
+    data->data_length = strlen((char*)data->data);
     tx_queue_push_tail();
 
     LS_("front\n");
@@ -251,8 +253,8 @@ void tx_queue_test()
     while (!tx_queue_is_full())
     {
         tx_queue_get_empty_tail(&data);
-        strcpy_P(data->data, PSTR("Element"));
-        data->data_length = strlen(data->data);
+        strcpy_P((char*)data->data, PSTR("Element"));
+        data->data_length = strlen((char*)data->data);
         tx_queue_push_tail();
         tx_queue_print_status();
     }
@@ -272,8 +274,8 @@ void tx_queue_test()
     while (!tx_queue_is_full())
     {
         tx_queue_get_empty_tail(&data);
-        strcpy_P(data->data, PSTR("Element"));
-        data->data_length = strlen(data->data);
+        strcpy_P((char*)data->data, PSTR("Element"));
+        data->data_length = strlen((char*)data->data);
         tx_queue_push_tail();
         tx_queue_print_status();
     }

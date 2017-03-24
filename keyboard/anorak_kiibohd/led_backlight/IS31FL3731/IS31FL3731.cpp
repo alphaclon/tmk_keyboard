@@ -29,6 +29,8 @@
 #define ISSI__BLINK_OFFSET 0x12
 #define ISSI__COLOR_OFFSET 0x24
 
+#define IS31FL3731_HARDWARE_SHUTDOWN
+
 #ifndef _swap_int16_t
 #define _swap_int16_t(a, b)                                                                                            \
     {                                                                                                                  \
@@ -126,16 +128,16 @@ void IS31FL3731::enableHardwareShutdown(bool enabled)
     if (enabled)
     {
         LS_("HardwareShutdown: on");
-        // set SDB pin to LOW (PD7)
-        DDRD |= (1 << 7);
-        PORTD &= ~(1 << 7);
+        // set SDB pin to LOW (PD2)
+        DDRD |= (1 << 2);
+        PORTD &= ~(1 << 2);
     }
     else
     {
         LS_("HardwareShutdown: off");
-        // set SDB pin to HIGH (PD7)
-        DDRD |= (1 << 7);
-        PORTD |= (1 << 7);
+        // set SDB pin to HIGH (PD2)
+        DDRD |= (1 << 2);
+        PORTD |= (1 << 2);
     }
 #endif
 }

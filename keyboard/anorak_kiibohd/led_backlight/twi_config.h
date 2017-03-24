@@ -6,7 +6,7 @@
 #define I2CMAS 3
 #define AVR315_SYNC 4
 
-#define TWILIB AVR315_SYNC
+#define TWILIB AVR315
 
 #define TWI_SEND_DATA_BUFFER_SIZE 144+2
 

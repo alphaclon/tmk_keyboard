@@ -6,9 +6,15 @@
 #ifdef SLEEP_LED_ENABLE
 #include "sleep_led.h"
 #endif
+#include "uart/uart.h"
 #include "led_backlight/animations/animation.h"
 #include "led_backlight/twi_config.h"
 #include "led_backlight/backlight_kiibohd.h"
+
+#include "led_backlight/avr315/twi_transmit_queue.h"
+
+
+#define BAUD 115200 // 9600 14400 19200 38400 57600 115200
 
 void twi_init(void)
 {
@@ -30,6 +36,9 @@ void twi_init(void)
 
 void hook_early_init(void)
 {
+#ifdef DEBUG_LUFA_UART
+	uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
+#endif
     twi_init();
 }
 
@@ -37,6 +46,8 @@ void hook_late_init(void)
 {
     backlight_setup();
     backlight_setup_finish();
+
+    tx_queue_test();
 }
 
 extern uint8_t keyboard_led_stats;

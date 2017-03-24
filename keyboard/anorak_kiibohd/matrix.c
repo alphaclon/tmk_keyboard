@@ -238,8 +238,13 @@ static void init_cols(void)
     DDRE &= ~(1 << 6);
     PORTE |= (1 << 6);
 
+#ifndef DEBUG_LUFA_UART
     DDRD &= ~(1 << 7 | 1 << 4 | 1 << 3);
     PORTD |= (1 << 7 | 1 << 4 | 1 << 3);
+#else
+    DDRD &= ~(1 << 7 | 1 << 4);
+    PORTD |= (1 << 7 | 1 << 4);
+#endif
 
     DDRC &= ~(1 << 6);
     PORTC |= (1 << 6);
@@ -247,10 +252,17 @@ static void init_cols(void)
 
 static matrix_row_t read_cols(void)
 {
+#ifndef DEBUG_LUFA_UART
     return (((PINB & (1 << 5)) ? 0 : (1 << 0)) | ((PINB & (1 << 4)) ? 0 : (1 << 1)) |
             ((PINE & (1 << 6)) ? 0 : (1 << 2)) | ((PIND & (1 << 7)) ? 0 : (1 << 3)) |
             ((PINC & (1 << 6)) ? 0 : (1 << 4)) | ((PIND & (1 << 4)) ? 0 : (1 << 5)) |
             ((PIND & (1 << 3)) ? 0 : (1 << 6)));
+#else
+    return (((PINB & (1 << 5)) ? 0 : (1 << 0)) | ((PINB & (1 << 4)) ? 0 : (1 << 1)) |
+            ((PINE & (1 << 6)) ? 0 : (1 << 2)) | ((PIND & (1 << 7)) ? 0 : (1 << 3)) |
+            ((PINC & (1 << 6)) ? 0 : (1 << 4)) | ((PIND & (1 << 4)) ? 0 : (1 << 5)));
+
+#endif
 }
 
 static void unselect_rows(void)

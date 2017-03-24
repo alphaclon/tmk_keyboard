@@ -60,8 +60,10 @@ SRC += \
 	matrix.c \
 	command.c \
 	keymap_common.c \
+	uart/uart.c \
 	led_backlight/key_led_map.cpp \
 	led_backlight/avr315/TWI_Master.c \
+	led_backlight/avr315/twi_transmit_queue.c \
 	led_backlight/i2cmaster/twimaster.c \
 	led_backlight/gfx/new.cpp \
 	led_backlight/gfx/glcdfont.c \
@@ -147,14 +149,14 @@ OPT_DEFS += -DBOOTLOADER_SIZE=4096
 # Build Options
 #   comment out to disable the options.
 #
-BOOTMAGIC_ENABLE = yes		# Virtual DIP switch configuration
 #MOUSEKEY_ENABLE = yes		# Mouse keys
-EXTRAKEY_ENABLE = yes		# Audio control and System control
+BOOTMAGIC_ENABLE = yes		# Virtual DIP switch configuration
+#EXTRAKEY_ENABLE = yes		# Audio control and System control
 CONSOLE_ENABLE = yes		# Console for debug
-COMMAND_ENABLE = yes    	# Commands for debug and configuration
+#COMMAND_ENABLE = yes    	# Commands for debug and configuration
 BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
 #NKRO_ENABLE = yes		    # USB Nkey Rollover
-SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+#SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -183,7 +185,9 @@ debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 #debug-on: EXTRAFLAGS += -DDEBUG_ISSI
 #debug-on: EXTRAFLAGS += -DDEBUG_I2C
+debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
 #debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 #debug-on: OPT_DEFS := $(filter-out -DCOMMAND_ENABLE,$(OPT_DEFS))

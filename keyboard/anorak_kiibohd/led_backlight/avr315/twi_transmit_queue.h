@@ -19,7 +19,7 @@ bool tx_queue_is_empty(void);
 bool tx_queue_is_full(void);
 
 bool tx_queue_get_empty_tail(tx_queue_data_t **tail);
-void tx_queue_push_tail(void);
+bool tx_queue_push_tail(void);
 
 bool tx_queue_front(tx_queue_data_t **head);
 bool tx_queue_back(tx_queue_data_t **tail);

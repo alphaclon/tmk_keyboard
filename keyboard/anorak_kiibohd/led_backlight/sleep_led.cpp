@@ -53,10 +53,14 @@ void backlight_sleep_led_enable(void)
 	issi.setBreathMode(true);
 	*/
 
+	issi.enableHardwareShutdown(true);
+
+	/*
 #if TWILIB == AVR315_SYNC || TWILIB == BUFFTW || TWILIB == I2CMAS
 	if (issi.is_initialized())
 		issi.enableSoftwareShutdown(true);
 #endif
+    */
 }
 
 void backlight_sleep_led_disable(void)
@@ -70,10 +74,14 @@ void backlight_sleep_led_disable(void)
 	issi.displayFrame(0);
 	*/
 
+	issi.enableHardwareShutdown(false);
+
+	/*
 #if TWILIB == AVR315_SYNC || TWILIB == BUFFTW || TWILIB == I2CMAS
 	if (issi.is_initialized())
 		issi.enableSoftwareShutdown(false);
 #endif
+	*/
 }
 
 void backlight_sleep_led_toggle(void)

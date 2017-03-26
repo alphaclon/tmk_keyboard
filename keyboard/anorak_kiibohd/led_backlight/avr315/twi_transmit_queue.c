@@ -1,15 +1,7 @@
 #include "twi_transmit_queue.h"
-#include <util/delay.h>
 #include <string.h>
-
-//#define USE_ATOMIC_BLOCK
-
-#ifdef USE_ATOMIC_BLOCK
 #include <util/atomic.h>
-#else
-#define ATOMIC_BLOCK(arg)
-#define ATOMIC_RESTORESTATE 0
-#endif
+#include <util/delay.h>
 
 #ifdef DEBUG_TX_QUEUE
 #include "debug.h"
@@ -31,25 +23,38 @@
 
 static struct _queue_t
 {
-	tx_queue_data_t data[TX_QUEUE_SIZE];
+    tx_queue_data_t data[TX_QUEUE_SIZE];
     volatile uint8_t read;  // Start, zeigt auf das Feld mit dem ältesten Inhalt
     volatile uint8_t write; // Ende, zeigt immer auf leeres Feld
     volatile uint8_t size;
 } tx_queue = {{}, 0, 0, 0};
 
+/*
+
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+
+					  ^
+					  |
+					write
+
+  ^
+  |
+read
+
+*/
 
 uint8_t tx_queue_size()
 {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-    	return tx_queue.size;
+        return tx_queue.size;
     }
-	return 0;
+    return 0;
 }
 
 bool tx_queue_is_empty()
 {
-    //LS_("tx_queue_is_empty");
+    // LS_("tx_queue_is_empty");
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         if (tx_queue.read == tx_queue.write)
@@ -62,7 +67,7 @@ bool tx_queue_is_empty()
 
 bool tx_queue_is_full()
 {
-    //LS_("tx_queue_is_full");
+    // LS_("tx_queue_is_full");
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         uint8_t next = ((tx_queue.write + 1) & QUEUE_MASK);
@@ -76,7 +81,7 @@ bool tx_queue_is_full()
 
 bool tx_queue_get_empty_tail(tx_queue_data_t **data)
 {
-    //LS_("tx_queue_get_empty_tail");
+    // LS_("tx_queue_get_empty_tail");
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         uint8_t next = ((tx_queue.write + 1) & QUEUE_MASK);
@@ -90,7 +95,7 @@ bool tx_queue_get_empty_tail(tx_queue_data_t **data)
 
 bool tx_queue_push_tail()
 {
-    //LS_("tx_queue_push_tail");
+    // LS_("tx_queue_push_tail");
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         uint8_t next = ((tx_queue.write + 1) & QUEUE_MASK);
@@ -105,7 +110,7 @@ bool tx_queue_push_tail()
 
 bool tx_queue_push(uint8_t const *data, uint8_t data_length)
 {
-    //LS_("tx_queue_push");
+    // LS_("tx_queue_push");
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         uint8_t next = ((tx_queue.write + 1) & QUEUE_MASK);
@@ -128,7 +133,7 @@ bool tx_queue_push(uint8_t const *data, uint8_t data_length)
 
 bool tx_queue_front(tx_queue_data_t **head)
 {
-    //LS_("tx_get_queue_head");
+    // LS_("tx_get_queue_head");
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         if (tx_queue.read == tx_queue.write)
@@ -174,11 +179,14 @@ bool tx_queue_pop()
 
 void tx_queue_print_status(void)
 {
-    LV_("read: %u", tx_queue.read);
-    LV_("write: %u", tx_queue.write);
-    LV_("empty: %u", tx_queue_is_empty());
-    LV_("full: %u", tx_queue_is_full());
-    LV_("size: %u", tx_queue_size());
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        LV_("read: %u", tx_queue.read);
+        LV_("write: %u", tx_queue.write);
+        LV_("empty: %u", tx_queue_is_empty());
+        LV_("full: %u", tx_queue_is_full());
+        LV_("size: %u", tx_queue_size());
+    }
 }
 
 void tx_queue_test()
@@ -245,8 +253,8 @@ void tx_queue_test()
     tx_queue_print_status();
 
     tx_queue_get_empty_tail(&data);
-    strcpy_P((char*)data->data, PSTR("Element6"));
-    data->data_length = strlen((char*)data->data);
+    strcpy_P((char *)data->data, PSTR("Element6"));
+    data->data_length = strlen((char *)data->data);
     tx_queue_push_tail();
 
     LS_("front");
@@ -269,8 +277,8 @@ void tx_queue_test()
     while (!tx_queue_is_full())
     {
         tx_queue_get_empty_tail(&data);
-        strcpy_P((char*)data->data, PSTR("Element"));
-        data->data_length = strlen((char*)data->data);
+        strcpy_P((char *)data->data, PSTR("Element"));
+        data->data_length = strlen((char *)data->data);
         tx_queue_push_tail();
         tx_queue_print_status();
     }
@@ -290,8 +298,8 @@ void tx_queue_test()
     while (!tx_queue_is_full())
     {
         tx_queue_get_empty_tail(&data);
-        strcpy_P((char*)data->data, PSTR("Element"));
-        data->data_length = strlen((char*)data->data);
+        strcpy_P((char *)data->data, PSTR("Element"));
+        data->data_length = strlen((char *)data->data);
         tx_queue_push_tail();
         tx_queue_print_status();
     }
@@ -307,4 +315,3 @@ void tx_queue_test()
         tx_queue_print_status();
     }
 }
-

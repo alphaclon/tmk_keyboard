@@ -183,7 +183,7 @@ include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
 debug-on: EXTRAFLAGS += -DDEBUG
-#debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
+debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
 #debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
@@ -194,14 +194,17 @@ debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
+#debug-on: EXTRAFLAGS += -DDEBUG_SHOW_SCAN_LED
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
-#debug-on: OPT_DEFS := $(filter-out -DCOMMAND_ENABLE,$(OPT_DEFS))
 debug-on: all
 
-debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
-debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
-#debug-off: EXTRAFLAGS += -DNO_DEBUG
+debug-off: EXTRAFLAGS += -DNO_DEBUG
 debug-off: all
+
+debug-off-noprint: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
+debug-off-noprint: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
+debug-off-noprint: all
+
 
 boot: 
 	@echo teensy_loader_cli: Boot only, do not program

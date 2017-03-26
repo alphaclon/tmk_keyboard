@@ -24,6 +24,10 @@ void set_animation_sweep()
     animation.delay_in_ms = 150;
     animation.duration_in_ms = 0;
 
+#ifdef DEBUG_ISSI_PERFORMANCE
+    animation.delay_in_ms = 1;
+#endif
+
     animation.animationStart = &sweep_animation_start;
     animation.animationStop = &sweep_animation_stop;
     animation.animationLoop = &sweep_animation_loop;

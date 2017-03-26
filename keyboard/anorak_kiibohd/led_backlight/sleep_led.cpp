@@ -1,3 +1,6 @@
+
+#if 0
+
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -35,8 +38,6 @@ void backlight_sleep_led_enable(void)
 {
 	//dprintf("backlight_sleep_led_enable\n");
 	breathing = 1;
-	LedInfo1_Toggle();
-
 	/*
 	// breathing for current configuration
 	issi.setAutoFramePlayConfig(0,1,40);
@@ -123,4 +124,6 @@ void sleep_led_off(void)
 #ifdef __cplusplus
 }
 #endif
+#endif
+
 #endif

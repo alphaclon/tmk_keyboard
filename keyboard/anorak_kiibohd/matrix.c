@@ -101,16 +101,22 @@ void matrix_clear(void)
 
 uint8_t matrix_scan(void)
 {
+#ifdef DEBUG_SHOW_SCAN_LED
+	LedInfo2_On();
+#endif
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++)
     {
         select_row(row);
         _delay_us(15); // without this wait read unstable value.
         matrix_row_t cols = read_cols();
 
+#ifndef DEBUG_SHOW_SCAN_LED
         if (cols)
             LedInfo2_On();
         else
             LedInfo2_Off();
+#endif
 
         if (matrix_debouncing[row] != cols)
         {
@@ -169,6 +175,10 @@ uint8_t matrix_scan(void)
 
 #ifdef BACKLIGHT_ENABLE
     animate();
+#endif
+
+#ifdef DEBUG_SHOW_SCAN_LED
+    LedInfo2_Off();
 #endif
 
     return 1;

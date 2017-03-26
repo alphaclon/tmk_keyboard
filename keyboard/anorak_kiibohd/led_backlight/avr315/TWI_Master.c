@@ -323,18 +323,17 @@ unsigned char TWI_get_data_from_transceiver(unsigned char *msg, unsigned char ms
     return (TWI_statusReg.lastTransOK);
 }
 
-/*
- *
- *
- * Queued TX
- *
- *
- *
- */
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * ------------------------------------------- Queued TX -------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
 
 void queued_twi_start_transceiver(void)
 {
-    //dprintf("qtst_start\n");
+    dprintf("qtst_start\n");
 
     if (tx_queue_is_empty())
         return;
@@ -365,7 +364,7 @@ void queued_twi_start_transceiver(void)
 void queued_twi_write_byte(unsigned char slave_address, unsigned char data_byte)
 {
     //dprintf("queued_twi_write_byte 0x%u\n", data_byte);
-	//dprintf("qtwb 0x%u\n", data_byte);
+	dprintf("qtwb 0x%u\n", data_byte);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
@@ -392,7 +391,7 @@ void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned cha
                                        unsigned char data_byte)
 {
     //dprintf("queued_twi_write_byte_to_register %u %u\n", register_address, data_byte);
-	//dprintf("qtwbtr %u %u\n", register_address, data_byte);
+	dprintf("qtwbtr %u %u\n", register_address, data_byte);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
@@ -422,24 +421,28 @@ void queued_twi_write_data_to_register(unsigned char slave_address, unsigned cha
                                        const unsigned char *data, unsigned char data_length)
 {
     //dprintf("queued_twi_write_data_to_register l:%u\n", data_length);
-	//dprintf("qtwdtr l:%u\n", data_length);
+	dprintf("qtwdtr l:%u\n", data_length);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-#ifdef DEBUG_I2C
+#ifndef DEBUG_TX_QUEUE
     while (tx_queue_is_full())
         ; // Wait until there is a free buffer in the queue
 #else
     if (tx_queue_is_full())
     {
-    	dprintf("qtwdtr full\n");
+    	print("qtwdtr full, wait\n");
         while (tx_queue_is_full())
             ; // Wait until there is a free buffer in the queue
     }
 #endif
 
-    tx_queue_get_empty_tail(&tail);
+    if (!tx_queue_get_empty_tail(&tail))
+    {
+    	print("qtwdtr ! tail\n");
+    	return;
+    }
 
     tail->data_length = data_length + 2; // Number of data to transmit.
 
@@ -454,7 +457,11 @@ void queued_twi_write_data_to_register(unsigned char slave_address, unsigned cha
     bool queue_was_empty = tx_queue_is_empty();
     //dprintf("qtwdtr l:%u, qe:%u\n", data_length, queue_was_empty);
 
-    tx_queue_push_tail();
+    if (!tx_queue_push_tail())
+    {
+		print("qtwdtr ! push tail\n");
+		return;
+	}
 
     //tx_queue_print_status();
     //if (tx_queue_size() > 1)
@@ -462,7 +469,7 @@ void queued_twi_write_data_to_register(unsigned char slave_address, unsigned cha
 
     if (queue_was_empty || tx_queue_size() == 1)
     {
-    	dprintf("qtwdtr start, ql:%u\n", tx_queue_size());
+    	//dprintf("qtwdtr start, ql:%u\n", tx_queue_size());
         queued_twi_start_transceiver();
     }
 }
@@ -488,7 +495,7 @@ ISR(TWI_vect)
     case TWI_MTX_DATA_ACK: // Data byte has been transmitted and ACK received
         if (TWI_bufPtr < TWI_data_length)
         {
-        	LedInfo1_On();
+        	//LedInfo1_On();
 
             TWDR = TWI_buf_ptr[TWI_bufPtr++];
             TWCR = (1 << TWEN) |                               // TWI Interface enabled
@@ -496,11 +503,11 @@ ISR(TWI_vect)
                    (0 << TWEA) | (0 << TWSTA) | (0 << TWSTO) | //
                    (0 << TWWC);                                //
 
-            LedInfo1_Off();
+            //LedInfo1_Off();
         }
         else // Send STOP after last byte
         {
-        	LedInfo2_On();
+        	//LedInfo2_On();
 
         	TWCR = (1 << TWEN) |                               // TWI Interface enabled
 				   (0 << TWIE) | (1 << TWINT) |                // Disable TWI Interrupt and clear the flag
@@ -525,7 +532,7 @@ ISR(TWI_vect)
 
 			}
 
-			LedInfo2_Off();
+			//LedInfo2_Off();
         }
         break;
     case TWI_MRX_DATA_ACK: // Data byte has been received and ACK transmitted

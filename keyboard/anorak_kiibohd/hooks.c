@@ -6,19 +6,18 @@
 #ifdef SLEEP_LED_ENABLE
 #include "sleep_led.h"
 #endif
-#include "uart/uart.h"
 #include "led_backlight/animations/animation.h"
 #include "led_backlight/twi_config.h"
 #include "led_backlight/backlight_kiibohd.h"
 
 #if defined(LUFA_DEBUG_UART) || defined(DEBUG_ISSI_PERFORMANCE) || defined(DEBUG_OUTPUT_ENABLE)
+#include "uart/uart.h"
 #include "debug.h"
 #include "utils.h"
 #include "led_backlight/avr315/twi_transmit_queue.h"
 #else
 #include "nodebug.h"
 #endif
-
 
 #define BAUD 115200 // 9600 14400 19200 38400 57600 115200
 
@@ -99,8 +98,10 @@ void hook_usb_suspend_entry(void)
     clear_keyboard();
 
 #ifdef BACKLIGHT_ENABLE
-    //stop_animation();
+    stop_animation();
 #endif
+
+    backlight_enableShutdown(true);
 
 #ifdef SLEEP_LED_ENABLE
     sleep_led_enable();
@@ -123,8 +124,10 @@ void hook_usb_wakeup(void)
     sleep_led_disable();
 #endif
 
+    backlight_enableShutdown(false);
+
 #ifdef BACKLIGHT_ENABLE
-    //stop_animation();
+    stop_animation();
 #endif
 
     // Restore LED status

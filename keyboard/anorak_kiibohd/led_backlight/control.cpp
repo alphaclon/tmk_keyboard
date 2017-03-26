@@ -9,3 +9,8 @@ void IS31FL3731_init()
 {
     issi.begin();
 }
+
+void IS31FL3731_enableHardwareShutdown(bool enabled)
+{
+    issi.enableHardwareShutdown(enabled);
+}

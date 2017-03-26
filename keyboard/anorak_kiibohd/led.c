@@ -15,12 +15,24 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <avr/io.h>
-#include "stdint.h"
 #include "led.h"
+#include "stdint.h"
+#include <avr/io.h>
 
-
-/* kiibohd has no LEDs */
 void led_set(uint8_t usb_led)
 {
+	// drives the YELLOW led
+
+    if (usb_led & (1 << USB_LED_CAPS_LOCK))
+    {
+    	// output high
+        DDRC |= (1 << 7);
+        PORTC |= (1 << 7);
+    }
+    else
+    {
+        // Hi-Z
+        DDRC &= ~(1 << 7);
+        PORTC &= ~(1 << 7);
+    }
 }

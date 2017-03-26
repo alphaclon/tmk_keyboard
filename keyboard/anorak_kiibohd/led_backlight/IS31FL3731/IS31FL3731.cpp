@@ -63,10 +63,9 @@ bool IS31FL3731::begin(uint8_t issi_slave_address)
 
     enableHardwareShutdown(false);
     _delay_ms(1);
-
     reset();
 
-    LS_("done");
+    dprintf("done\n");
 
     _is_initialized = true;
 
@@ -82,7 +81,7 @@ void IS31FL3731::reset()
 {
     _frame = 0;
 
-    LS_("reset");
+    dprintf("reset\n");
 
     // shutdown
     enableSoftwareShutdown(true);
@@ -261,6 +260,10 @@ void IS31FL3731::enableLeds(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uin
 
     TWI_write_data_to_register(_issi_address, ISSI__ENABLE_OFFSET, ledEnableMask, ISSI_LED_MASK_SIZE);
 
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_data_to_register(_issi_address, ISSI__ENABLE_OFFSET, ledEnableMask, ISSI_LED_MASK_SIZE);
+
 #elif TWILIB == BUFFTW
 
     i2cMasterSendCommandNI(_issi_address, ISSI__ENABLE_OFFSET, ISSI_LED_MASK_SIZE, ledEnableMask);
@@ -298,6 +301,14 @@ void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8
 
     // TWI_write_data_to_register(_issi_address, ISSI__COLOR_OFFSET, pwm, ISSI_USED_CHANNELS);
 
+#elif TWILIB == AVR315_QUEUED
+
+    for (uint8_t offset = 0; offset < ISSI_USED_CHANNELS; offset += (ISSI_USED_CHANNELS / ISSI_USED_ROWS))
+    {
+        queued_twi_write_data_to_register(_issi_address, ISSI__COLOR_OFFSET + offset, pwm + offset,
+                                          (ISSI_USED_CHANNELS / ISSI_USED_ROWS));
+    }
+
 #elif TWILIB == BUFFTW
 
     for (uint8_t offset = 0; offset < ISSI_USED_CHANNELS; offset += (ISSI_USED_CHANNELS / ISSI_USED_ROWS))
@@ -323,19 +334,23 @@ void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8
 
 void IS31FL3731::selectBank(uint8_t bank)
 {
-#if TWILIB == AVR315_SYNC
+#if TWILIB == AVR315
+
+    TWI_write_byte_to_register(_issi_address, ISSI_COMMANDREGISTER, bank);
+
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_byte_to_register(_issi_address, ISSI_COMMANDREGISTER, bank);
+
+#elif TWILIB == AVR315_SYNC
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
 
     i2c_start_wait(_issi_address + I2C_WRITE);
-	i2c_write(ISSI_COMMANDREGISTER);
-	i2c_write(bank);
-	i2c_stop();
-
-#elif TWILIB == AVR315
-
-    TWI_write_byte_to_register(_issi_address, ISSI_COMMANDREGISTER, bank);
+    i2c_write(ISSI_COMMANDREGISTER);
+    i2c_write(bank);
+    i2c_stop();
 
 #elif TWILIB == BUFFTW
 
@@ -361,13 +376,17 @@ void IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
         ; // Wait until TWI is ready for next transmission.
 
     i2c_start_wait(_issi_address + I2C_WRITE);
-	i2c_write(reg);
-	i2c_write(data);
-	i2c_stop();
+    i2c_write(reg);
+    i2c_write(data);
+    i2c_stop();
 
 #elif TWILIB == AVR315
 
     TWI_write_byte_to_register(_issi_address, reg, data);
+
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_byte_to_register(_issi_address, reg, data);
 
 #elif TWILIB == BUFFTW
 
@@ -398,6 +417,10 @@ void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 
     TWI_write_data_to_register(_issi_address, reg, (unsigned char *)&data, 2);
 
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_data_to_register(_issi_address, reg, (unsigned char *)&data, 2);
+
 #elif TWILIB == BUFFTW
 
     uint8_t retval = i2cMasterSendCommandNI(_issi_address, reg, 2, (uint8_t const *)&data);
@@ -426,7 +449,7 @@ uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 
     uint8_t data;
 
-#if TWILIB == AVR315 || TWILIB == AVR315_SYNC
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC || TWILIB ==AVR315_QUEUED
 
     TWI_write_byte(_issi_address, reg);
     TWI_read_data(_issi_address, 1);
@@ -475,7 +498,6 @@ uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 
 void IS31FL3731::dumpConfiguration()
 {
-#ifdef DEBUG_ISSI
     LS_("register bank");
     uint8_t reg;
     reg = readRegister8(ISSI_BANK_FUNCTIONREG, ISSI_REG_SHUTDOWN);
@@ -484,20 +506,18 @@ void IS31FL3731::dumpConfiguration()
     for (uint8_t i = 0; i < 0x0D; i++)
     {
         reg = readRegister8(ISSI_BANK_FUNCTIONREG, i);
-        LV_("%02X: 0x%02X\r\n", i, reg);
+        LV_("%02X: 0x%02X", i, reg);
     }
-#endif
 }
 
 void IS31FL3731::dumpLeds(uint8_t bank)
 {
-#ifdef DEBUG_ISSI
     uint8_t leds[ISSI_TOTAL_LED_MASK_SIZE];
     memset(leds, 0, ISSI_TOTAL_LED_MASK_SIZE);
 
     selectBank(bank);
 
-#if TWILIB == AVR315 || TWILIB == AVR315_SYNC
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC || TWILIB ==AVR315_QUEUED
     TWI_write_byte(_issi_address, ISSI__ENABLE_OFFSET);
     TWI_read_data(_issi_address, ISSI_TOTAL_LED_MASK_SIZE);
     bool lastTransOK = TWI_get_data_from_transceiver(leds, ISSI_TOTAL_LED_MASK_SIZE);
@@ -531,18 +551,16 @@ void IS31FL3731::dumpLeds(uint8_t bank)
         }
         LS_("");
     }
-#endif
 }
 
 void IS31FL3731::dumpBrightness(uint8_t bank)
 {
-#ifdef DEBUG_ISSI
     uint8_t pwm[ISSI_TOTAL_CHANNELS];
     memset(pwm, 0, ISSI_TOTAL_CHANNELS);
 
     selectBank(bank);
 
-#if TWILIB == AVR315 || TWILIB == AVR315_SYNC
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC || TWILIB ==AVR315_QUEUED
 
     /*
     TWI_write_byte(_issi_address, ISSI__COLOR_OFFSET);
@@ -593,5 +611,4 @@ void IS31FL3731::dumpBrightness(uint8_t bank)
         }
         LS_("");
     }
-#endif
 }

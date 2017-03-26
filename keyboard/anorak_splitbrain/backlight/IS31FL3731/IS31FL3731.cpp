@@ -253,9 +253,13 @@ void IS31FL3731::enableLeds(uint8_t const ledEnableMask[ISSI_LED_MASK_SIZE], uin
 {
     selectBank(bank);
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC
 
     TWI_write_data_to_register(_issi_address, ISSI__ENABLE_OFFSET, ledEnableMask, ISSI_LED_MASK_SIZE);
+
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_data_to_register(_issi_address, ISSI__ENABLE_OFFSET, ledEnableMask, ISSI_LED_MASK_SIZE);
 
 #elif TWILIB == BUFFTW
 
@@ -284,7 +288,7 @@ void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8
 {
     selectBank(bank);
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC
 
     for (uint8_t offset = 0; offset < ISSI_USED_CHANNELS; offset += (ISSI_USED_CHANNELS / ISSI_USED_ROWS))
     {
@@ -294,9 +298,23 @@ void IS31FL3731::setLedsBrightness(uint8_t const pwm[ISSI_TOTAL_CHANNELS], uint8
 
     // TWI_write_data_to_register(_issi_address, ISSI__COLOR_OFFSET, pwm, ISSI_USED_CHANNELS);
 
+#elif TWILIB == AVR315_QUEUED
+
+    for (uint8_t offset = 0; offset < ISSI_USED_CHANNELS; offset += (ISSI_USED_CHANNELS / ISSI_USED_ROWS))
+    {
+        queued_twi_write_data_to_register(_issi_address, ISSI__COLOR_OFFSET + offset, pwm + offset,
+                                          (ISSI_USED_CHANNELS / ISSI_USED_ROWS));
+    }
+
 #elif TWILIB == BUFFTW
 
-    i2cMasterSendCommandNI(_issi_address, ISSI__COLOR_OFFSET, ISSI_USED_CHANNELS, pwm);
+    for (uint8_t offset = 0; offset < ISSI_USED_CHANNELS; offset += (ISSI_USED_CHANNELS / ISSI_USED_ROWS))
+    {
+        i2cMasterSendCommandNI(_issi_address, ISSI__COLOR_OFFSET + offset, (ISSI_USED_CHANNELS / ISSI_USED_ROWS),
+                               pwm + offset);
+    }
+
+    // i2cMasterSendCommandNI(_issi_address, ISSI__COLOR_OFFSET, ISSI_USED_CHANNELS, pwm);
 
 #else
 
@@ -317,6 +335,20 @@ void IS31FL3731::selectBank(uint8_t bank)
 
     TWI_write_byte_to_register(_issi_address, ISSI_COMMANDREGISTER, bank);
 
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_byte_to_register(_issi_address, ISSI_COMMANDREGISTER, bank);
+
+#elif TWILIB == AVR315_SYNC
+
+    while (TWI_Transceiver_Busy())
+        ; // Wait until TWI is ready for next transmission.
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
+    i2c_write(ISSI_COMMANDREGISTER);
+    i2c_write(bank);
+    i2c_stop();
+
 #elif TWILIB == BUFFTW
 
     i2cMasterSendCommandNI(_issi_address, ISSI_COMMANDREGISTER, 1, &bank);
@@ -335,18 +367,34 @@ void IS31FL3731::writeRegister8(uint8_t b, uint8_t reg, uint8_t data)
 {
     selectBank(b);
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315_SYNC
+
+    while (TWI_Transceiver_Busy())
+        ; // Wait until TWI is ready for next transmission.
+
+    i2c_start_wait(_issi_address + I2C_WRITE);
+    i2c_write(reg);
+    i2c_write(data);
+    i2c_stop();
+
+#elif TWILIB == AVR315
 
     TWI_write_byte_to_register(_issi_address, reg, data);
+
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_byte_to_register(_issi_address, reg, data);
 
 #elif TWILIB == BUFFTW
 
     uint8_t retval = i2cMasterSendCommandNI(_issi_address, reg, 1, &data);
 
+#ifdef TWI_HANDLE_ERRORS
     if (retval != I2C_OK)
     {
         LV_("writeRegister8 i2c error: 0x%X", retval);
     }
+#endif
 
 #else
 
@@ -362,18 +410,24 @@ void IS31FL3731::writeRegister16(uint8_t b, uint8_t reg, uint16_t data)
 {
     selectBank(b);
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC
 
     TWI_write_data_to_register(_issi_address, reg, (unsigned char *)&data, 2);
+
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_data_to_register(_issi_address, reg, (unsigned char *)&data, 2);
 
 #elif TWILIB == BUFFTW
 
     uint8_t retval = i2cMasterSendCommandNI(_issi_address, reg, 2, (uint8_t const *)&data);
 
+#ifdef TWI_HANDLE_ERRORS
     if (retval != I2C_OK)
     {
         LV_("writeRegister16 i2c error: 0x%X", retval);
     }
+#endif
 
 #else
 
@@ -392,33 +446,39 @@ uint8_t IS31FL3731::readRegister8(uint8_t bank, uint8_t reg)
 
     uint8_t data;
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC || TWILIB ==AVR315_QUEUED
 
     TWI_write_byte(_issi_address, reg);
     TWI_read_data(_issi_address, 1);
     bool lastTransOK = TWI_get_data_from_transceiver(&data, 1);
 
+#ifdef TWI_HANDLE_ERRORS
     if (!lastTransOK)
     {
         dprintf("transmission failed! reg:%u\r\n", reg);
         return 0;
     }
+#endif
 
 #elif TWILIB == BUFFTW
 
     uint8_t retval = i2cMasterSendCommandNI(_issi_address, reg, 0, 0);
 
+#ifdef TWI_HANDLE_ERRORS
     if (retval != I2C_OK)
     {
         LV_("readRegister8 send i2c error: 0x%X", retval);
     }
+#endif
 
     retval = i2cMasterReceiveNI(_issi_address, 1, &data);
 
+#ifdef TWI_HANDLE_ERRORS
     if (retval != I2C_OK)
     {
         LV_("readRegister8 recv i2c error: 0x%X", retval);
     }
+#endif
 
 #else
 
@@ -443,7 +503,7 @@ void IS31FL3731::dumpConfiguration()
     for (uint8_t i = 0; i < 0x0D; i++)
     {
         reg = readRegister8(ISSI_BANK_FUNCTIONREG, i);
-        LV_("%02X: 0x%02X\r\n", i, reg);
+        LV_("%02X: 0x%02X", i, reg);
     }
 }
 
@@ -454,15 +514,15 @@ void IS31FL3731::dumpLeds(uint8_t bank)
 
     selectBank(bank);
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC || TWILIB ==AVR315_QUEUED
     TWI_write_byte(_issi_address, ISSI__ENABLE_OFFSET);
     TWI_read_data(_issi_address, ISSI_TOTAL_LED_MASK_SIZE);
     bool lastTransOK = TWI_get_data_from_transceiver(leds, ISSI_TOTAL_LED_MASK_SIZE);
 
     if (!lastTransOK)
     {
-    	dprintf("transmission failed! 0x%X\r\n", TWI_Get_State_Info());
-    	TWI_Master_Initialise();
+        dprintf("transmission failed! 0x%X\r\n", TWI_Get_State_Info());
+        TWI_Master_Initialise();
         return;
     }
 #elif TWILIB == BUFFTW
@@ -497,7 +557,7 @@ void IS31FL3731::dumpBrightness(uint8_t bank)
 
     selectBank(bank);
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC || TWILIB ==AVR315_QUEUED
 
     /*
     TWI_write_byte(_issi_address, ISSI__COLOR_OFFSET);
@@ -524,7 +584,6 @@ void IS31FL3731::dumpBrightness(uint8_t bank)
             TWI_Master_Initialise();
             return;
         }
-
     }
 
 #elif TWILIB == BUFFTW

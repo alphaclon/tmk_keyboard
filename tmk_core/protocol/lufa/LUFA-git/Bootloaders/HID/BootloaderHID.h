@@ -64,7 +64,7 @@
 	/* Function Prototypes: */
 		static void SetupHardware(void);
 
-		void Application_Jump_Check(void) ATTR_INIT_SECTION(3);
+		//void Application_Jump_Check(void) ATTR_INIT_SECTION(3);
 
 		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_UnhandledControlRequest(void);

@@ -2,8 +2,9 @@
 #include "matrix.h"
 #include "../control.h"
 #include "animation_utils.h"
+#include "../avr315/twi_transmit_queue.h"
 
-#ifdef DEBUG_ANIMATION
+#if defined(DEBUG_ANIMATION) || defined(DEBUG_ISSI_PERFORMANCE)
 #include "debug.h"
 #else
 #include "nodebug.h"
@@ -28,10 +29,26 @@ void sweep_animation_stop()
 	animation_postpare(animation_frame);
 }
 
+#ifdef DEBUG_ISSI_PERFORMANCE
+uint8_t max_size = 0;
+uint8_t min_size = 255;
+uint8_t loopcounter = 0;
+#endif
+
 void sweep_animation_loop()
 {
     // animate over all the pixels, and set the brightness from the sweep table
 	//dprintf(".");
+
+#ifdef DEBUG_ISSI_PERFORMANCE
+	loopcounter++;
+
+	if (loopcounter >= 10)
+	{
+		uint8_t queue_size = tx_queue_size();
+		dprintf("> s: %u, min: %u, max: %u\n", queue_size, min_size, max_size);
+	}
+#endif
 
 	incr++;
 	if (incr >= 24)
@@ -42,4 +59,20 @@ void sweep_animation_loop()
 			issi.drawPixel(x, y, pgm_read_byte(&sweep[(x + y + incr) % 24]));
 
 	issi.blitToFrame(1);
+
+#ifdef DEBUG_ISSI_PERFORMANCE
+	uint8_t queue_size = tx_queue_size();
+
+	if (queue_size > max_size)
+		max_size = queue_size;
+
+	if (queue_size > 0 && queue_size < min_size)
+			min_size = queue_size;
+
+	if (loopcounter >= 10)
+	{
+		loopcounter = 0;
+		dprintf("< s: %u, min: %u, max: %u\n", queue_size, min_size, max_size);
+	}
+#endif
 }

@@ -725,6 +725,11 @@ void splitbrain_communication_task(void)
 {
 }
 
+void hook_late_test(void) __attribute__((weak));
+void hook_late_test(void)
+{
+}
+
 int main(void) __attribute__((weak));
 int main(void)
 {
@@ -766,6 +771,7 @@ int main(void)
 #endif
 
     print("Start\n");
+    hook_late_test();
 
     while (1)
     {

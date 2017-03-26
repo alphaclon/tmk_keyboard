@@ -53,6 +53,7 @@ uint16_t MagicBootKey ATTR_NO_INIT;
  *  start key has been loaded into \ref MagicBootKey. If the bootloader started via the watchdog and the key is valid,
  *  this will force the user application to start via a software jump.
  */
+#if 0
 void Application_Jump_Check(void)
 {
 	/* If the reset source was the bootloader and the key is correct, clear it and jump to the application */
@@ -64,6 +65,7 @@ void Application_Jump_Check(void)
 		((void (*)(void))0x0000)();
 	}
 }
+#endif
 
 /** Main program entry point. This routine configures the hardware required by the bootloader, then continuously
  *  runs the bootloader processing routine until instructed to soft-exit.
@@ -145,6 +147,7 @@ void EVENT_USB_Device_ControlRequest(void)
 			#endif
 
 			/* Check if the command is a program page command, or a start application command */
+			/*
 			#if (FLASHEND > 0xFFFF)
 			if ((uint16_t)(PageAddress >> 8) == COMMAND_STARTAPPLICATION)
 			#else
@@ -154,6 +157,7 @@ void EVENT_USB_Device_ControlRequest(void)
 				RunBootloader = false;
 			}
 			else
+			*/
 			{
 				/* Erase the given FLASH page, ready to be programmed */
 				boot_page_erase(PageAddress);

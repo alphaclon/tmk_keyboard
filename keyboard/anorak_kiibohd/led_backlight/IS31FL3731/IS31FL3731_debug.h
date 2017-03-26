@@ -8,8 +8,8 @@
 #endif
 
 #ifdef DEBUG_ISSI
-#define LS_(arg) dprintf(arg "\r\n")
-#define LV_(s, args...) dprintf(s "\r\n", args)
+#define LS_(arg) dprintf(arg "\n")
+#define LV_(s, args...) dprintf(s "\n", args)
 #define LVN_(s, args...) dprintf(s, args)
 #else
 #define LS_(arg)

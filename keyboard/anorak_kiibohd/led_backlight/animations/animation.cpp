@@ -21,7 +21,7 @@ void set_animation_sweep()
 	dprintf("sweep\r\n");
 
     animation.brightness = 255;
-    animation.delay_in_ms = 100;
+    animation.delay_in_ms = 150;
     animation.duration_in_ms = 0;
 
     animation.animationStart = &sweep_animation_start;
@@ -148,7 +148,7 @@ void animation_test()
         return;
     }
 
-    set_animation_type_o_matic();
+    set_animation_sweep();
     start_animation();
 }
 

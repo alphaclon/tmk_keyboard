@@ -168,7 +168,6 @@ void show_region_info(uint8_t region)
 
     strcpy_P(fmt, region_names[index]);
     strcat_P(fmt, PSTR(" %s %u"));
-
     sprintf(infotext, fmt, (regions & region ? "on" : "off"), region_brightness[index] + 1);
 
     dprintf("info: %s\n", infotext);
@@ -187,7 +186,6 @@ void show_region_enabled(uint8_t region)
 
     strcpy_P(fmt, region_names[index]);
     strcat_P(fmt, PSTR(" %s"));
-
     sprintf(infotext, fmt, (regions & region ? "on" : "off"));
 
     dprintf("info: %s\n", infotext);

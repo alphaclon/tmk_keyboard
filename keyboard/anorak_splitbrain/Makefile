@@ -75,6 +75,7 @@ SRC += \
 	command.c \
 	uart/uart.c \
 	twi/avr315/TWI_Master.c \
+	twi/avr315/twi_transmit_queue.c \
 	matrixdisplay/infodisplay.c \
 	backlight/gfx/new.cpp \
 	backlight/gfx/glcdfont.c \
@@ -186,14 +187,16 @@ include $(TMK_DIR)/rules.mk
 
 
 debug-on: EXTRAFLAGS += -DDEBUG
+debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
+#debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
 #debug-on: EXTRAFLAGS += -DDEBUG_ISSI
 #debug-on: EXTRAFLAGS += -DDEBUG_I2C
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
-debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN_SLOW_INIT
-#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-#debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
+#debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN_SLOW_INIT
+debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION

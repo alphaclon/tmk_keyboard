@@ -11,6 +11,7 @@ extern "C" {
 
 void mcpu_init(void);
 bool mcpu_is_initialized(void);
+void mcpu_hardware_shutdown(bool enabled);
 
 void mcpu_read_config(void);
 void mcpu_read_and_dump_config(void);

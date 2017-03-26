@@ -61,7 +61,7 @@ void bootmagic(void)
     if (debug_config.raw != eeconfig_read_debug())
     	eeconfig_write_debug(debug_config.raw);
 
-#if 0
+#ifdef LUFA_DEBUG_UART
 #ifdef DEBUG
     debug_config.enable = 1;
     debug_config.matrix = 0;

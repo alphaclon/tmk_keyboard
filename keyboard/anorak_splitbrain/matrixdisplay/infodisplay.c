@@ -11,34 +11,56 @@
 #include "nodebug.h"
 #endif
 
-#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
 static bool _is_initialized = false;
 static uint8_t cmd_buffer[MAX_MSG_LENGTH];
 static uint8_t current_animation = MATRIX_FIRST_ANIMATION;
+static uint8_t first_animation = MATRIX_FIRST_ANIMATION;
+static uint8_t last_animation = MATRIX_LAST_ANIMATION;
 
 void mcpu_init()
 {
     dprintf("mcpu_init\n");
 
+    mcpu_hardware_shutdown(false);
     mcpu_send_command(MATRIX_CMD_INITIALIZE, 0, 0);
     mcpu_read_config();
 
-    //mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 5);
+    // mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 5);
 
     _is_initialized = true;
 }
 
 bool mcpu_is_initialized()
 {
-	return _is_initialized;
+    return _is_initialized;
 }
+
+void mcpu_hardware_shutdown(bool enabled)
+{
+    if (enabled)
+    {
+    	dprintf("mcpu_hardware_shutdown: on\n");
+        // set SDB pin to LOW (PE4)
+        DDRE |= (1 << 4);
+        PORTE &= ~(1 << 4);
+    }
+    else
+    {
+    	dprintf("mcpu_hardware_shutdown: off\n");
+        // set SDB pin to HIGH (PE4)
+        DDRE |= (1 << 4);
+        PORTE |= (1 << 4);
+    }
+}
+
 
 uint8_t mcpu_read_config_register8(uint8_t reg)
 {
     uint8_t data;
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
 
     TWI_write_byte_to_register(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, reg);
     _delay_ms(2);
@@ -71,6 +93,10 @@ void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length
 
     TWI_write_data_to_register(MATRIX_TWI_ADDRESS, command, data, data_length);
 
+#elif TWILIB == AVR315_QUEUED
+
+    queued_twi_write_data_to_register(MATRIX_TWI_ADDRESS, command, data, data_length);
+
 #elif TWILIB == BUFFTW
 
     i2cMasterSendCommand(MATRIX_TWI_ADDRESS, command, data_length, data);
@@ -102,7 +128,7 @@ void mcpu_read_config()
 
     dprintf("mcpu cfg\n");
 
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
 
     TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
     _delay_ms(2);
@@ -123,9 +149,12 @@ void mcpu_read_config()
 
 #endif
 
-    // current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
+    current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
+    first_animation = cfg[MATRIX_CFG_REG_ANIMATION_FIRST];
+    last_animation = cfg[MATRIX_CFG_REG_ANIMATION_LAST];
 
     dprintf("mcpu v%u.%u\n", cfg[MATRIX_CFG_REG_MAJOR_VERSION], cfg[MATRIX_CFG_REG_MINOR_VERSION]);
+    dprintf("mcpu animation: %u, first:%u, last:%u\n", current_animation, first_animation, last_animation);
 }
 
 void mcpu_read_and_dump_config()
@@ -186,6 +215,12 @@ void mcpu_send_animation(uint8_t animation, uint8_t speed, uint8_t direction, ui
     cmd_animation *cmd = (cmd_animation *)cmd_buffer;
     prepare_command(cmd, speed, direction, duration, color, font);
     mcpu_send_command(animation, cmd_buffer, sizeof(cmd_animation));
+}
+
+void mcpu_send_animation_unknown(uint8_t id, uint8_t direction, uint8_t duration)
+{
+    dprintf("sweep\n");
+    mcpu_send_animation(id, 3, direction, duration, 3, 0);
 }
 
 void mcpu_send_animation_sweep(uint8_t direction, uint8_t duration)
@@ -313,6 +348,7 @@ void mcpu_start_animation(uint8_t animation_number)
         mcpu_send_animation_typematrix();
         break;
     default:
+        mcpu_send_animation_unknown(animation_number, MATRIX_ANIMATION_DIRECTION_LEFT, MATRIX_ANIMATION_RUN_FOREVER);
         dprintf("set_animation: not found: %u\n", animation_number);
         break;
     }
@@ -337,8 +373,8 @@ void mcpu_animation_toggle(void)
 void mcpu_animation_next()
 {
     current_animation++;
-    if (current_animation > MATRIX_LAST_ANIMATION)
-        current_animation = MATRIX_FIRST_ANIMATION;
+    if (current_animation > last_animation)
+        current_animation = first_animation;
 
     dprintf("animation_next: %u\n", current_animation);
 
@@ -347,8 +383,8 @@ void mcpu_animation_next()
 
 void mcpu_animation_prev()
 {
-    if (current_animation <= MATRIX_FIRST_ANIMATION)
-        current_animation = MATRIX_LAST_ANIMATION;
+    if (current_animation <= first_animation)
+        current_animation = last_animation;
     else
         current_animation--;
 

@@ -57,6 +57,7 @@ TARGET_DIR = .
 SRC += \
 	led.c \
 	hooks.c \
+	utils.c \
 	matrix.c \
 	command.c \
 	keymap_common.c \
@@ -91,8 +92,9 @@ SRC += \
 #	led_backlight/i2cmaster/twimaster.c \
 #	led_backlight/avr315/TWI_Master.c \
 
-PROGRAM_CMD = avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
-	
+#PROGRAM_CMD = avrdude -v -c avr109 -p atmega32u4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
+PROGRAM_CMD = /home/wenk/bin/hid_bootloader_cli -v -mmcu=atmega32u4 anorak_kiibohd_lufa.hex
+
 CONFIG_H = config.h
 
 
@@ -143,7 +145,7 @@ OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 #   Atmel DFU loader 4096	(TMK Alt Controller)
 #   LUFA bootloader  4096
 #   USBaspLoader     2048
-OPT_DEFS += -DBOOTLOADER_SIZE=4096
+OPT_DEFS += -DBOOTLOADER_SIZE=512
 
 
 # Build Options
@@ -151,12 +153,12 @@ OPT_DEFS += -DBOOTLOADER_SIZE=4096
 #
 #MOUSEKEY_ENABLE = yes		# Mouse keys
 BOOTMAGIC_ENABLE = yes		# Virtual DIP switch configuration
-#EXTRAKEY_ENABLE = yes		# Audio control and System control
+EXTRAKEY_ENABLE = yes		# Audio control and System control
 CONSOLE_ENABLE = yes		# Console for debug
-#COMMAND_ENABLE = yes    	# Commands for debug and configuration
+COMMAND_ENABLE = yes    	# Commands for debug and configuration
 BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
 #NKRO_ENABLE = yes		    # USB Nkey Rollover
-#SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -181,13 +183,16 @@ include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
 debug-on: EXTRAFLAGS += -DDEBUG
+#debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
+#debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 #debug-on: EXTRAFLAGS += -DDEBUG_ISSI
+#debug-on: EXTRAFLAGS += -DDEBUG_ISSI_PERFORMANCE
 #debug-on: EXTRAFLAGS += -DDEBUG_I2C
-debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
+#debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
 #debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 #debug-on: OPT_DEFS := $(filter-out -DCOMMAND_ENABLE,$(OPT_DEFS))
@@ -197,3 +202,7 @@ debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
 debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
 #debug-off: EXTRAFLAGS += -DNO_DEBUG
 debug-off: all
+
+boot: 
+	@echo teensy_loader_cli: Boot only, do not program
+	teensy_loader_cli --mcu $(MCU) -v -b

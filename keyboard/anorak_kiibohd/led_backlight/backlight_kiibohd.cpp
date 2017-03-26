@@ -139,7 +139,7 @@ void set_region_mode(uint8_t region, tLedRegionControlMode mode)
 
 void set_brightness_for_region(uint8_t region, uint8_t brightness, tLedPWMControlMode mode)
 {
-    //dprintf("set bri %d\n", brightness);
+    dprintf("set bri %d\n", brightness);
     tLedPWMControlCommand control;
     control.mode = mode;
     control.amount = gamma_correction_table[brightness];
@@ -221,7 +221,7 @@ void backlight_decrease_brightness_selected_region()
 
 void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness)
 {
-    //dprintf("bl_bri_set_by_mask %d\n", brightness);
+    dprintf("backlight_set_brightness_for_region %d\n", brightness);
     uint8_t pos = get_index_for_region(current_region);
     set_and_save_brightness_for_region(current_region, pos, brightness);
 }
@@ -290,7 +290,7 @@ void backlight_disable_region(uint8_t region)
 {
     regions &= ~region;
     current_region = region;
-    //dprintf("region %u: off\n", region);
+    dprintf("region %u: off\n", region);
     set_region_mode(region, LedControlMode_disable_mask);
 }
 
@@ -298,7 +298,7 @@ void backlight_enable_region(uint8_t region)
 {
     regions |= region;
     current_region = region;
-    //dprintf("region %u: on\n", region);
+    dprintf("region %u: on\n", region);
     set_region_mode(region, LedControlMode_enable_mask);
 }
 
@@ -401,6 +401,13 @@ void backlight_setup()
 
 void backlight_setup_finish()
 {
+}
+
+void backlight_test(void)
+{
+	issi.dumpConfiguration();
+	issi.dumpLeds(0);
+	issi.dumpBrightness(0);
 }
 
 } /* C */

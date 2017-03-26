@@ -11,14 +11,20 @@
 #include "led_backlight/twi_config.h"
 #include "led_backlight/backlight_kiibohd.h"
 
+#if defined(LUFA_DEBUG_UART) || defined(DEBUG_ISSI_PERFORMANCE) || defined(DEBUG_OUTPUT_ENABLE)
+#include "debug.h"
+#include "utils.h"
 #include "led_backlight/avr315/twi_transmit_queue.h"
+#else
+#include "nodebug.h"
+#endif
 
 
 #define BAUD 115200 // 9600 14400 19200 38400 57600 115200
 
 void twi_init(void)
 {
-#if TWILIB == AVR315
+#if TWILIB == AVR315 || TWILIB == AVR315_SYNC || TWILIB ==AVR315_QUEUED
 
     TWI_Master_Initialise();
 
@@ -36,7 +42,7 @@ void twi_init(void)
 
 void hook_early_init(void)
 {
-#ifdef DEBUG_LUFA_UART
+#ifdef LUFA_DEBUG_UART
 	uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
 #endif
     twi_init();
@@ -44,11 +50,38 @@ void hook_early_init(void)
 
 void hook_late_init(void)
 {
+#ifdef DEBUG_OUTPUT_ENABLE
+    debug_config.enable = 1;
+    debug_config.matrix = 0;
+    debug_config.keyboard = 0;
+#endif
+
+	dprintf("late_init\n");
+
     backlight_setup();
     backlight_setup_finish();
-
-    tx_queue_test();
 }
+
+#ifdef DEBUG_LATE_TEST
+void hook_late_test(void)
+{
+#ifdef DEBUG_OUTPUT_ENABLE
+    debug_config.enable = 1;
+    debug_config.matrix = 0;
+    debug_config.keyboard = 0;
+#endif
+
+	dprintf("late_test\n");
+	dprintf("free ram: %d\n", freeRam());
+
+    backlight_enable_region(backlight_region_logo);
+    backlight_set_brightness_for_region(backlight_region_logo, 7);
+
+	backlight_test();
+
+    animation_test();
+}
+#endif
 
 extern uint8_t keyboard_led_stats;
 static uint8_t _led_stats = 0;
@@ -64,6 +97,11 @@ void hook_usb_suspend_entry(void)
 
     matrix_clear();
     clear_keyboard();
+
+#ifdef BACKLIGHT_ENABLE
+    //stop_animation();
+#endif
+
 #ifdef SLEEP_LED_ENABLE
     sleep_led_enable();
 #endif
@@ -71,13 +109,14 @@ void hook_usb_suspend_entry(void)
 
 void hook_usb_wakeup(void)
 {
-    //suspend_wakeup_init();
+    //This replaces the call of suspend_wakeup_init()
+	// suspend_wakeup_init();
 
     // clear keyboard state
     matrix_clear();
     clear_keyboard();
 #ifdef BACKLIGHT_ENABLE
-    //backlight_init();
+    //backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
 #endif
 
 #ifdef SLEEP_LED_ENABLE
@@ -85,7 +124,7 @@ void hook_usb_wakeup(void)
 #endif
 
 #ifdef BACKLIGHT_ENABLE
-    stop_animation();
+    //stop_animation();
 #endif
 
     // Restore LED status

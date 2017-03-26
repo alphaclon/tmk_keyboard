@@ -6,6 +6,8 @@
 #include "timer.h"
 #include "type_o_circles.h"
 #include "type_o_matic.h"
+#include "../../matrixdisplay/infodisplay.h"
+#include <stdio.h>
 
 #ifdef DEBUG_ANIMATION
 #include "debug.h"
@@ -13,11 +15,66 @@
 #include "nodebug.h"
 #endif
 
+const char animation_sweep[] PROGMEM = "SWEEP";
+const char animation_type_o_matic[] PROGMEM = "TypeOMatic";
+const char animation_type_o_circles[] PROGMEM = "Circles";
+const char animation_breathing[] PROGMEM = "Breathing";
+const char animation_none[] PROGMEM = "xxx";
+
+PGM_P animation_names[] = {animation_sweep, animation_type_o_matic, animation_type_o_circles, animation_breathing,
+                           animation_none};
+
 uint8_t current_annimation = ANIMATION_SWEEP;
+
+void show_animaiton_info(uint8_t animation)
+{
+    if (!mcpu_is_initialized())
+        return;
+
+    char infotext[32];
+
+    strcpy_P(infotext, PSTR("Animate: "));
+    strcat_P(infotext, animation_names[animation]);
+
+    dprintf("info: %s\n", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
+void show_animaiton_info_stopped(uint8_t animation)
+{
+    if (!mcpu_is_initialized())
+        return;
+
+    char infotext[32];
+
+    strcpy_P(infotext, PSTR("Stop: "));
+    strcat_P(infotext, animation_names[animation]);
+
+    dprintf("info: %s\n", infotext);
+
+    mcpu_send_info_text(infotext);
+}
+
+void show_animaiton_info_delay(uint16_t delay_in_ms)
+{
+	if (!mcpu_is_initialized())
+		return;
+
+    char infotext[32];
+    char fmt[16];
+
+    strcpy_P(fmt, PSTR("Delay: %u"));
+    sprintf(infotext, fmt, delay_in_ms);
+
+    dprintf("info: %s\n", infotext);
+
+    mcpu_send_info_text(infotext);
+}
 
 void set_animation_sweep()
 {
-	dprintf("sweep\r\n");
+    dprintf("sweep\r\n");
 
     animation.brightness = 0;
     animation.delay_in_ms = 50;
@@ -31,7 +88,7 @@ void set_animation_sweep()
 
 void set_animation_type_o_matic()
 {
-	dprintf("type_o_matic\r\n");
+    dprintf("type_o_matic\r\n");
 
     animation.brightness = 255;
     animation.delay_in_ms = 250;
@@ -45,7 +102,7 @@ void set_animation_type_o_matic()
 
 void set_animation_type_o_circles()
 {
-	dprintf("type_o_circles\r\n");
+    dprintf("type_o_circles\r\n");
 
     animation.brightness = 255;
     animation.delay_in_ms = 250;
@@ -59,7 +116,7 @@ void set_animation_type_o_circles()
 
 void set_animation_breathing()
 {
-	dprintf("breathing\r\n");
+    dprintf("breathing\r\n");
 
     animation.brightness = 255;
     animation.delay_in_ms = 0;
@@ -99,7 +156,7 @@ void animation_next()
     dprintf("animation_next: %u\r\n", current_annimation);
 
     if (!animation_is_running())
-    	return;
+        return;
 
     stop_animation();
 
@@ -113,10 +170,10 @@ void animation_previous()
         current_annimation = ANIMATIONS_COUNT;
     current_annimation--;
 
-	dprintf("animation_previous: %u\r\n", current_annimation);
+    dprintf("animation_previous: %u\r\n", current_annimation);
 
     if (!animation_is_running())
-    	return;
+        return;
 
     stop_animation();
 
@@ -129,12 +186,15 @@ void animation_increase_speed(void)
     if (animation.delay_in_ms > 10)
         animation.delay_in_ms -= 50;
     else
-    	animation.delay_in_ms = 10;
+        animation.delay_in_ms = 10;
+
+    show_animaiton_info_delay(animation.delay_in_ms);
 }
 
 void animation_decrease_speed(void)
 {
     animation.delay_in_ms += 50;
+    show_animaiton_info_delay(animation.delay_in_ms);
 }
 
 void animation_test()
@@ -151,7 +211,7 @@ void animation_test()
 
 void animation_toggle(void)
 {
-	dprintf("animation_toggle\r\n");
+    dprintf("animation_toggle\r\n");
 
     if (animation_is_running())
     {
@@ -170,7 +230,9 @@ bool animation_is_running()
 
 void start_animation()
 {
-	dprintf("start_animation\r\n");
+    dprintf("start_animation\r\n");
+
+    show_animaiton_info(current_annimation);
 
     if (animation.animationStart)
         animation.animationStart();
@@ -181,7 +243,9 @@ void start_animation()
 
 void stop_animation()
 {
-	dprintf("stop_animation\r\n");
+    dprintf("stop_animation\r\n");
+
+    show_animaiton_info_stopped(current_annimation);
 
     if (animation.animationStop)
         animation.animationStop();
@@ -201,8 +265,8 @@ void animate()
 
     if (animation.duration_in_ms > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_in_ms)
     {
-    	stop_animation();
-		return;
+        stop_animation();
+        return;
     }
 
     animation.loop_timer = timer_read();
@@ -211,9 +275,9 @@ void animate()
 
 void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
-	if (animation.animation_typematrix_row)
-	{
-		animation.loop_timer = timer_read();
-		animation.animation_typematrix_row(row_number, row);
-	}
+    if (animation.animation_typematrix_row)
+    {
+        animation.loop_timer = timer_read();
+        animation.animation_typematrix_row(row_number, row);
+    }
 }

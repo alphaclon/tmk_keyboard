@@ -18,17 +18,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define VENDOR_ID       0xBADE
+#define VENDOR_ID       0x1209
 #define PRODUCT_ID      0xAFFE
 #define DEVICE_VER      0x0101
 #define MANUFACTURER    Anorak
-#define PRODUCT         splitbrain
-#define DESCRIPTION     t.m.k. keyboard firmware for Anorak splitbrain
+#define PRODUCT         91tkl
+#define DESCRIPTION     t.m.k. keyboard firmware for Anorak 91tkl
 
 
 /* matrix size */
 #define MATRIX_ROWS 6
-#define MATRIX_COLS 18
+#define MATRIX_COLS 17
 
 #define BACKLIGHT_LEVELS 8
 
@@ -44,8 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /* Boot Magic salt key: Space */
 #define BOOTMAGIC_KEY_SALT      KC_SPACE
-
-#define LAYOUT_ISO_CURSORKEYS_RIGHT
 
 /*
  * Feature disable options

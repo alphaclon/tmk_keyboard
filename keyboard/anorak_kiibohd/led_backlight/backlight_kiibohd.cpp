@@ -408,7 +408,7 @@ void backlight_enableShutdown(bool enabled)
 	IS31FL3731_enableHardwareShutdown(enabled);
 }
 
-void backlight_test(void)
+void backlight_dump_issi_state(void)
 {
 	issi.dumpConfiguration();
 	issi.dumpLeds(0);

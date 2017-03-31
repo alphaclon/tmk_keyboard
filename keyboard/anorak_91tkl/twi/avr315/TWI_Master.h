@@ -59,8 +59,8 @@ extern "C" {
 #define TWI_TWBR 0x0C // TWI Bit rate Register setting.
                       // See Application note for detailed
                       // information on setting this value.
-					  // 0x0C = 400kHz
-					  // 0x48 = 100kHz
+                      // 0x0C = 400kHz
+                      // 0x48 = 100kHz
 
 /****************************************************************************
   Global definitions
@@ -93,6 +93,13 @@ void TWI_read_data(unsigned char slave_address, unsigned char data_length);
 void TWI_Start_Transceiver_With_Data(const unsigned char *data, unsigned char data_length);
 void TWI_Start_Transceiver(void);
 unsigned char TWI_get_data_from_transceiver(unsigned char *data, unsigned char data_length);
+
+void queued_twi_start_transceiver(void);
+void queued_twi_write_byte(unsigned char slave_address, unsigned char data_byte);
+void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned char register_address,
+                                       unsigned char data_byte);
+void queued_twi_write_data_to_register(unsigned char slave_address, unsigned char register_address,
+                                       const unsigned char *data, unsigned char data_length);
 
 /****************************************************************************
   Bit and byte definitions

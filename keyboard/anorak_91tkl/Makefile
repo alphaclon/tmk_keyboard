@@ -74,6 +74,7 @@ SRC += \
 	command.c \
 	uart/uart.c \
 	twi/avr315/TWI_Master.c \
+	twi/avr315/twi_transmit_queue.c \
 	matrixdisplay/infodisplay.c \
 	backlight/gfx/new.cpp \
 	backlight/gfx/glcdfont.c \
@@ -87,9 +88,7 @@ SRC += \
 	backlight/control.cpp \
 	backlight/led_control.cpp \
 	backlight/pwm_control.cpp \
-	backlight/led_masks_leftside.cpp \
-	backlight/led_masks_rightside.cpp \
-	backlight/sleep_led.cpp \
+	backlight/led_masks.cpp \
 	backlight/key_led_map.cpp \
 	backlight/animations/animation.cpp \
 	backlight/animations/animation_utils.cpp \

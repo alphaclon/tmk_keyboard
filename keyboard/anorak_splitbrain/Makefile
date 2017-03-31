@@ -91,7 +91,6 @@ SRC += \
 	backlight/pwm_control.cpp \
 	backlight/led_masks_leftside.cpp \
 	backlight/led_masks_rightside.cpp \
-	backlight/sleep_led.cpp \
 	backlight/key_led_map.cpp \
 	backlight/animations/animation.cpp \
 	backlight/animations/animation_utils.cpp \

@@ -4,6 +4,11 @@
 #include "../issi/is31fl3733.h"
 #include <avr/pgmspace.h>
 
+#ifndef PROGMEM
+#define PROGMEM
+#define PGM_P
+#endif
+
 extern uint8_t const LedMaskFull_Top[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskOthr_Top[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskWASD_Top[IS31FL3733_LED_ENABLE_SIZE];

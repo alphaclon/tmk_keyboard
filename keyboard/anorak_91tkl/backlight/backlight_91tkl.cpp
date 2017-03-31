@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config.h"
 #include "eeconfig.h"
 #include "eeconfig_backlight.h"
-#include "issi/is31fl3733_rgb_91tkl.h"
+#include "issi/is31fl3733_91tkl.h"
 #include "sector/sector_control.h"
 
 #ifdef DEBUG_BACKLIGHT
@@ -75,8 +75,8 @@ void backlight_setup()
     sector_control_init();
     fix_backlight_level();
 
-    IS31FL3733_RGB_91TKL_Init(&issi, RBG);
-    IS31FL3731_RGB_91TKL_Power_Target(&issi, 450);
+    is31fl3733_91tkl_init(&issi);
+    is31fl3733_91tkl_power_target(&issi, 450);
 }
 
 void backlight_setup_finish()

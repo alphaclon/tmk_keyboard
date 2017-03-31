@@ -19,12 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <avr/pgmspace.h>
 #include "keymap_common.h"
 
-/*
- * Add different layouts. If no layout is defined the default layout will be set to ISO.
-*/
-
-#include "keymap_91tkl.c"
-
 
 #if 0
 /* translates key to keycode */

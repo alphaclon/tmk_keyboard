@@ -76,7 +76,7 @@ void hook_late_test(void)
     backlight_enable_region(backlight_region_logo);
     backlight_set_brightness_for_region(backlight_region_logo, 7);
 
-	backlight_test();
+    backlight_dump_issi_state();
 
     animation_test();
 }
@@ -99,9 +99,8 @@ void hook_usb_suspend_entry(void)
 
 #ifdef BACKLIGHT_ENABLE
     stop_animation();
-#endif
-
     backlight_enableShutdown(true);
+#endif
 
 #ifdef SLEEP_LED_ENABLE
     sleep_led_enable();
@@ -122,9 +121,8 @@ void hook_usb_wakeup(void)
 
 #ifdef SLEEP_LED_ENABLE
     sleep_led_disable();
-#endif
-
     backlight_enableShutdown(false);
+#endif
 
 #ifdef BACKLIGHT_ENABLE
     stop_animation();

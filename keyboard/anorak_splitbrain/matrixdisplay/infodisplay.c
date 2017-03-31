@@ -27,8 +27,6 @@ void mcpu_init()
     mcpu_send_command(MATRIX_CMD_INITIALIZE, 0, 0);
     mcpu_read_config();
 
-    // mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 5);
-
     _is_initialized = true;
 }
 
@@ -137,7 +135,7 @@ void mcpu_read_config()
 
     if (!lastTransOK)
     {
-        dprintf("transmission failed! 0x%X\n", TWI_Get_State_Info());
+        printf("transmission failed! 0x%X\n", TWI_Get_State_Info());
         TWI_Master_Initialise();
         return;
     }

@@ -103,7 +103,7 @@
 
 /** IS31FL3733 structure.
   */
-typedef struct
+struct IS31FL3733Device
 {
     /// Address on I2C bus.
     uint8_t address;
@@ -115,8 +115,8 @@ typedef struct
     uint8_t leds[IS31FL3733_LED_ENABLE_SIZE];
     /// LED matrix brightness.
     uint8_t pwm[IS31FL3733_LED_PWM_SIZE];
-    /// LED matrix enabled mask.
-    uint8_t leds_mask[IS31FL3733_LED_ENABLE_SIZE];
+    /// LED matrix mask.
+    uint8_t mask[IS31FL3733_LED_ENABLE_SIZE];
     /// Pointer to I2C write data to register function.
     uint8_t (*pfn_i2c_write_reg)(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *buffer, uint8_t count);
     /// Pointer to I2C read data from register function.
@@ -125,42 +125,57 @@ typedef struct
     uint8_t (*pfn_i2c_write_reg8)(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data);
     /// Pointer to I2C read byte from register function.
     uint8_t (*pfn_i2c_read_reg8)(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *data);
-} IS31FL3733;
+    /// Hardware enable (SBD)
+    void (*pfn_hardware_enable)(bool enabled);
+};
+
+typedef struct IS31FL3733Device IS31FL3733;
 
 /// Init LED matrix for normal operation.
-void IS31FL3733_Init(IS31FL3733 *device);
-void IS31FL3733_Update_GlobalConfiguration(IS31FL3733 *device);
+void is31fl3733_init(IS31FL3733 *device);
+void is31fl3733_update_global_configuration(IS31FL3733 *device);
 
-void IS31FL3733_Software_Shutdown(IS31FL3733 *device, bool enabled);
+void is31fl3733_software_shutdown(IS31FL3733 *device, bool enabled);
+void is31fl3733_hardware_shutdown(IS31FL3733 *device, bool enabled);
 
 /// Update LED matrix with internal buffer values.
-void IS31FL3733_Update(IS31FL3733 *device);
+void is31fl3733_update(IS31FL3733 *device);
 /// Update LED matrix LED enable/disable states with internal buffer values.
-void IS31FL3733_Update_LedEnableStates(IS31FL3733 *device);
+void is31fl3733_update_led_enable(IS31FL3733 *device);
 /// Update LED matrix LED brightness values with internal buffer values.
-void IS31FL3733_Update_LedPwmValues(IS31FL3733 *device);
+void is31fl3733_update_led_pwm(IS31FL3733 *device);
 
 /// Enable/disable LED. Brightness level is not changed.
-void IS31FL3733_SetLedEnable(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enable);
+void is31fl3733_set_led(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enable);
+/// Enable/disable LED. Brightness level is not changed.
+void is31fl3733_set_led_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enabled);
+
+void is31fl3733_disable_all_leds(IS31FL3733 *device);
+void is31fl3733_enable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
+void is31fl3733_disable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
+
 /// Set LED brightness level.
-void IS31FL3733_SetLedPwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness);
+void is31fl3733_set_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness);
+/// Set LED brightness level.
+void is31fl3733_set_pwm_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness);
 /// Set brightness level for all LEDs.
-void IS31FL3733_Fill(IS31FL3733 *device, uint8_t brightness);
-
-void IS31FL3733_CopyMask(IS31FL3733 *device, uint8_t *mask);
-void IS31FL3733_ClearMask(IS31FL3733 *device);
-void IS31FL3733_ApplyMask_Or(IS31FL3733 *device, uint8_t *mask);
-void IS31FL3733_ApplyMask_NAnd(IS31FL3733 *device, uint8_t *mask);
-
+void is31fl3733_fill(IS31FL3733 *device, uint8_t brightness);
 /// Set brightness level for all LEDs.
-void IS31FL3733_SetBrightnessForMasked(IS31FL3733 *device, uint8_t brightness);
+void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness);
+
+uint8_t* is31fl3733_pwm_buffer(IS31FL3733 *device);
+
+void is31fl3733_set_mask(IS31FL3733 *device, uint8_t *mask);
+void is31fl3733_clear_mask(IS31FL3733 *device);
+void is31fl3733_or_mask(IS31FL3733 *device, uint8_t *mask);
+void is31fl3733_nand_mask(IS31FL3733 *device, uint8_t *mask);
 
 /// Select active page.
-void IS31FL3733_SelectPage(IS31FL3733 *device, uint8_t page);
+void is31fl3733_select_page(IS31FL3733 *device, uint8_t page);
 
 /// Write to common register.
-void IS31FL3733_WriteCommonReg(IS31FL3733 *device, uint8_t reg_addr, uint8_t reg_value);
+void is31fl3733_write_common_reg(IS31FL3733 *device, uint8_t reg_addr, uint8_t reg_value);
 /// Write to paged register.
-void IS31FL3733_WritePagedReg(IS31FL3733 *device, uint16_t reg_addr, uint8_t reg_value);
+void is31fl3733_write_paged_reg(IS31FL3733 *device, uint16_t reg_addr, uint8_t reg_value);
 
 #endif /* _IS31FL3733_H_ */

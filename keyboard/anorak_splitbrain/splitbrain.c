@@ -390,12 +390,14 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
         if (sleep)
         {
             _is_other_side_sleeping = true;
+            hook_usb_suspend_entry();
             // backlight_sleep_led_enable();
             // USB_DeviceState = DEVICE_STATE_Suspended;
         }
         else
         {
             _is_other_side_sleeping = false;
+            hook_usb_wakeup();
             // backlight_sleep_led_enable();
             // USB_DeviceState = DEVICE_STATE_Unattached;
         }

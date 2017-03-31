@@ -66,7 +66,7 @@ void hook_late_test(void)
     backlight_enable_region(backlight_region_logo);
     backlight_set_brightness_for_region(backlight_region_logo, 7);
 
-    backlight_test();
+    backlight_dump_issi_state();
 
     animation_test();
 #endif
@@ -91,6 +91,7 @@ void hook_usb_suspend_entry(void)
 
 #ifdef BACKLIGHT_ENABLE
     stop_animation();
+    backlight_enableShutdown(true);
 #endif
 
 #ifdef SLEEP_LED_ENABLE
@@ -107,15 +108,13 @@ void hook_usb_wakeup(void)
     matrix_clear();
     clear_keyboard();
 #ifdef BACKLIGHT_ENABLE
-// backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
+    // backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
+    backlight_enableShutdown(false);
+    stop_animation();
 #endif
 
 #ifdef SLEEP_LED_ENABLE
     sleep_led_disable();
-#endif
-
-#ifdef BACKLIGHT_ENABLE
-    stop_animation();
 #endif
 
     mcpu_hardware_shutdown(false);

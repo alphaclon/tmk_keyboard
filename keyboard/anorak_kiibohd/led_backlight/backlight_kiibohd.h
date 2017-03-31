@@ -52,6 +52,6 @@ void backlight_load_region_states(void);
 
 void backlight_enableShutdown(bool enabled);
 
-void backlight_test(void);
+void backlight_dump_issi_state(void);
 
 #endif

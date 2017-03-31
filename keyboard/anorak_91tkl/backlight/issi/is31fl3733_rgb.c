@@ -1,57 +1,36 @@
-/*
- * issi31fl3733_rgb.c
- *
- *  Created on: 02.03.2017
- *      Author: wenkm
- */
 
 #include "is31fl3733_rgb.h"
 
-void IS31FL3733_RGB_Init(IS31FL3733_RGB *device, enum IS31FL3733_RGB_ColorOrder color_order)
+void is31fl3733_rgb_init(IS31FL3733_RGB *device)
 {
-    switch (color_order)
-    {
-    case RGB:
-        device->red_offset = 0;
-        device->green_offset = 1;
-        device->blue_offset = 2;
-        break;
-    case RBG:
-        device->red_offset = 0;
-        device->green_offset = 2;
-        device->blue_offset = 1;
-        break;
-    }
+    device->offsets.r = 0;
+    device->offsets.g = 2;
+    device->offsets.b = 1;
 
-    IS31FL3733_Init(device->device);
+    is31fl3733_init(device->device);
 }
 
-void IS31FL3733_RGB_SetBrightnessForMasked(IS31FL3733_RGB *device, enum IS31FL3733_RGB_Color color, uint8_t brightness)
+void is31fl3733_fill_rgb_masked(IS31FL3733_RGB *device, RGB color)
 {
-    uint8_t i;
     uint8_t mask_byte;
     uint8_t mask_bit;
 
-    switch (color)
-    {
-    case red:
-    	i = device->red_offset;
-    	break;
-    case green:
-    	i = device->green_offset;
-    	break;
-    case blue:
-    	i = device->blue_offset;
-    	break;
-    }
-
     // Set brightness level of all LED's.
-    for (; i < IS31FL3733_LED_PWM_SIZE; i += 3)
+    for (uint8_t c = 0; c < 3; ++c)
     {
-        uint8_t mask_byte = i / 8;
-        uint8_t mask_bit = i % 8;
+        for (uint8_t i = device->offsets.color[c]; i < IS31FL3733_LED_PWM_SIZE; i += 3)
+        {
+            mask_byte = i / 8;
+            mask_bit = i % 8;
 
-        if (device->device->leds_mask[mask_byte] & (1 << mask_bit))
-        	device->device->pwm[i] = brightness;
+            if (device->device->mask[mask_byte] & (1 << mask_bit))
+                device->device->pwm[i] = color.rgb[c];
+        }
     }
+}
+
+void is31fl3733_fill_hsv_masked(IS31FL3733_RGB *device, HSV color)
+{
+    RGB color_rgb = hsv_to_rgb(color);
+    is31fl3733_fill_rgb_masked(device, color_rgb);
 }

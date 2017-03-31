@@ -52,6 +52,8 @@ void backlight_decrease_brightness_selected_region(void);
 void backlight_save_region_states(void);
 void backlight_load_region_states(void);
 
+void backlight_enableShutdown(bool enabled);
+
 void backlight_dump_issi_state(void);
 
 #ifdef __cplusplus

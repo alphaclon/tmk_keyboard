@@ -572,9 +572,10 @@ void backlight_setup_finish()
     dprintf("backlight_setup_finish\n");
 }
 
-#ifdef __cplusplus
+void backlight_enableShutdown(bool enabled)
+{
+	IS31FL3731_enableHardwareShutdown(enabled);
 }
-#endif
 
 void backlight_dump_issi_state()
 {
@@ -582,3 +583,9 @@ void backlight_dump_issi_state()
     issi.dumpLeds(0);
     issi.dumpBrightness(0);
 }
+
+
+#ifdef __cplusplus
+}
+#endif
+

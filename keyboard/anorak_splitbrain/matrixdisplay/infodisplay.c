@@ -53,7 +53,6 @@ void mcpu_hardware_shutdown(bool enabled)
     }
 }
 
-
 uint8_t mcpu_read_config_register8(uint8_t reg)
 {
     uint8_t data;

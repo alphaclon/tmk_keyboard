@@ -125,7 +125,7 @@ struct IS31FL3733Device
     uint8_t (*pfn_i2c_write_reg8)(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data);
     /// Pointer to I2C read byte from register function.
     uint8_t (*pfn_i2c_read_reg8)(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *data);
-    /// Hardware enable (SBD)
+    /// Hardware enable (SDB)
     void (*pfn_hardware_enable)(bool enabled);
 };
 

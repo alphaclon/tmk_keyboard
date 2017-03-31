@@ -1,7 +1,8 @@
 
 #include "is31fl3733_91tkl.h"
+
+#include "is31fl3733_sdb.h"
 #include "is31fl3733_twi.h"
-#include "is31fl3733_sbd.h"
 
 IS31FL3733_91TKL issi;
 

@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define VENDOR_ID       0xDEAD
-#define PRODUCT_ID      0xBEEF
+#define VENDOR_ID       0x1209
+#define PRODUCT_ID      0xAFFE
 #define DEVICE_VER      0x0203
 #define MANUFACTURER    Anorak
 #define PRODUCT         kiibohd
@@ -42,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /* Boot Magic salt key: Space */
 #define BOOTMAGIC_KEY_SALT      KC_SPACE
-
 
 /*
  * Feature disable options

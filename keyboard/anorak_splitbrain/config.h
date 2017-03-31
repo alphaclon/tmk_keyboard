@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define VENDOR_ID       0xBADE
-#define PRODUCT_ID      0xAFFE
-#define DEVICE_VER      0x0101
+#define VENDOR_ID       0x1209
+#define PRODUCT_ID      0xAA90
+#define DEVICE_VER      0x0200
 #define MANUFACTURER    Anorak
 #define PRODUCT         splitbrain
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak splitbrain

@@ -41,6 +41,13 @@
 # To rebuild project do "make clean" then "make all".
 #
 # avrdude -v -c avr109 -p atmega32U4 -P /dev/ttyACM0 -U flash:w:anorak_kiibohd_lufa.hex
+# 
+# Fuses for nanoBoot:
+# avrdude -v -c stk500v2 -p m32u4 -P /dev/ttySTK500 -B0.1 -U lfuse:w:0xff:m -U hfuse:w:0xd6:m -U efuse:w:0xf8:m
+#
+# Flash nanoBoot
+# avrdude -v -c stk500v2 -p m32u4 -P /dev/ttySTK500 -B0.1 -U flash:w:nanoBoot.hex:a
+# 
 #
 #----------------------------------------------------------------------------
 
@@ -183,7 +190,7 @@ include $(TMK_DIR)/common.mk
 include $(TMK_DIR)/rules.mk
 
 debug-on: EXTRAFLAGS += -DDEBUG
-debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
+#debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
 #debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED

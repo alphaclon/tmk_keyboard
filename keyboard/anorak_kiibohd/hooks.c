@@ -117,15 +117,12 @@ void hook_usb_wakeup(void)
     clear_keyboard();
 #ifdef BACKLIGHT_ENABLE
     //backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
+    stop_animation();
+    backlight_enableShutdown(false);
 #endif
 
 #ifdef SLEEP_LED_ENABLE
     sleep_led_disable();
-    backlight_enableShutdown(false);
-#endif
-
-#ifdef BACKLIGHT_ENABLE
-    stop_animation();
 #endif
 
     // Restore LED status

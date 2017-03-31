@@ -62,7 +62,8 @@ bool IS31FL3731::begin(uint8_t issi_slave_address)
         writeRegister8(ISSI_BANK_FUNCTIONREG, i, 0x0);
 
     enableHardwareShutdown(false);
-    _delay_ms(1);
+    _delay_us(1);
+
     reset();
 
     dprintf("done\n");

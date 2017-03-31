@@ -49,7 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /* disable debug print */
 //#define NO_DEBUG
-//#define NO_DEBUG_LEDS
+#define NO_DEBUG_LEDS
 
 /* disable print */
 //#define NO_PRINT

@@ -33,7 +33,7 @@ void show_animaiton_info(uint8_t animation)
 
     char infotext[32];
 
-    strcpy_P(infotext, PSTR("Animate: "));
+    strcpy_P(infotext, PSTR("A: "));
     strcat_P(infotext, animation_names[animation]);
 
     dprintf("info: %s\n", infotext);
@@ -48,7 +48,7 @@ void show_animaiton_info_stopped(uint8_t animation)
 
     char infotext[32];
 
-    strcpy_P(infotext, PSTR("Stop: "));
+    strcpy_P(infotext, PSTR("S: "));
     strcat_P(infotext, animation_names[animation]);
 
     dprintf("info: %s\n", infotext);

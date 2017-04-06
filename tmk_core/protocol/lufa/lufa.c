@@ -725,8 +725,8 @@ void splitbrain_communication_task(void)
 {
 }
 
-void hook_late_test(void) __attribute__((weak));
-void hook_late_test(void)
+void hook_late_start(void) __attribute__((weak));
+void hook_late_start(void)
 {
 }
 
@@ -734,7 +734,7 @@ int main(void) __attribute__((weak));
 int main(void)
 {
     setup_mcu();
-    hook_early_init();
+
 
 #ifdef LUFA_DEBUG_SUART
     SUART_OUT_DDR |= (1 << SUART_OUT_BIT);
@@ -742,6 +742,7 @@ int main(void)
 #endif
 
     print_set_sendchar(sendchar);
+    hook_early_init();
 
     keyboard_setup();
     setup_usb();
@@ -757,7 +758,7 @@ int main(void)
 #endif
         splitbrain_communication_task();
     }
-    print("USB\n");
+    println("> USB\n");
 
     /* init modules */
     hook_late_init();
@@ -770,8 +771,8 @@ int main(void)
     virtser_init();
 #endif
 
-    print("Start\n");
-    hook_late_test();
+    hook_late_start();
+    println("> start");
 
     while (1)
     {
@@ -781,6 +782,7 @@ int main(void)
             print("[s]");
 #endif
             hook_usb_suspend_loop();
+            splitbrain_communication_task();
         }
 
         keyboard_task();

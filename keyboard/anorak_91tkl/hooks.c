@@ -49,7 +49,7 @@ void hook_late_init(void)
 }
 
 #ifdef DEBUG_LATE_TEST
-void hook_late_test(void)
+void hook_late_start(void)
 {
 #ifdef DEBUG_OUTPUT_ENABLE
     debug_config.enable = 1;

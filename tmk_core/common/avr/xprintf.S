@@ -3,11 +3,11 @@
 ;---------------------------------------------------------------------------;
 
 				// Base size is 152 bytes
-#define	CR_CRLF		0	// Convert \n to \r\n (+10 bytes)
-#define USE_XPRINTF	1	// Enable xprintf function (+194 bytes)
+#define	CR_CRLF		    0	// Convert \n to \r\n (+10 bytes)
+#define USE_XPRINTF	    1	// Enable xprintf function (+194 bytes)
 #define USE_XSPRINTF	0	// Add xsprintf function (+78 bytes)
 #define USE_XFPRINTF	0	// Add xfprintf function (+54 bytes)
-#define USE_XATOI	0	// Enable xatoi function (+182 bytes)
+#define USE_XATOI	    0	// Enable xatoi function (+182 bytes)
 
 
 #if FLASHEND > 0x1FFFF
@@ -450,7 +450,7 @@ xatoi:
 	brcs	70f		;/
 	cpi	r22, 10		;if(r22 >= 10) {
 	brcs	53f		; r22 -= 7;
-	subi	r22, 7		; if(r22 < 10) 
+	subi	r22, 7		; if(r22 < 10)
 	cpi	r22, 10		;
 	brcs	70f		;}
 53:	cp	r22, r25	;if(r22 >= r25) error;

@@ -45,8 +45,8 @@
  */
 
 #include "TWI_Master.h"
-#include "twi_transmit_queue.h"
 #include "../../nfo_led.h"
+#include "twi_transmit_queue.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <util/delay.h>
@@ -57,6 +57,8 @@
 #include "nodebug.h"
 #endif
 
+#define MAX_MTX_NACK_COUNT 3
+
 static unsigned char TWI_buf[TWI_BUFFER_SIZE]; // Transceiver buffer
 static unsigned char *TWI_buf_ptr;             // Transceiver buffer pointer
 static unsigned char TWI_data_length;          // Number of bytes to be transmitted.
@@ -66,6 +68,14 @@ union TWI_statusReg TWI_statusReg = {0}; // TWI_statusReg is defined in TWI_Mast
 
 static tx_queue_data_t *tail = 0;
 static tx_queue_data_t *head = 0;
+
+static volatile uint8_t mtx_adr_nack_total = 0;
+static volatile uint8_t mtx_adr_nack_count = 0;
+static volatile uint8_t mtx_adr_nack_lost = 0;
+
+static volatile uint8_t mtx_data_nack_total = 0;
+static volatile uint8_t mtx_data_nack_count = 0;
+static volatile uint8_t mtx_data_nack_lost = 0;
 
 /****************************************************************************
 Call this function to set up the TWI master to its initial standby state.
@@ -113,13 +123,18 @@ void TWI_write_byte(unsigned char slave_address, unsigned char data_byte)
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("TWI_write_byte 0x%u\n", data_byte);
+    dprintf("TWI_write_byte\n");
+
+    if (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
 
     while (!tx_queue_is_empty())
         ; // Wait until tx queue is empty
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
+
+    dprintf("TWI_write_byte 0x%u\n", data_byte);
 
     TWI_data_length = 2;        // Number of data to transmit.
     TWI_buf[0] = slave_address; // Store slave address with R/W setting.
@@ -148,6 +163,9 @@ void TWI_write_byte_to_register(unsigned char slave_address, unsigned char regis
         return;
 
     dprintf("TWI_write_byte_to_register %u %u\n", register_address, data_byte);
+
+    while (!tx_queue_is_empty())
+        ; // Wait until tx queue is empty
 
     while (TWI_Transceiver_Busy())
         ; // Wait until TWI is ready for next transmission.
@@ -320,21 +338,23 @@ unsigned char TWI_get_data_from_transceiver(unsigned char *msg, unsigned char ms
             msg[i] = TWI_buf[i + 1];
         }
     }
+
+    dprintf("TWI_get_data_from_transceiver done\n");
+
     return (TWI_statusReg.lastTransOK);
 }
 
-/*
- *
- *
- * Queued TX
- *
- *
- *
- */
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * ------------------------------------------- Queued TX -------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
+// * -------------------------------------------------------------------------------------------------
 
 void queued_twi_start_transceiver(void)
 {
-    //dprintf("qtst_start\n");
+    dprintf("qtst_start\n");
 
     if (tx_queue_is_empty())
         return;
@@ -344,15 +364,15 @@ void queued_twi_start_transceiver(void)
 
     if (!tx_queue_front(&head))
     {
-    	//dprintf("no queue front\n");
-    	//tx_queue_print_status();
-    	return;
+        // dprintf("no queue front\n");
+        // tx_queue_print_status();
+        return;
     }
 
     TWI_buf_ptr = head->data;
     TWI_data_length = head->data_length;
 
-    //dprintf("qtst_start l:%u\n", head->data_length);
+    dprintf("qtst_start l:%u\n", TWI_data_length);
 
     TWI_statusReg.all = 0;
     TWI_state = TWI_NO_STATE;
@@ -364,8 +384,8 @@ void queued_twi_start_transceiver(void)
 
 void queued_twi_write_byte(unsigned char slave_address, unsigned char data_byte)
 {
-    //dprintf("queued_twi_write_byte 0x%u\n", data_byte);
-	//dprintf("qtwb 0x%u\n", data_byte);
+    // dprintf("queued_twi_write_byte 0x%u\n", data_byte);
+    dprintf("qtwb 0x%u\n", data_byte);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
@@ -391,8 +411,8 @@ void queued_twi_write_byte(unsigned char slave_address, unsigned char data_byte)
 void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned char register_address,
                                        unsigned char data_byte)
 {
-    //dprintf("queued_twi_write_byte_to_register %u %u\n", register_address, data_byte);
-	//dprintf("qtwbtr %u %u\n", register_address, data_byte);
+    // dprintf("queued_twi_write_byte_to_register %u %u\n", register_address, data_byte);
+    dprintf("qtwbtr %u %u\n", register_address, data_byte);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
@@ -410,7 +430,7 @@ void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned cha
 
     bool queue_was_empty = tx_queue_is_empty();
 
-    //dprintf("qtwbtr qe:%u\n", queue_was_empty);
+    // dprintf("qtwbtr qe:%u\n", queue_was_empty);
 
     tx_queue_push_tail();
 
@@ -421,25 +441,29 @@ void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned cha
 void queued_twi_write_data_to_register(unsigned char slave_address, unsigned char register_address,
                                        const unsigned char *data, unsigned char data_length)
 {
-    //dprintf("queued_twi_write_data_to_register l:%u\n", data_length);
-	//dprintf("qtwdtr l:%u\n", data_length);
+    // dprintf("queued_twi_write_data_to_register l:%u\n", data_length);
+    dprintf("qtwdtr l:%u\n", data_length);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-#ifdef DEBUG_I2C
+#ifndef DEBUG_TX_QUEUE
     while (tx_queue_is_full())
         ; // Wait until there is a free buffer in the queue
 #else
     if (tx_queue_is_full())
     {
-    	dprintf("qtwdtr full\n");
+        print("qtwdtr full, wait\n");
         while (tx_queue_is_full())
             ; // Wait until there is a free buffer in the queue
     }
 #endif
 
-    tx_queue_get_empty_tail(&tail);
+    if (!tx_queue_get_empty_tail(&tail))
+    {
+        print("qtwdtr ! tail\n");
+        return;
+    }
 
     tail->data_length = data_length + 2; // Number of data to transmit.
 
@@ -449,22 +473,34 @@ void queued_twi_write_data_to_register(unsigned char slave_address, unsigned cha
     for (unsigned char pos = 0; pos < data_length; pos++)
         tail->data[pos + 2] = data[pos];
 
-    //tx_queue_print_status();
+    // tx_queue_print_status();
 
     bool queue_was_empty = tx_queue_is_empty();
-    //dprintf("qtwdtr l:%u, qe:%u\n", data_length, queue_was_empty);
+    // dprintf("qtwdtr l:%u, qe:%u\n", data_length, queue_was_empty);
 
-    tx_queue_push_tail();
+    if (!tx_queue_push_tail())
+    {
+        print("qtwdtr ! push tail\n");
+        return;
+    }
 
-    //tx_queue_print_status();
-    //if (tx_queue_size() > 1)
+    // tx_queue_print_status();
+    // if (tx_queue_size() > 1)
     //	dprintf("qtwdtr ql:%u\n", tx_queue_size());
 
     if (queue_was_empty || tx_queue_size() == 1)
     {
-    	dprintf("qtwdtr start, ql:%u\n", tx_queue_size());
+        // dprintf("qtwdtr start, ql:%u\n", tx_queue_size());
         queued_twi_start_transceiver();
     }
+}
+
+void queued_twi_stats(void)
+{
+    xprintf("qs %u\n", tx_queue_size());
+    xprintf("state 0x%X\n", TWI_state);
+    xprintf("adr: %u %u\n", mtx_adr_nack_total, mtx_adr_nack_lost);
+    xprintf("data: %u %u\n", mtx_data_nack_total, mtx_data_nack_lost);
 }
 
 // ********** Interrupt Handlers ********** //
@@ -480,15 +516,23 @@ ISR(TWI_vect)
 
     switch (TWSR)
     {
-    case TWI_START:        // START has been transmitted
-    case TWI_REP_START:    // Repeated START has been transmitted
-        TWI_bufPtr = 0;    // Set buffer pointer to the TWI Address location
-        // NO BREAK
+
+    /*
+     *
+     * Master Transmit Mode (TX)
+     *
+     */
+
+    case TWI_START:     // START has been transmitted
+    case TWI_REP_START: // Repeated START has been transmitted
+        TWI_bufPtr = 0; // Set buffer pointer to the TWI Address location
+    // NO BREAK
     case TWI_MTX_ADR_ACK:  // SLA+W has been transmitted and ACK received
     case TWI_MTX_DATA_ACK: // Data byte has been transmitted and ACK received
+
         if (TWI_bufPtr < TWI_data_length)
         {
-        	LedInfo1_On();
+            // LedInfo1_On();
 
             TWDR = TWI_buf_ptr[TWI_bufPtr++];
             TWCR = (1 << TWEN) |                               // TWI Interface enabled
@@ -496,41 +540,154 @@ ISR(TWI_vect)
                    (0 << TWEA) | (0 << TWSTA) | (0 << TWSTO) | //
                    (0 << TWWC);                                //
 
-            LedInfo1_Off();
+            // LedInfo1_Off();
         }
         else // Send STOP after last byte
         {
-        	LedInfo2_On();
+            LedInfo2_On();
 
-        	TWCR = (1 << TWEN) |                               // TWI Interface enabled
-				   (0 << TWIE) | (1 << TWINT) |                // Disable TWI Interrupt and clear the flag
-				   (0 << TWEA) | (0 << TWSTA) | (1 << TWSTO) | // Initiate a STOP condition.
-				   (0 << TWWC);                                //
+            TWCR = (1 << TWEN) |                               // TWI Interface enabled
+                   (0 << TWIE) | (1 << TWINT) |                // Disable TWI Interrupt and clear the flag
+                   (0 << TWEA) | (0 << TWSTA) | (1 << TWSTO) | // Initiate a STOP condition.
+                   (0 << TWWC);                                //
 
-        	TWI_statusReg.lastTransOK = TRUE; // Set status bits to completed successfully.
+            TWI_statusReg.lastTransOK = TRUE; // Set status bits to completed successfully.
 
-        	tx_queue_pop();
+            tx_queue_pop();
 
-			if (tx_queue_front(&head))
-			{
-				TWI_buf_ptr = head->data;
-				TWI_data_length = head->data_length;
+            if (tx_queue_front(&head))
+            {
+                //_delay_us(4);
+                //_delay_ms(1);
 
-			    TWI_statusReg.all = 0;
-			    TWI_state = TWI_NO_STATE;
-			    TWCR = (1 << TWEN) |                               // TWI Interface enabled.
-			           (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
-			           (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
-			           (0 << TWWC);                                //
+                TWI_buf_ptr = head->data;
+                TWI_data_length = head->data_length;
 
-			}
+                TWI_statusReg.all = 0;
+                TWI_state = TWI_NO_STATE;
+                TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+                       (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+                       (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+                       (0 << TWWC);                                //
+            }
 
-			LedInfo2_Off();
+            LedInfo2_Off();
         }
         break;
+
+    case TWI_MTX_ADR_NACK: // SLA+W has been transmitted and NACK received
+
+        mtx_adr_nack_total++;
+        mtx_adr_nack_count++;
+
+        if (mtx_data_nack_count <= MAX_MTX_NACK_COUNT && tx_queue_front(&head))
+        {
+            _delay_us(4);
+
+            TWI_buf_ptr = head->data;
+            TWI_data_length = head->data_length;
+
+            TWI_statusReg.all = 0;
+            TWI_state = TWI_NO_STATE;
+            TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+                   (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+                   (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+                   (0 << TWWC);
+        }
+        else
+        {
+            mtx_adr_nack_count = 0;
+            mtx_adr_nack_lost++;
+
+            tx_queue_pop();
+
+            if (tx_queue_front(&head))
+            {
+                _delay_us(4);
+
+                TWI_buf_ptr = head->data;
+                TWI_data_length = head->data_length;
+
+                TWI_statusReg.all = 0;
+                TWI_state = TWI_NO_STATE;
+                TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+                       (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+                       (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+                       (0 << TWWC);
+            }
+            else
+            {
+                TWI_state = TWSR;                   // Store TWSR and automatically sets clears noErrors bit.
+                                                    // Reset TWI Interface
+                TWCR = (1 << TWEN) |                // Enable TWI-interface and release TWI pins
+                       (0 << TWIE) | (0 << TWINT) | // Disable Interrupt
+                       (0 << TWEA) | (0 << TWSTA) | (0 << TWSTO) | // No Signal requests
+                       (0 << TWWC);
+            }
+        }
+        break;
+
+    case TWI_MTX_DATA_NACK: // Data byte has been transmitted and NACK received
+
+        mtx_data_nack_total++;
+        mtx_data_nack_count++;
+
+        if (mtx_data_nack_count <= MAX_MTX_NACK_COUNT && tx_queue_front(&head))
+        {
+            _delay_us(4);
+
+            TWI_buf_ptr = head->data;
+            TWI_data_length = head->data_length;
+
+            TWI_statusReg.all = 0;
+            TWI_state = TWI_NO_STATE;
+            TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+                   (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+                   (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+                   (0 << TWWC);
+        }
+        else
+        {
+            mtx_data_nack_count = 0;
+            mtx_data_nack_lost++;
+
+            tx_queue_pop();
+
+            if (tx_queue_front(&head))
+            {
+                _delay_us(4);
+
+                TWI_buf_ptr = head->data;
+                TWI_data_length = head->data_length;
+
+                TWI_statusReg.all = 0;
+                TWI_state = TWI_NO_STATE;
+                TWCR = (1 << TWEN) |                               // TWI Interface enabled.
+                       (1 << TWIE) | (1 << TWINT) |                // Enable TWI Interrupt and clear the flag.
+                       (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a START condition.
+                       (0 << TWWC);
+            }
+            else
+            {
+                TWI_state = TWSR;                   // Store TWSR and automatically sets clears noErrors bit.
+                                                    // Reset TWI Interface
+                TWCR = (1 << TWEN) |                // Enable TWI-interface and release TWI pins
+                       (0 << TWIE) | (0 << TWINT) | // Disable Interrupt
+                       (0 << TWEA) | (0 << TWSTA) | (0 << TWSTO) | // No Signal requests
+                       (0 << TWWC);
+            }
+        }
+        break;
+
+    /*
+     *
+     * Master Receive Mode (RX)
+     *
+     */
+
     case TWI_MRX_DATA_ACK: // Data byte has been received and ACK transmitted
         TWI_buf[TWI_bufPtr++] = TWDR;
-        // NO BREAK
+    // NO BREAK
     case TWI_MRX_ADR_ACK:                       // SLA+R has been transmitted and ACK received
         if (TWI_bufPtr < (TWI_data_length - 1)) // Detect the last byte to NACK it.
         {
@@ -561,10 +718,9 @@ ISR(TWI_vect)
                (0 << TWEA) | (1 << TWSTA) | (0 << TWSTO) | // Initiate a (RE)START condition.
                (0 << TWWC);                                //
         break;
-    case TWI_MTX_ADR_NACK:  // SLA+W has been transmitted and NACK received
-    case TWI_MRX_ADR_NACK:  // SLA+R has been transmitted and NACK received
-    case TWI_MTX_DATA_NACK: // Data byte has been transmitted and NACK received
-    case TWI_BUS_ERROR:     // Bus error due to an illegal START or STOP condition
+
+    case TWI_MRX_ADR_NACK: // SLA+R has been transmitted and NACK received
+    case TWI_BUS_ERROR:    // Bus error due to an illegal START or STOP condition
     default:
         TWI_state = TWSR;                                  // Store TWSR and automatically sets clears noErrors bit.
                                                            // Reset TWI Interface

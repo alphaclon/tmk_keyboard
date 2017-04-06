@@ -69,7 +69,6 @@ void bootmagic(void)
 #endif
 #endif
 
-
     /* keymap config */
     keymap_config.raw = eeconfig_read_keymap();
     if (bootmagic_scan_key(BOOTMAGIC_KEY_SWAP_CONTROL_CAPSLOCK)) {

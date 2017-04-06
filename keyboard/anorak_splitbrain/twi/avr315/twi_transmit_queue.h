@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define TX_QUEUE_SIZE 16 // muss 2^n betragen (2, 4, 8, 16, 32, 64 ...)
-#define TX_QUEUE_PAYLOAD_SIZE 16 + 2
+#define TX_QUEUE_PAYLOAD_SIZE 48
 
 struct _tx_queue_data_t
 {

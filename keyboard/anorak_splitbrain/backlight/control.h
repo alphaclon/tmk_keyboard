@@ -6,5 +6,6 @@
 extern IS31FL3731Buffered issi;
 
 void IS31FL3731_init(void);
+void IS31FL3731_enableHardwareShutdown(bool enabled);
 
 #endif

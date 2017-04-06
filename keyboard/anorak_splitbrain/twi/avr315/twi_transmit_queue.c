@@ -181,11 +181,11 @@ void tx_queue_print_status(void)
 {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        LV_("read: %u", tx_queue.read);
-        LV_("write: %u", tx_queue.write);
-        LV_("empty: %u", tx_queue_is_empty());
-        LV_("full: %u", tx_queue_is_full());
-        LV_("size: %u", tx_queue_size());
+        xprintf("read: %u", tx_queue.read);
+        xprintf("write: %u", tx_queue.write);
+        xprintf("empty: %u", tx_queue_is_empty());
+        xprintf("full: %u", tx_queue_is_full());
+        xprintf("size: %u", tx_queue_size());
     }
 }
 

@@ -15,12 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "backlight.h"
+#include "backlight_kiibohd.h"
 #include "../matrixdisplay/infodisplay.h"
 #include "../nfo_led.h"
 #include "../splitbrain.h"
 #include "../twi/twi_config.h"
-#include "backlight_kiibohd.h"
+#include "backlight.h"
 #include "config.h"
 #include "led_control.h"
 #include "led_masks.h"
@@ -159,8 +159,8 @@ uint8_t get_index_for_region(uint8_t region)
 
 void show_region_info(uint8_t region)
 {
-	if (!mcpu_is_initialized())
-		return;
+    if (!mcpu_is_initialized())
+        return;
 
     char infotext[32];
     char fmt[16];
@@ -177,8 +177,8 @@ void show_region_info(uint8_t region)
 
 void show_region_enabled(uint8_t region)
 {
-	if (!mcpu_is_initialized())
-		return;
+    if (!mcpu_is_initialized())
+        return;
 
     char infotext[32];
     char fmt[16];
@@ -195,8 +195,8 @@ void show_region_enabled(uint8_t region)
 
 void show_region_increase_brightness(uint8_t region)
 {
-	if (!mcpu_is_initialized())
-		return;
+    if (!mcpu_is_initialized())
+        return;
 
     char infotext[32];
     uint8_t index = get_index_for_region(region);
@@ -211,8 +211,8 @@ void show_region_increase_brightness(uint8_t region)
 
 void show_region_decrease_brightness(uint8_t region)
 {
-	if (!mcpu_is_initialized())
-		return;
+    if (!mcpu_is_initialized())
+        return;
 
     char infotext[32];
     uint8_t index = get_index_for_region(region);
@@ -227,8 +227,8 @@ void show_region_decrease_brightness(uint8_t region)
 
 void show_region_brightness(uint8_t region)
 {
-	if (!mcpu_is_initialized())
-		return;
+    if (!mcpu_is_initialized())
+        return;
 
     char infotext[32];
     char fmt[16];
@@ -246,8 +246,8 @@ void show_region_brightness(uint8_t region)
 
 void show_regions_saved()
 {
-	if (!mcpu_is_initialized())
-		return;
+    if (!mcpu_is_initialized())
+        return;
 
     char infotext[32];
     strcat_P(infotext, PSTR("saved"));
@@ -387,7 +387,7 @@ void backlight_increase_brightness()
 
 void backlight_decrease_brightness()
 {
-	show_region_decrease_brightness(backlight_region_ALL);
+    show_region_decrease_brightness(backlight_region_ALL);
 
     for (uint8_t pos = 0; pos < BACKLIGHT_MAX_REGIONS; pos++)
     {
@@ -574,7 +574,7 @@ void backlight_setup_finish()
 
 void backlight_enableShutdown(bool enabled)
 {
-	IS31FL3731_enableHardwareShutdown(enabled);
+    IS31FL3731_enableHardwareShutdown(enabled);
 }
 
 void backlight_dump_issi_state()
@@ -584,8 +584,6 @@ void backlight_dump_issi_state()
     issi.dumpBrightness(0);
 }
 
-
 #ifdef __cplusplus
 }
 #endif
-

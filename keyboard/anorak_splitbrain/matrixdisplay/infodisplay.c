@@ -30,6 +30,11 @@ void mcpu_init()
     _is_initialized = true;
 }
 
+void mcpu_set_initialized()
+{
+    _is_initialized = true;
+}
+
 bool mcpu_is_initialized()
 {
     return _is_initialized;
@@ -39,18 +44,27 @@ void mcpu_hardware_shutdown(bool enabled)
 {
     if (enabled)
     {
-    	dprintf("mcpu_hardware_shutdown: on\n");
-        // set SDB pin to LOW (PE4)
-        DDRE |= (1 << 4);
+        dprintf("mcpu_hardware_shutdown: on\n");
+        // set SDB pin (PE4) to Hi-Z (DDR:0, PORT:0) (input, no pull-up)
+        DDRE &= ~(1 << 4);
         PORTE &= ~(1 << 4);
     }
     else
     {
-    	dprintf("mcpu_hardware_shutdown: off\n");
-        // set SDB pin to HIGH (PE4)
+        dprintf("mcpu_hardware_shutdown: off\n");
+        // set SDB pin (PE4) to LOW (output, low)
         DDRE |= (1 << 4);
-        PORTE |= (1 << 4);
+        PORTE &= ~(1 << 4);
     }
+}
+
+void mcpu_toggle_hardware_shutdown(void)
+{
+    static bool enabled = false;
+
+    enabled = !enabled;
+
+    mcpu_hardware_shutdown(enabled);
 }
 
 uint8_t mcpu_read_config_register8(uint8_t reg)
@@ -60,7 +74,7 @@ uint8_t mcpu_read_config_register8(uint8_t reg)
 #if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
 
     TWI_write_byte_to_register(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, reg);
-    _delay_ms(2);
+    _delay_us(500);
     TWI_read_data(MATRIX_TWI_ADDRESS, 1);
     TWI_get_data_from_transceiver(&data, 1);
 
@@ -84,7 +98,7 @@ uint8_t mcpu_read_config_register8(uint8_t reg)
 
 void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length)
 {
-    dprintf("mcpu_send_command: c:0x%X l:%u\n\r", command, data_length);
+    dprintf("mcpu_send_command: c:0x%X l:%u\n", command, data_length);
 
 #if TWILIB == AVR315
 
@@ -92,6 +106,7 @@ void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length
 
 #elif TWILIB == AVR315_QUEUED
 
+    // TWI_write_data_to_register(MATRIX_TWI_ADDRESS, command, data, data_length);
     queued_twi_write_data_to_register(MATRIX_TWI_ADDRESS, command, data, data_length);
 
 #elif TWILIB == BUFFTW
@@ -128,13 +143,13 @@ void mcpu_read_config()
 #if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
 
     TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
-    _delay_ms(2);
+    _delay_us(500);
     TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
     bool lastTransOK = TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
 
     if (!lastTransOK)
     {
-        printf("transmission failed! 0x%X\n", TWI_Get_State_Info());
+        xprintf("transmission failed! 0x%X\n", TWI_Get_State_Info());
         TWI_Master_Initialise();
         return;
     }
@@ -146,31 +161,78 @@ void mcpu_read_config()
 
 #endif
 
-    current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
-    first_animation = cfg[MATRIX_CFG_REG_ANIMATION_FIRST];
-    last_animation = cfg[MATRIX_CFG_REG_ANIMATION_LAST];
+    //    current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
+    //    first_animation = cfg[MATRIX_CFG_REG_ANIMATION_FIRST];
+    //    last_animation = cfg[MATRIX_CFG_REG_ANIMATION_LAST];
+
+    current_animation = MATRIX_FIRST_ANIMATION;
+    first_animation = MATRIX_FIRST_ANIMATION;
+    last_animation = MATRIX_LAST_ANIMATION;
 
     dprintf("mcpu v%u.%u\n", cfg[MATRIX_CFG_REG_MAJOR_VERSION], cfg[MATRIX_CFG_REG_MINOR_VERSION]);
-    dprintf("mcpu animation: %u, first:%u, last:%u\n", current_animation, first_animation, last_animation);
+    dprintf("mcpu animation: %u, first:%u, last:%u\n", cfg[MATRIX_CFG_REG_ANIMATION],
+            cfg[MATRIX_CFG_REG_ANIMATION_FIRST], cfg[MATRIX_CFG_REG_ANIMATION_LAST]);
 }
 
 void mcpu_read_and_dump_config()
 {
-#ifdef DEBUG_INFODISPLAY
-    dprintf("mcpu dmp\n");
+    unsigned char cfg[MATRIX_MAX_CFG_REG];
+    xprintf("mcpu dmp\n");
 
-    for (uint8_t i = 0; i < MATRIX_MAX_CFG_REG; ++i)
+#if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
+
+    unsigned char state;
+
+    TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
+
+    state = TWI_Get_State_Info();
+    if (state != TWI_NO_STATE)
     {
-        uint8_t cfg = mcpu_read_config_register8(i);
-        dprintf("%u: %u 0x%X\n", i, cfg, cfg);
+        xprintf("wb failed: 0x%X\n", state);
     }
 
-    dprintf("running: %u\n", mcpu_read_config_register8(MATRIX_CFG_REG_ANIMATION_STATE));
+    //_delay_ms(1);
+    TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
+
+    state = TWI_Get_State_Info();
+    if (state != TWI_NO_STATE)
+    {
+        xprintf("rd failed: 0x%X\n", state);
+    }
+
+    bool lastTransOK = TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
+
+    if (!lastTransOK)
+    {
+        xprintf("gd failed! 0x%X\n", TWI_Get_State_Info());
+        TWI_Master_Initialise();
+        return;
+    }
+
+#elif TWILIB == BUFFTW
+
+    i2cMasterSendCommandNI(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, 0, 0);
+    i2cMasterReceiveNI(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG, &cfg[0]);
+
 #endif
+
+    xprintf("mcpu v%u.%u\n", cfg[MATRIX_CFG_REG_MAJOR_VERSION], cfg[MATRIX_CFG_REG_MINOR_VERSION]);
+    xprintf("mcpu running: %u\n", cfg[MATRIX_CFG_REG_ANIMATION_STATE]);
+    xprintf("mcpu animation: %u, first:%u, last:%u\n", cfg[MATRIX_CFG_REG_ANIMATION],
+            cfg[MATRIX_CFG_REG_ANIMATION_FIRST], cfg[MATRIX_CFG_REG_ANIMATION_LAST]);
+    xprintf("mcpu animation: %u, first:%u, last:%u\n", current_animation, first_animation, last_animation);
+
+    xprintf("mcpu cfg\n");
+    for (uint8_t i = 0; i < MATRIX_MAX_CFG_REG; ++i)
+    {
+        xprintf("cfg: %u: %u 0x%X\n", i, cfg[i], cfg[i]);
+    }
 }
 
 void mcpu_send_text(char const *msg)
 {
+    dprintf("mcpu_send_text\n");
+
     cmd_animation *cmd = (cmd_animation *)cmd_buffer;
     prepare_command(cmd, 0, 0, 0, 3, 0);
 
@@ -185,6 +247,8 @@ void mcpu_send_text(char const *msg)
 
 void mcpu_send_scroll_text(char const *msg, uint8_t direction, uint8_t duration)
 {
+    dprintf("mcpu_send_scroll_text\n");
+
     cmd_animation *cmd = (cmd_animation *)cmd_buffer;
     prepare_command(cmd, 3, direction, duration, 3, 0);
 
@@ -199,6 +263,9 @@ void mcpu_send_scroll_text(char const *msg, uint8_t direction, uint8_t duration)
 
 void mcpu_send_lock_state(uint8_t lock_state)
 {
+    if (!_is_initialized)
+        return;
+
     cmd_lock_state *cmd = (cmd_lock_state *)cmd_buffer;
     cmd->msg.locks = lock_state;
 
@@ -208,7 +275,7 @@ void mcpu_send_lock_state(uint8_t lock_state)
 void mcpu_send_animation(uint8_t animation, uint8_t speed, uint8_t direction, uint8_t duration, uint8_t color,
                          uint8_t font)
 {
-    dprintf("mcpu_send_animation: c:0x%X %u\n\r", animation, animation);
+    dprintf("mcpu_send_animation: c:0x%X %u\n", animation, animation);
     cmd_animation *cmd = (cmd_animation *)cmd_buffer;
     prepare_command(cmd, speed, direction, duration, color, font);
     mcpu_send_command(animation, cmd_buffer, sizeof(cmd_animation));
@@ -278,6 +345,9 @@ void mcpu_send_sleep(uint8_t sleep)
 
 void mcpu_send_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+    if (!_is_initialized)
+        return;
+
     cmd_typematrix_key *cmd = (cmd_typematrix_key *)cmd_buffer;
     cmd->msg.row_number = row_number;
     cmd->msg.row = row;
@@ -331,7 +401,7 @@ void mcpu_send_animation_toggle(void)
 void mcpu_start_animation(uint8_t animation_number)
 {
     mcpu_send_animation_stop();
-    _delay_ms(2);
+    _delay_ms(1);
 
     switch (animation_number)
     {
@@ -355,7 +425,7 @@ void mcpu_animation_toggle(void)
 {
     uint8_t running = mcpu_read_config_register8(MATRIX_CFG_REG_ANIMATION_STATE);
 
-    dprintf("mcpu_animation_toggle: running: %u\n", running);
+    dprintf("mcpu_animation_toggle: run:%u ani:%u\n", running, current_animation);
 
     if (running)
     {

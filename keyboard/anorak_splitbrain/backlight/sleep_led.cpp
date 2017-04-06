@@ -1,6 +1,4 @@
 
-#if 0
-
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -15,7 +13,7 @@ extern "C" {
 #include "sleep_led.h"
 }
 
-#ifdef DEBUG_HOOKS
+#ifdef DEBUG_SLEEP_LED
 #include "debug.h"
 #else
 #include "nodebug.h"
@@ -55,8 +53,8 @@ void backlight_sleep_led_enable(void)
     issi.setBreathMode(1);
     */
 
-    if (issi.is_initialized())
-        issi.enableHardwareShutdown(true);
+    //if (issi.is_initialized())
+    //    issi.enableHardwareShutdown(true);
 
     /*
     if (mcpu_is_initialized())
@@ -66,7 +64,7 @@ void backlight_sleep_led_enable(void)
     }
     */
 
-    send_sleep_to_other_side(true);
+    //send_sleep_to_other_side(true);
 }
 
 void backlight_sleep_led_disable(void)
@@ -80,25 +78,17 @@ void backlight_sleep_led_disable(void)
     issi.displayFrame(0);
     */
 
-    if (issi.is_initialized())
-        issi.enableHardwareShutdown(false);
+    //if (issi.is_initialized())
+    //    issi.enableHardwareShutdown(false);
 
     /*
     if (mcpu_is_initialized())
         mcpu_send_sleep(0);
 	*/
 
-    send_sleep_to_other_side(false);
+    //send_sleep_to_other_side(false);
 
-    dprintf("backlight_sleep_led_disable\n");
-}
-
-void backlight_sleep_led_toggle(void)
-{
-    if (breathing)
-        sleep_led_disable();
-    else
-        sleep_led_enable();
+    //dprintf("backlight_sleep_led_disable\n");
 }
 
 #ifdef SLEEP_LED_ENABLE
@@ -132,6 +122,4 @@ void sleep_led_off(void)
 #ifdef __cplusplus
 }
 #endif
-#endif
-
 #endif

@@ -12,8 +12,9 @@
 #include "nfo_led.h"
 #include "splitbrain.h"
 #include "twi/twi_config.h"
+#include <util/delay.h>
 
-#ifdef DEBUG_HOOKS
+#ifdef DEBUG_INFODISPLAY
 #include "debug.h"
 #else
 #include "nodebug.h"
@@ -45,20 +46,30 @@ void hook_early_init(void)
 
 void hook_late_init(void)
 {
-    backlight_setup();
-    backlight_setup_finish();
-
-    mcpu_send_animation_stop();
-    mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 15);
-}
-
-void hook_late_test(void)
-{
 #ifdef DEBUG_OUTPUT_ENABLE
     debug_config.enable = 1;
     debug_config.matrix = 0;
     debug_config.keyboard = 0;
+    debug_config.mouse = 0;
 #endif
+
+	splitbrain_communication_task();
+	mcpu_init();
+
+	splitbrain_communication_task();
+
+    backlight_setup();
+    backlight_setup_finish();
+
+    splitbrain_communication_task();
+}
+
+void hook_late_start(void)
+{
+	dprintf("hook_late_start\n");
+
+	splitbrain_communication_task();
+
 #ifdef DEBUG_LATE_TEST
     dprintf("late_test\n");
     dprintf("free ram: %d\n", freeRam());
@@ -70,6 +81,13 @@ void hook_late_test(void)
 
     animation_test();
 #endif
+
+    _delay_us(100);
+    mcpu_send_animation_stop();
+    _delay_us(100);
+    mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 15);
+
+    dprintf("hook_late_start\n");
 }
 
 extern uint8_t keyboard_led_stats;
@@ -77,6 +95,8 @@ static uint8_t _led_stats = 0;
 
 void hook_usb_suspend_entry(void)
 {
+	dprintf("hook_usb_suspend_entry\n");
+
     // Turn LED off to save power
     // Set 0 with putting aside status before suspend and restore
     // it after wakeup, then LED is updated at keyboard_task() in main loop
@@ -87,6 +107,7 @@ void hook_usb_suspend_entry(void)
     matrix_clear();
     clear_keyboard();
 
+    send_sleep_to_other_side(true);
     mcpu_hardware_shutdown(true);
 
 #ifdef BACKLIGHT_ENABLE
@@ -101,6 +122,8 @@ void hook_usb_suspend_entry(void)
 
 void hook_usb_wakeup(void)
 {
+	dprintf("hook_usb_wakeup\n");
+
     // This replaces the call of suspend_wakeup_init()
     // suspend_wakeup_init();
 
@@ -118,6 +141,7 @@ void hook_usb_wakeup(void)
 #endif
 
     mcpu_hardware_shutdown(false);
+    send_sleep_to_other_side(false);
 
     // Restore LED status
     // BIOS/grub won't recognize/enumerate if led_set() takes long(around 40ms?)

@@ -15,16 +15,9 @@ IS31FL3731Buffered issi;
 void IS31FL3731_init()
 {
     issi.begin();
+}
 
-#if TWILIB == AVR315 && defined(DEBUG_BACKLIGHT)
-    issi.dumpConfiguration();
-    issi.dumpLeds(0);
-
-    dprintf("I2C: wait\r\n");
-    while (TWI_Transceiver_Busy())
-    {
-        _delay_ms(1);
-    }
-    dprintf("I2C: wait done\r\n");
-#endif
+void IS31FL3731_enableHardwareShutdown(bool enabled)
+{
+    issi.enableHardwareShutdown(enabled);
 }

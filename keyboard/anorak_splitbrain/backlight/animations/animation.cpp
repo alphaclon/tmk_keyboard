@@ -1,12 +1,13 @@
 
 #include "animation.h"
+#include "../../matrixdisplay/infodisplay.h"
 #include "animation_utils.h"
 #include "breathing.h"
 #include "sweep.h"
 #include "timer.h"
 #include "type_o_circles.h"
 #include "type_o_matic.h"
-#include "../../matrixdisplay/infodisplay.h"
+#include <avr/pgmspace.h>
 #include <stdio.h>
 
 #ifdef DEBUG_ANIMATION
@@ -15,16 +16,16 @@
 #include "nodebug.h"
 #endif
 
-const char animation_sweep[] PROGMEM = "SWEEP";
-const char animation_type_o_matic[] PROGMEM = "TypeOMatic";
+const char animation_type_o_matic[] PROGMEM = "Matic";
 const char animation_type_o_circles[] PROGMEM = "Circles";
+const char animation_sweep[] PROGMEM = "Sweep";
 const char animation_breathing[] PROGMEM = "Breathing";
 const char animation_none[] PROGMEM = "xxx";
 
-PGM_P animation_names[] = {animation_sweep, animation_type_o_matic, animation_type_o_circles, animation_breathing,
+PGM_P animation_names[] = {animation_type_o_matic, animation_type_o_circles, animation_sweep, animation_breathing,
                            animation_none};
 
-uint8_t current_annimation = ANIMATION_SWEEP;
+uint8_t current_annimation = ANIMATION_TYPE_O_MATIC;
 
 void show_animaiton_info(uint8_t animation)
 {
@@ -58,8 +59,8 @@ void show_animaiton_info_stopped(uint8_t animation)
 
 void show_animaiton_info_delay(uint16_t delay_in_ms)
 {
-	if (!mcpu_is_initialized())
-		return;
+    if (!mcpu_is_initialized())
+        return;
 
     char infotext[32];
     char fmt[16];
@@ -76,8 +77,8 @@ void set_animation_sweep()
 {
     dprintf("sweep\r\n");
 
-    animation.brightness = 0;
-    animation.delay_in_ms = 50;
+    animation.brightness = 255;
+    animation.delay_in_ms = 150;
     animation.duration_in_ms = 0;
 
     animation.animationStart = &sweep_animation_start;
@@ -119,7 +120,7 @@ void set_animation_breathing()
     dprintf("breathing\r\n");
 
     animation.brightness = 255;
-    animation.delay_in_ms = 0;
+    animation.delay_in_ms = 1000;
     animation.duration_in_ms = 0;
 
     animation.animationStart = &breathing_animation_start;
@@ -232,27 +233,30 @@ void start_animation()
 {
     dprintf("start_animation\r\n");
 
-    show_animaiton_info(current_annimation);
-
     if (animation.animationStart)
         animation.animationStart();
 
     animation.loop_timer = timer_read();
     animation.duration_timer = timer_read32();
+
+    show_animaiton_info(current_annimation);
 }
 
 void stop_animation()
 {
     dprintf("stop_animation\r\n");
 
-    show_animaiton_info_stopped(current_annimation);
+    if (!animation_is_running())
+        return;
 
-    if (animation.animationStop)
-        animation.animationStop();
+    animation.animationStop();
 
     animation.animationStart = 0;
     animation.animationStop = 0;
     animation.animationLoop = 0;
+    animation.animation_typematrix_row = 0;
+
+    show_animaiton_info(current_annimation);
 }
 
 void animate()

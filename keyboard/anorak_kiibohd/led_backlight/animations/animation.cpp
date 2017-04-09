@@ -74,6 +74,7 @@ void set_animation_breathing()
     animation.animationStart = &breathing_animation_start;
     animation.animationStop = &breathing_animation_stop;
     animation.animationLoop = 0;
+    animation.animation_typematrix_row = 0;
 }
 
 void set_animation(uint8_t animation_number)

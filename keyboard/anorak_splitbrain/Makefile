@@ -73,6 +73,7 @@ SRC += \
 	splitbrain.c \
 	hooks.c \
 	command.c \
+	sleep_led.cpp \
 	uart/uart.c \
 	twi/avr315/TWI_Master.c \
 	twi/avr315/twi_transmit_queue.c \
@@ -92,7 +93,6 @@ SRC += \
 	backlight/led_masks_leftside.cpp \
 	backlight/led_masks_rightside.cpp \
 	backlight/key_led_map.cpp \
-	backlight/sleep_led.cpp \
 	backlight/animations/animation.cpp \
 	backlight/animations/animation_utils.cpp \
 	backlight/animations/sweep.cpp \

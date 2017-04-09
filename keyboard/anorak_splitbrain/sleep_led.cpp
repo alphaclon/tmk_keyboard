@@ -4,11 +4,9 @@
 #include <avr/pgmspace.h>
 #include <stdint.h>
 
-#include "../backlight/control.h"
+#include "backlight/control.h"
 
 extern "C" {
-#include "../matrixdisplay/infodisplay.h"
-#include "../splitbrain.h"
 #include "led.h"
 #include "sleep_led.h"
 }

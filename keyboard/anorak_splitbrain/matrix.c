@@ -141,7 +141,10 @@ uint8_t matrix_scan(void)
 	}
 
 	splitbrain_communication_task();
+
+#ifdef BACKLIGHT_ENABLE
 	animate();
+#endif
 
 	return 1;
 }

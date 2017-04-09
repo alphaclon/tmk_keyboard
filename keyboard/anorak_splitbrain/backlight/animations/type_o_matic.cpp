@@ -1,5 +1,6 @@
 
 #include "type_o_matic.h"
+#include "../../splitbrain.h"
 #include "../control.h"
 #include "../key_led_map.h"
 #include "animation_utils.h"
@@ -9,7 +10,7 @@ static uint8_t animation_frame = 1;
 
 void type_o_matic_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
-	type_o_matic_animation_loop();
+    type_o_matic_animation_loop();
 }
 
 void type_o_matic_animation_start()
@@ -28,25 +29,30 @@ void type_o_matic_animation_loop()
 {
     uint8_t led_row;
     uint8_t led_col;
+    bool is_left_side;
 
     for (uint8_t row = 0; row < MATRIX_ROWS; ++row)
     {
         for (uint8_t col = 0; col < MATRIX_COLS; ++col)
         {
             uint8_t color;
-        	getLedPosByMatrixKey(row, col, &led_row, &led_col);
+            getLedPosByMatrixKey(row, col, &led_row, &led_col, &is_left_side);
+
+            if (is_left_side != is_left_side_of_keyboard())
+                continue;
 
             if (matrix_is_on(row, col))
             {
                 issi.drawPixel(led_col, led_row, animation.brightness);
             }
-
             else
             {
-            	color = issi.getPixel(led_row, led_col);
+                color = issi.getPixel(led_row, led_col);
 
-            	if (color >= 5)
-            		color -= 5;
+                if (color >= 5)
+                    color -= 5;
+                else
+                    color = 0;
 
                 issi.drawPixel(led_col, led_row, color);
             }

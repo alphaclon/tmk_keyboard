@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VENDOR_ID       0x1209
 #define PRODUCT_ID      0xAA90
-#define DEVICE_VER      0x0200
+#define DEVICE_VER      0x0201
 #define MANUFACTURER    Anorak
 #define PRODUCT         splitbrain
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak splitbrain

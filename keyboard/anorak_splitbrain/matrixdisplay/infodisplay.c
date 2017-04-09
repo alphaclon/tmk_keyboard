@@ -74,7 +74,7 @@ uint8_t mcpu_read_config_register8(uint8_t reg)
 #if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
 
     TWI_write_byte_to_register(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG, reg);
-    _delay_us(500);
+    _delay_ms(1);
     TWI_read_data(MATRIX_TWI_ADDRESS, 1);
     TWI_get_data_from_transceiver(&data, 1);
 
@@ -143,7 +143,7 @@ void mcpu_read_config()
 #if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
 
     TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
-    _delay_us(500);
+    _delay_ms(1);
     TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
     bool lastTransOK = TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
 
@@ -424,6 +424,7 @@ void mcpu_start_animation(uint8_t animation_number)
 void mcpu_animation_toggle(void)
 {
     uint8_t running = mcpu_read_config_register8(MATRIX_CFG_REG_ANIMATION_STATE);
+    _delay_ms(1);
 
     dprintf("mcpu_animation_toggle: run:%u ani:%u\n", running, current_animation);
 

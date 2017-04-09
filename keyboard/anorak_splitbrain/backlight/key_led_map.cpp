@@ -20,10 +20,11 @@ const uint8_t PROGMEM keyledmap[MATRIX_ROWS][MATRIX_COLS] =
 			    5C,  5B,  5A,  59,  58,                 55,  54,  53,  52,  51,  50,       5A,  59,  58
 );
 
-void getLedPosByMatrixKey(uint8_t row, uint8_t col, uint8_t *led_row, uint8_t *led_col)
+void getLedPosByMatrixKey(uint8_t row, uint8_t col, uint8_t *led_row, uint8_t *led_col, bool* is_left_side)
 {
     uint8_t pos = pgm_read_byte(&keyledmap[row][col]);
 
-    *led_row = (pos & 0xF0) >> 4;
+    *is_left_side = (pos & 0x80);
+    *led_row = (pos & 0x70) >> 4;
     *led_col = (pos & 0x0F);
 }

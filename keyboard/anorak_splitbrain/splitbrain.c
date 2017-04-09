@@ -121,6 +121,7 @@ bool _is_connected_to_other_side = false;
 bool _waiting_for_row_ack = false;
 bool _is_other_side_connected_to_usb = false;
 bool _is_other_side_sleeping = false;
+bool _was_ever_connected_to_usb = false;
 
 uint16_t last_receive_ts = 0;
 uint16_t last_send_ts = 0;
@@ -159,6 +160,7 @@ void splitbrain_get_my_side(void);
 void send_connect_request_to_other_side(void);
 void send_connect_ack_to_other_side(void);
 bool is_connected_to_usb(void);
+bool was_ever_connected_to_usb(void);
 char is_connected_to_usb_as_char(void);
 bool accept_connection_request(uint8_t usb, uint8_t side, uint8_t protocol_version);
 char this_side_as_char(void);
@@ -186,6 +188,8 @@ void splitbrain_init()
     row_resend_counter = 0;
     row_resend_count = 0;
 
+    _was_ever_connected_to_usb = false;
+
     reset_other_sides_rows();
     splitbrain_get_my_side();
 
@@ -193,6 +197,11 @@ void splitbrain_init()
     last_init_send_ts = timer_read() - INIT_TIMEOUT;
 
     uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
+}
+
+void splitbrain_post_usb_connect_init(void)
+{
+	_was_ever_connected_to_usb = is_connected_to_usb();
 }
 
 void splitbrain_get_my_side()
@@ -228,6 +237,11 @@ bool has_usb(void)
 bool is_connected_to_usb()
 {
     return (USB_DeviceState == DEVICE_STATE_Configured);
+}
+
+bool was_ever_connected_to_usb(void)
+{
+	return _was_ever_connected_to_usb;
 }
 
 bool is_other_side_connected_to_usb(void)
@@ -400,6 +414,10 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
         	backlight_load_region_states();
         	backlight_init();
         }
+
+        //TODO: set current animation
+        mcpu_send_animation_stop();
+        stop_animation();
     }
     else if (cmd == DATAGRAM_CMD_SLEEP)
     {
@@ -656,7 +674,7 @@ void send_ping_to_other_side()
 
 void send_sleep_to_other_side(bool sleep)
 {
-    if (!_is_connected_to_other_side || !is_connected_to_usb())
+    if (!_is_connected_to_other_side || !was_ever_connected_to_usb())
         return;
 
     dprintf("send sleep %u\n", sleep);
@@ -686,6 +704,7 @@ void send_sync_to_other_side()
         dprintf("sync: rg%u:%u\n", i, eeconfig_read_backlight_region_brightness(i));
         send_buffer[pos++] = eeconfig_read_backlight_region_brightness(i);
     }
+    //send_buffer[pos++] = current_animation();
 #else
     uint8_t pos = fill_message_header(DATAGRAM_CMD_SYNC, 1);
     send_buffer[pos++] = eeconfig_read_debug();

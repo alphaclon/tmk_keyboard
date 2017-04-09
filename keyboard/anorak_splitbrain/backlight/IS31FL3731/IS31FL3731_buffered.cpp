@@ -85,10 +85,6 @@ uint8_t IS31FL3731Buffered::getPixel(int16_t x, int16_t y)
         return 0;
     if ((y < 0) || (y >= 9))
         return 0;
-#ifdef IS31FL3731_DO_CHECKS
-    if (color > 255)
-        color = 255; // PWM 8bit max
-#endif
 
     return _pwm_buffer[x + y * 16];
 }

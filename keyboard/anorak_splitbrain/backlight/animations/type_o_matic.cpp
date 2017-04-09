@@ -47,7 +47,7 @@ void type_o_matic_animation_loop()
             }
             else
             {
-                color = issi.getPixel(led_row, led_col);
+                color = issi.getPixel(led_col, led_row);
 
                 if (color >= 5)
                     color -= 5;

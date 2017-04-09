@@ -53,6 +53,8 @@ void hook_late_init(void)
     debug_config.mouse = 0;
 #endif
 
+    splitbrain_post_usb_connect_init();
+
 	splitbrain_communication_task();
 	mcpu_init();
 

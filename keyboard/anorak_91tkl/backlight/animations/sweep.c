@@ -1,8 +1,10 @@
 
+#include "sweep.h"
 #include "config.h"
 #include "matrix.h"
 #include "../issi/is31fl3733_91tkl.h"
 #include "animation_utils.h"
+#include <avr/pgmspace.h>
 
 #define SWEEP_ROWS (MATRIX_ROWS*3)
 
@@ -42,5 +44,6 @@ void sweep_animation_loop()
 			is31fl3733_set_pwm(issi.lower->device, x, y/2, pgm_read_byte(&sweep[(x + y/2 + incr) % 24]));
 	}
 
-	issi.blitToFrame(1);
+	//TODO: bit blit
+	//issi.blitToFrame(1);
 }

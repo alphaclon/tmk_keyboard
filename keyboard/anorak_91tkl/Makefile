@@ -38,22 +38,28 @@
 #                   bug reports to the GCC project.
 #
 # To rebuild project do "make clean" then "make all".
+# 
+# Default fuses (factory) : (E:F3, H:9B, L:5E)  -U lfuse:w:0x5e:m -U hfuse:w:0x9b:m -U efuse:w:0xf3:m 
+# Used fuses                  : (E:F0, H:D3, L:ED) -U lfuse:w:0xde:m -U hfuse:w:0xd3:m -U efuse:w:0xf0:m 
 #
-# Default fuses (factory) : E:F3, H:99, L:5E
-# Used fuses              : E:F3, H:D9, L:DE
-# Brown out at 3.5V       : E:F1, H:D9, L:DE
-#                                       L:D1 preserves EEPROM
+# Flashing the fuses: 
+#  avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B100 -U lfuse:w:0xde:m -U hfuse:w:0xd3:m -U efuse:w:0xf0:m
 #
 # Flashing the bootloader:
-#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -D -U flash:w:BootloaderDFU.hex:a
-
-# Flashing the fuses: 
-#  avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B0.1 -U lfuse:w:0xde:m -U hfuse:w:0xd1:m -U efuse:w:0xf1:m 
+#  avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B0.1 -D -U flash:w:BootloaderDFU.hex:a
+#
+# If flashing fuses fails, try a chip erase:
+#  avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B100 -e
+#
+# NOTE: Out-of-the-box at90usb works only with external 8MHz crystal!
+# NOTE: Out-of-the-box at90usb works only with external 8MHz crystal!
+# NOTE: Out-of-the-box at90usb works only with external 8MHz crystal!
+# NOTE: Out-of-the-box at90usb works only with external 8MHz crystal!
 #
 #----------------------------------------------------------------------------
 
 # Target file name (without extension).
-TARGET = anorak_splitbrain_lufa
+TARGET = anorak_91tkl_lufa
 
 # Directory common source filess exist
 TMK_DIR = ../../tmk_core
@@ -61,54 +67,45 @@ TMK_DIR = ../../tmk_core
 # Directory keyboard dependent files exist
 TARGET_DIR = .
 
-PROGRAM_CMD = avrdude -v -c stk500v2 -p usb1286 -P /dev/ttySTK500 -B 0.1 -U flash:w:anorak_splitbrain_lufa.hex:a
+PROGRAM_CMD = avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B 0.1 -U flash:w:anorak_91tkl_lufa.hex:a
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
 	led.c \
-	crc8.c \
-	matrix.c \
-	keymap_splitbrain.c \
-	splitbrain.c \
 	hooks.c \
+	matrix.c \
 	command.c \
+	keymap_common.c \
+	keymap_91tkl.c \
+	mini-snprintf.c \
+	virt_ser_rpc.c \
 	uart/uart.c \
 	twi/avr315/TWI_Master.c \
 	twi/avr315/twi_transmit_queue.c \
-	matrixdisplay/infodisplay.c \
-	backlight/gfx/new.cpp \
-	backlight/gfx/glcdfont.c \
-	backlight/gfx/Adafruit_GFX.cpp \
-	backlight/gfx/WString.cpp \
-	backlight/gfx/Print.cpp \
-	backlight/IS31FL3731/IS31FL3731.cpp \
-	backlight/IS31FL3731/IS31FL3731_buffered.cpp \
-	backlight/backlight_kiibohd.c \
+	backlight/issi/is31fl3733.c \
+	backlight/issi/is31fl3733_twi.c \
+	backlight/issi/is31fl3733_sdb.c \
+	backlight/issi/is31fl3733_rgb.c \
+	backlight/issi/is31fl3733_91tkl.c \
+	backlight/sector/sector_control.c \
+	backlight/sector/sector_led_masks.c \
+	backlight/backlight_91tkl.c \
 	backlight/eeconfig_backlight.c \
-	backlight/control.cpp \
-	backlight/led_control.cpp \
-	backlight/pwm_control.cpp \
-	backlight/led_masks.cpp \
-	backlight/key_led_map.cpp \
-	backlight/animations/animation.cpp \
-	backlight/animations/animation_utils.cpp \
-	backlight/animations/sweep.cpp \
-	backlight/animations/breathing.cpp \
-	backlight/animations/type_o_matic.cpp \
-	backlight/animations/type_o_circles.cpp	
+	backlight/color.c \
+	backlight/key_led_map.c \
+	backlight/animations/animation.c \
+	backlight/animations/animation_utils.c \
+	backlight/animations/sweep.c \
+	backlight/animations/breathing.c \
+	backlight/animations/type_o_matic.c \
+	backlight/animations/type_o_circles.c
 
-#	twi/twi/twi_master.c \
-#	twi/i2cmaster/twimaster.c \
-#	twi/avr315/TWI_Master.c \
 
 CONFIG_H = config.h
 
 
 # MCU name
-# PJRC Teensy++ 2.0
-# MCU = at90usb1286
-# TMK Alt Controller or PJRC Teensy 2.0
-MCU = at90usb1286
+MCU = at90usb646
 
 # Processor frequency.
 #     This will define a symbol, F_CPU, in all source code files equal to the
@@ -149,6 +146,7 @@ OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 #   Teensy halfKay   512
 #   Teensy++ halfKay 1024
 #   Atmel DFU loader 4096	(TMK Alt Controller)
+#   LUFA bootloader  8192
 #   LUFA bootloader  4096
 #   USBaspLoader     2048
 OPT_DEFS += -DBOOTLOADER_SIZE=4096
@@ -158,14 +156,14 @@ OPT_DEFS += -DBOOTLOADER_SIZE=4096
 #   comment out to disable the options.
 #
 BOOTMAGIC_ENABLE = yes      # Virtual DIP switch configuration(+1000)
-#MOUSEKEY_ENABLE = yes       # Mouse keys(+4700)
 EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
 CONSOLE_ENABLE = yes        # Console for debug(+400)
 COMMAND_ENABLE = yes        # Commands for debug and configuration
 NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
-BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
+#BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 #VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
+#MOUSEKEY_ENABLE = yes       # Mouse keys(+4700)
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -184,13 +182,15 @@ include $(TMK_DIR)/rules.mk
 
 
 debug-on: EXTRAFLAGS += -DDEBUG
+#debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
+#debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
 #debug-on: EXTRAFLAGS += -DDEBUG_ISSI
 #debug-on: EXTRAFLAGS += -DDEBUG_I2C
+#debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
-debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
-debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
+#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION

@@ -197,8 +197,8 @@ static bool command_common_splitbrain(uint8_t code)
         	if (is_right_side_of_keyboard())
         	{
 				clear_keyboard();
-				print("\n\nbootloader... ");
-				mcpu_send_info_text_P(PSTR("bootloader..."));
+				print("\n\nbootloader...");
+				mcpu_send_info_text_P(PSTR("bootloader!"));
 				wait_ms(1000);
 				bootloader_jump(); // not return
         	}
@@ -207,8 +207,8 @@ static bool command_common_splitbrain(uint8_t code)
         	if (is_left_side_of_keyboard())
         	{
 				clear_keyboard();
-				print("\n\nbootloader... ");
-				mcpu_send_info_text_P(PSTR("bootloader..."));
+				print("\n\nbootloader...");
+				mcpu_send_info_text_P(PSTR("bootloader!"));
 				wait_ms(1000);
 				bootloader_jump(); // not return
         	}
@@ -308,7 +308,7 @@ static bool command_common_splitbrain(uint8_t code)
             // TODO
             );
 #endif
-            mcpu_send_scroll_text(PSTR("Anorak splitbrain"), MATRIX_ANIMATION_DIRECTION_LEFT, 15);
+            mcpu_send_scroll_text(PSTR("splitbrain v" STR(DEVICE_VER)), MATRIX_ANIMATION_DIRECTION_LEFT, 15);
             mcpu_read_and_dump_config();
             break;
         case KC_S:

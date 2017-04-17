@@ -11,9 +11,10 @@
 
 # Run "make help" for target help.
 
-MCU          = at90usb1286
+#MCU          = at90usb1286
+MCU          = at90usb646
 ARCH         = AVR8
-BOARD        = SPLITBRAIN
+BOARD        = 91TKL
 F_CPU        = 16000000
 F_USB        = $(F_CPU)
 OPTIMIZATION = s
@@ -26,8 +27,8 @@ LD_FLAGS     = -Wl,--section-start=.text=$(BOOT_START_OFFSET) $(BOOT_API_LD_FLAG
 # Flash size and bootloader section sizes of the target, in KB. These must
 # match the target's total FLASH size and the bootloader size set in the
 # device's fuses.
-FLASH_SIZE_KB         = 128
-BOOT_SECTION_SIZE_KB  = 8
+FLASH_SIZE_KB         = 64
+BOOT_SECTION_SIZE_KB  = 4
 
 # Bootloader address calculation formulas
 # Do not modify these macros, but rather modify the dependent values above.

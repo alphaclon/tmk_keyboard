@@ -1,9 +1,9 @@
 
 #include "type_o_circles.h"
-#include "../control.h"
 #include "../key_led_map.h"
 #include "animation_utils.h"
 #include "config.h"
+#include <stdlib.h>
 
 #define RADIUS_COUNT 15
 
@@ -33,7 +33,8 @@ void type_o_circles_animation_loop()
     uint8_t led_row;
     uint8_t led_col;
 
-    issi.clear();
+    //TODO: implement
+    //issi.clear();
 
     for (uint8_t row = 0; row < MATRIX_ROWS; ++row)
     {
@@ -46,11 +47,13 @@ void type_o_circles_animation_loop()
             {
                 uint8_t r = RADIUS_COUNT - pressed_keys[row * MATRIX_ROWS + col];
                 getLedPosByMatrixKey(row, col, &led_row, &led_col);
-                issi.drawCircle(led_col, led_row, r, 128);
+                //TODO: implement
+				//issi.drawCircle(led_col, led_row, r, 128);
                 pressed_keys[row * MATRIX_ROWS + col]--;
             }
         }
     }
 
-    issi.blitToFrame(animation_frame);
+    //TODO: implement
+	//issi.blitToFrame(animation_frame);
 }

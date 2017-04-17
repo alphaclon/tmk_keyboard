@@ -6,15 +6,14 @@
 #ifdef SLEEP_LED_ENABLE
 #include "sleep_led.h"
 #endif
-#include "led_backlight/animations/animation.h"
-#include "led_backlight/twi_config.h"
-#include "led_backlight/backlight_kiibohd.h"
+#include "twi/twi_config.h"
+#include "backlight/animations/animation.h"
+#include "backlight/backlight_91tkl.h"
 
 #if defined(LUFA_DEBUG_UART) || defined(DEBUG_ISSI_PERFORMANCE) || defined(DEBUG_OUTPUT_ENABLE)
 #include "uart/uart.h"
 #include "debug.h"
 #include "utils.h"
-#include "led_backlight/avr315/twi_transmit_queue.h"
 #else
 #include "nodebug.h"
 #endif
@@ -44,11 +43,13 @@ void hook_late_init(void)
 
 	dprintf("late_init\n");
 
+#ifdef BACKLIGHT_ENABLE
     backlight_setup();
     backlight_setup_finish();
+#endif
 }
 
-#ifdef DEBUG_LATE_TEST
+
 void hook_late_start(void)
 {
 #ifdef DEBUG_OUTPUT_ENABLE
@@ -56,7 +57,7 @@ void hook_late_start(void)
     debug_config.matrix = 0;
     debug_config.keyboard = 0;
 #endif
-
+#ifdef DEBUG_LATE_TEST
 	dprintf("late_test\n");
 	dprintf("free ram: %d\n", freeRam());
 
@@ -66,8 +67,9 @@ void hook_late_start(void)
     backlight_dump_issi_state();
 
     animation_test();
-}
 #endif
+}
+
 
 extern uint8_t keyboard_led_stats;
 static uint8_t _led_stats = 0;
@@ -108,7 +110,8 @@ void hook_usb_wakeup(void)
 
 #ifdef SLEEP_LED_ENABLE
     sleep_led_disable();
-    backlight_enableShutdown(false);
+    //TODO: issi
+    //backlight_enableShutdown(false);
 #endif
 
 #ifdef BACKLIGHT_ENABLE

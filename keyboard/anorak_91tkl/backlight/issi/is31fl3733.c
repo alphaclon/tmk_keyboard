@@ -1,4 +1,5 @@
 #include "is31fl3733.h"
+#include <string.h>
 
 void is31fl3733_select_page(IS31FL3733 *device, uint8_t page)
 {
@@ -28,8 +29,8 @@ void is31fl3733_init(IS31FL3733 *device)
     memset(device->leds, 0, IS31FL3733_LED_ENABLE_SIZE);
     memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
 
-    is31fl3733_hardware_shutdown(false);
-    is31fl3733_software_shutdown(true);
+    is31fl3733_hardware_shutdown(device, false);
+    is31fl3733_software_shutdown(device, true);
 
     // Clear software reset in configuration register.
     is31fl3733_write_paged_reg(device, IS31FL3733_CR, IS31FL3733_CR_SSD);
@@ -40,10 +41,10 @@ void is31fl3733_init(IS31FL3733 *device)
     is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
 
     // clear all LEDs
-    is31fl3733_led_disable_all(device);
+    is31fl3733_disable_all_leds(device);
     is31fl3733_fill(device, 0);
 
-    is31fl3733_software_shutdown(false);
+    is31fl3733_software_shutdown(device, false);
 }
 
 void is31fl3733_update_global_gonfiguration(IS31FL3733 *device)
@@ -67,7 +68,7 @@ void is31fl3733_software_shutdown(IS31FL3733 *device, bool enabled)
 
 void is31fl3733_hardware_shutdown(IS31FL3733 *device, bool enabled)
 {
-	pfn_hardware_enable(enabled);
+	device->pfn_hardware_enable(enabled);
 }
 
 void is31fl3733_update_led_enable(IS31FL3733 *device)

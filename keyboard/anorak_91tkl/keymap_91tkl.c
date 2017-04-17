@@ -23,10 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "backlight/animations/animation.h"
 #include "backlight/backlight_91tkl.h"
 #include "backlight/sector/sector_control.h"
-#include "matrixdisplay/infodisplay.h"
-#include "splitbrain.h"
-
-#define PROGMEM
 
 /*
  *  Keymaps
@@ -228,19 +224,12 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
  */
 void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
 {
-    /*
-    if (record->event.pressed) dprint("P");	else dprint("R");
-    dprintf("%d", record->tap.count);
-    if (record->tap.interrupted) dprint("i");
-    dprint("\n");
-    */
-
     if (record->event.pressed)
     {
         switch (id)
         {
         case FN91_Backlight_Sector_Select:
-            backlight_select_region(BACKLIGHT_BV(opt));
+            sector_select(SECTOR_BV(opt));
             break;
         case FN91_Backlight_Sector_Toggle:
             sector_toggle_selected();

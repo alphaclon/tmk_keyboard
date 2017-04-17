@@ -1,5 +1,12 @@
 
 #include "is31fl3733_sdb.h"
+#include <avr/io.h>
+
+#ifdef DEBUG_ISSI
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
 
 void sdb_hardware_enable_upper(bool enabled)
 {

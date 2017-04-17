@@ -48,7 +48,7 @@ uint8_t i2c_read_reg8(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *data)
     TWI_write_byte(i2c_addr, reg_addr);
     TWI_read_data(i2c_addr, 1);
 
-    bool lastTransOK = TWI_get_data_from_transceiver(&data, 1);
+    bool lastTransOK = TWI_get_data_from_transceiver(data, 1);
 
     if (!lastTransOK)
     {

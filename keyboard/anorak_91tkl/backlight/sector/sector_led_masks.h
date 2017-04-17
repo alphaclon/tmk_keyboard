@@ -4,11 +4,6 @@
 #include "../issi/is31fl3733.h"
 #include <avr/pgmspace.h>
 
-#ifndef PROGMEM
-#define PROGMEM
-#define PGM_P
-#endif
-
 extern uint8_t const LedMaskFull_Top[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskOthr_Top[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskWASD_Top[IS31FL3733_LED_ENABLE_SIZE];
@@ -21,7 +16,7 @@ extern uint8_t const LedMaskWASD_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskCtrl_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskCurs_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 
-extern PGM_P LedMasksTop[];
-extern PGM_P LedMasksBottom[];
+extern const uint8_t* LedMasksTop[];
+extern const uint8_t* LedMasksBottom[];
 
 #endif /* KEYBOARD_ANORAK_SECTOR_LED_MASKS_H_ */

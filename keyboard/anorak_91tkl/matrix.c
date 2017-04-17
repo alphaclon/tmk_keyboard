@@ -32,8 +32,6 @@
 #include <util/delay.h>
 #include "backlight/animations/animation.h"
 #include "backlight/backlight_91tkl.h"
-#include "splitbrain.h"
-#include "matrixdisplay/infodisplay.h"
 #include "uart/uart.h"
 
 #ifndef DEBOUNCE_TIME
@@ -131,9 +129,9 @@ uint8_t matrix_scan(void)
 				matrix[row] = matrix_debouncing[row];
 				debouncing[row] = false;
 
-				send_row_to_other_side(row, matrix[row]);
-				mcpu_send_typematrix_row(row, matrix[row]);
+#ifdef BACKLIGHT_ENABLE
 				animation_typematrix_row(row, matrix[row]);
+#endif
 			}
 		}
 		else
@@ -142,8 +140,9 @@ uint8_t matrix_scan(void)
 		}
 	}
 
-	splitbrain_communication_task();
+#ifdef BACKLIGHT_ENABLE
 	animate();
+#endif
 
 	return 1;
 }
@@ -164,12 +163,12 @@ inline bool matrix_has_ghost(void)
 
 inline bool matrix_is_on(uint8_t row, uint8_t col)
 {
-	return ((matrix[row] | get_other_sides_row(row)) & ((matrix_row_t) 1 << col));
+	return ((matrix[row]) & ((matrix_row_t) 1 << col));
 }
 
 inline matrix_row_t matrix_get_row(uint8_t row)
 {
-	return (matrix[row] | get_other_sides_row(row));
+	return (matrix[row]);
 }
 
 void matrix_print(void)

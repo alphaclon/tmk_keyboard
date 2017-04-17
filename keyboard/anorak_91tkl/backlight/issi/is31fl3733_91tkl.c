@@ -25,7 +25,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_upper.pfn_i2c_write_reg = &i2c_write_reg;
     device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
     device_upper.pfn_i2c_write_reg8 = &i2c_write_reg8;
-    device_upper.pfn_hardware_enable = &sbd_hardware_enable_upper;
+    device_upper.pfn_hardware_enable = &sdb_hardware_enable_upper;
 
     is31fl3733_rgb_init(device->upper);
 
@@ -38,7 +38,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_lower.pfn_i2c_write_reg = &i2c_write_reg;
     device_lower.pfn_i2c_read_reg8 = &i2c_read_reg8;
     device_lower.pfn_i2c_write_reg8 = &i2c_write_reg8;
-    device_lower.pfn_hardware_enable = &sbd_hardware_enable_lower;
+    device_lower.pfn_hardware_enable = &sdb_hardware_enable_lower;
 
     is31fl3733_rgb_init(device->lower);
 

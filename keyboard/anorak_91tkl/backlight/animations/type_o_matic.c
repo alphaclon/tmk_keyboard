@@ -1,6 +1,5 @@
 
 #include "type_o_matic.h"
-#include "../control.h"
 #include "../key_led_map.h"
 #include "animation_utils.h"
 #include "config.h"
@@ -38,20 +37,24 @@ void type_o_matic_animation_loop()
 
             if (matrix_is_on(row, col))
             {
-                issi.drawPixel(led_col, led_row, animation.brightness);
+            	//TODO: drawPixel
+                //issi.drawPixel(led_col, led_row, animation.brightness);
             }
 
             else
             {
-            	color = issi.getPixel(led_row, led_col);
+            	//TODO: drawPixel
+            	//color = issi.getPixel(led_row, led_col);
 
             	if (color >= 5)
             		color -= 5;
 
-                issi.drawPixel(led_col, led_row, color);
+            	//TODO: drawPixel
+                //issi.drawPixel(led_col, led_row, color);
             }
         }
     }
 
-    issi.blitToFrame(animation_frame);
+    //TODO: bit blt
+    //issi.blitToFrame(animation_frame);
 }

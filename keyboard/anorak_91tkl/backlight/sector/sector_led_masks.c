@@ -53,7 +53,5 @@ uint8_t const LedMaskWASD_Bottom[IS31FL3733_LED_ENABLE_SIZE] PROGMEM = {0};
 uint8_t const LedMaskCtrl_Bottom[IS31FL3733_LED_ENABLE_SIZE] PROGMEM = {0};
 uint8_t const LedMaskCurs_Bottom[IS31FL3733_LED_ENABLE_SIZE] PROGMEM = {0};
 
-
-
-extern PGM_P LedMasksTop[] = {LedMaskWASD_Top, LedMaskCtrl_Top, LedMaskCurs_Top, LedMaskOthr_Top};
-extern PGM_P LedMasksBottom[] = {LedMaskWASD_Bottom, LedMaskCtrl_Bottom, LedMaskCurs_Bottom, LedMaskOthr_Bottom};
+const uint8_t* LedMasksTop[] = {LedMaskWASD_Top, LedMaskCtrl_Top, LedMaskCurs_Top, LedMaskOthr_Top};
+const uint8_t* LedMasksBottom[] = {LedMaskWASD_Bottom, LedMaskCtrl_Bottom, LedMaskCurs_Bottom, LedMaskOthr_Bottom};

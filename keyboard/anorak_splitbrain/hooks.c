@@ -14,7 +14,7 @@
 #include "twi/twi_config.h"
 #include <util/delay.h>
 
-#ifdef DEBUG_INFODISPLAY
+#ifdef DEBUG_HOOKS
 #include "debug.h"
 #else
 #include "nodebug.h"

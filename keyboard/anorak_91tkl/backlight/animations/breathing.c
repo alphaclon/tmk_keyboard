@@ -1,5 +1,5 @@
 
-#include "../control.h"
+#include "breathing.h"
 #include "animation_utils.h"
 #include "config.h"
 #include "matrix.h"
@@ -12,10 +12,12 @@ void breathing_animation_start()
 
     animation_prepare(animation_frame);
 
+    /*TODO: implement
     issi.setAutoFramePlayConfig(0, 1, 40);
     issi.setAutoFramePlayMode(0);
     issi.setBreathConfig(7, 7, 2);
     issi.setBreathMode(true);
+    */
 
     /*
     issi.enableLed(0, 1, animation_frame);
@@ -29,8 +31,10 @@ void breathing_animation_start()
 
 void breathing_animation_stop()
 {
+	/*TODO: implement
     issi.setBreathMode(false);
     issi.setPictureMode();
+    */
 
     animation_postpare(animation_frame);
 }

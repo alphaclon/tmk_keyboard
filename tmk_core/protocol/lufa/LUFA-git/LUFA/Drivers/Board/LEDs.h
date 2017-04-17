@@ -116,6 +116,8 @@
 			static inline void LEDs_ChangeLEDs(const uint_reg_t LEDMask, const uint_reg_t ActiveMask) {};
 			static inline void LEDs_ToggleLEDs(const uint_reg_t LEDMask) {};
 			static inline uint_reg_t LEDs_GetLEDs(void) { return 0; }
+		#elif (BOARD == BOARD_91TKL)
+			#include "AVR8/91TKL/LEDs.h"
 		#elif (BOARD == BOARD_SPLITBRAIN)
 			#include "AVR8/SPLITBRAIN/LEDs.h"
 		#elif (BOARD == BOARD_USBKEY)

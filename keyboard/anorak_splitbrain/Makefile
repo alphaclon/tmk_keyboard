@@ -40,7 +40,7 @@
 # To rebuild project do "make clean" then "make all".
 #
 # Default fuses (factory) : E:F3, H:99, L:5E
-# Used fuses              : E:F7, H:D9, L:DE
+# Used fuses                  : E:F7, H:D9, L:DE
 
 #                                       L:D1 preserves EEPROM
 # 
@@ -194,11 +194,12 @@ debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
-debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
+#debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN
 #debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN_SLOW_INIT
 #debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN_RECV_OFF
-debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
 #debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
+debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION

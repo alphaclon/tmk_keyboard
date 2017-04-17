@@ -3,9 +3,13 @@
 #include "mini-snprintf.h"
 #include "virtser.h"
 #include "utils.h"
+#include "nfo_led.h"
+#include "timer.h"
 #include "virt_ser_rpc.h"
 #include <avr/pgmspace.h>
-#include <cstdarg>
+//#include <cstdarg>
+
+#ifdef VIRTSER_ENABLE
 
 #define DATAGRAM_START 0x02
 #define DATAGRAM_STOP 0x03
@@ -501,3 +505,4 @@ void virtser_recv(uint8_t ucData)
 
     LedInfo2_Off();
 }
+#endif

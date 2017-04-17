@@ -428,15 +428,11 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
         {
             _is_other_side_sleeping = true;
             hook_usb_suspend_entry();
-            // backlight_sleep_led_enable();
-            // USB_DeviceState = DEVICE_STATE_Suspended;
         }
         else
         {
             _is_other_side_sleeping = false;
             hook_usb_wakeup();
-            // backlight_sleep_led_enable();
-            // USB_DeviceState = DEVICE_STATE_Unattached;
         }
     }
     else if (cmd == DATAGRAM_CMD_CMD)
@@ -829,7 +825,7 @@ void communication_watchdog()
     }
     else
     {
-        if (is_connected_to_usb() && timer_elapsed(last_init_send_ts) > INIT_TIMEOUT)
+        if (was_ever_connected_to_usb() && timer_elapsed(last_init_send_ts) > INIT_TIMEOUT)
         {
             send_connect_request_to_other_side();
         }

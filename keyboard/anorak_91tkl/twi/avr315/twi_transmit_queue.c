@@ -96,7 +96,7 @@ bool tx_queue_get_empty_tail(tx_queue_data_t **data)
 bool tx_queue_push_tail()
 {
     // LS_("tx_queue_push_tail");
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    //ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         uint8_t next = ((tx_queue.write + 1) & QUEUE_MASK);
         if (tx_queue.read == next)
@@ -181,11 +181,11 @@ void tx_queue_print_status(void)
 {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        LV_("read: %u", tx_queue.read);
-        LV_("write: %u", tx_queue.write);
-        LV_("empty: %u", tx_queue_is_empty());
-        LV_("full: %u", tx_queue_is_full());
-        LV_("size: %u", tx_queue_size());
+        xprintf("read: %u", tx_queue.read);
+        xprintf("write: %u", tx_queue.write);
+        xprintf("empty: %u", tx_queue_is_empty());
+        xprintf("full: %u", tx_queue_is_full());
+        xprintf("size: %u", tx_queue_size());
     }
 }
 

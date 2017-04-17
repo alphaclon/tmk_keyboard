@@ -73,7 +73,7 @@ void matrix_init(void)
     LedInfo1_Off();
     LedInfo2_Off();
 
-    dprintf("matrix_init\r\n");
+    dprintf("matrix_init\n");
 }
 
 void matrix_clear(void)
@@ -196,45 +196,33 @@ uint8_t matrix_key_count(void)
 static void init_cols(void)
 {
 	// Column pin configuration
-	// Total available: 23
-	// We use 18 columns
+	// We use 17 of 18 possible columns
 	// Input with pull-up (DDR:0, PORT:1)
 	//
-	// Columns 1..8 are on Port C 0..7
-	// Columns 9..16 are on Port F 0..7
-	// Column 17: PA 6
-	// Column 18: PA 7
-	// Column 19,20,21: PD 4,5,6
-	// Column 22: PB 0
-	// Column 23: PB 4
+	// Columns 1..8 are on Port A 0..7
+	// Columns 9..16 are on Port C 0..7
+	// Column 17: PF 6
+	// Column 18: PF 7
+
+	DDRA &= ~0xFF;
+	PORTA |= 0xFF;
 
 	DDRC &= ~0xFF;
 	PORTC |= 0xFF;
 
-	DDRF &= ~0xFF;
-	PORTF |= 0xFF;
-
-	DDRA &= ~(1 << 7 | 1 << 6);
-	PORTA |= (1 << 7 | 1 << 6);
-
-	/* more columns
-	DDRD &= ~(1 << 6 | 1 << 5 | 1 << 4);
-	PORTD |= (1 << 6 | 1 << 5 | 1 << 4);
-
-	DDRB &= ~(1 << 4 | 1 << 0);
-	PORTB |= (1 << 4 | 1 << 0);
-	*/
+	DDRF &= ~(1 << 6 | 1 << 7);
+	PORTF |= (1 << 6 | 1 << 7);
 }
 
 static matrix_row_t read_cols(void)
 {
 	// Invert the value read, because PINx indicates 'switch on' with low(0) and 'off' with high(1)
 
+	uint8_t a = ~PINA;
 	uint8_t c = ~PINC;
-	uint8_t f = ~PINF;
-	uint8_t a = ~PINA & 0xC0;
+	uint8_t f = ~PINF & 0xC0;
 
-	a = a >> 6;
+	f = f >> 6;
 
 	/*
 	matrix_row_t v1 = c;
@@ -245,7 +233,7 @@ static matrix_row_t read_cols(void)
 	dprintf("C:%lX F:%lX A:%lX v:%lX\r\n", v1, v2, v3, v4);
 	*/
 
-	return (c | ((matrix_row_t) (f) << 8) | ((matrix_row_t) (a) << 16));
+	return (a | ((matrix_row_t) (c) << 8) | ((matrix_row_t) (f) << 16));
 }
 
 static void unselect_rows(void)
@@ -253,8 +241,8 @@ static void unselect_rows(void)
 	// Hi-Z (DDR:0, PORT:0) (input, no pull-up) to unselect the row
 	// ROWs are on Port A, Pin 0..5
 
-	DDRA &= ~(0x3F);
-	PORTA &= ~(0x3F);
+	DDRF &= ~(0x3F);
+	PORTF &= ~(0x3F);
 }
 
 static void select_row(uint8_t row)
@@ -262,6 +250,6 @@ static void select_row(uint8_t row)
 	// Output low (DDR:1, PORT:0) to select the row
 	// ROWs are on Port A, Pin 0..5
 
-	DDRA |= (1 << row);
-	PORTA &= ~(1 << row);
+	DDRF |= (1 << row);
+	PORTF &= ~(1 << row);
 }

@@ -57,7 +57,7 @@
 #include "nodebug.h"
 #endif
 
-#define MAX_MTX_NACK_COUNT 3
+#define MAX_MTX_NACK_COUNT 5
 
 static unsigned char TWI_buf[TWI_BUFFER_SIZE]; // Transceiver buffer
 static unsigned char *TWI_buf_ptr;             // Transceiver buffer pointer
@@ -655,7 +655,7 @@ ISR(TWI_vect)
 
             if (tx_queue_front(&head))
             {
-                _delay_us(4);
+                _delay_us(50);
 
                 TWI_buf_ptr = head->data;
                 TWI_data_length = head->data_length;

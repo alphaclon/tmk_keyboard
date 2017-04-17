@@ -96,7 +96,7 @@ bool tx_queue_get_empty_tail(tx_queue_data_t **data)
 bool tx_queue_push_tail()
 {
     // LS_("tx_queue_push_tail");
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    //ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         uint8_t next = ((tx_queue.write + 1) & QUEUE_MASK);
         if (tx_queue.read == next)

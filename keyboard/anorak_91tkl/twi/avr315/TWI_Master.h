@@ -101,6 +101,8 @@ void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned cha
 void queued_twi_write_data_to_register(unsigned char slave_address, unsigned char register_address,
                                        const unsigned char *data, unsigned char data_length);
 
+void queued_twi_stats(void);
+
 /****************************************************************************
   Bit and byte definitions
 ****************************************************************************/

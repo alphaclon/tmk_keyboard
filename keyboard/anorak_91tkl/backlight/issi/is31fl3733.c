@@ -206,8 +206,8 @@ void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness)
     // Set brightness level of all LED's.
     for (i = 0; i < IS31FL3733_LED_PWM_SIZE; i++)
     {
-        uint8_t mask_byte = i / 8;
-        uint8_t mask_bit = i % 8;
+        mask_byte = i / 8;
+        mask_bit = i % 8;
 
         if (device->mask[mask_byte] & (1 << mask_bit))
             device->pwm[i] = brightness;

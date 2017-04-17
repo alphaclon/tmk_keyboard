@@ -735,7 +735,6 @@ int main(void)
 {
     setup_mcu();
 
-
 #ifdef LUFA_DEBUG_SUART
     SUART_OUT_DDR |= (1 << SUART_OUT_BIT);
     SUART_OUT_PORT |= (1 << SUART_OUT_BIT);

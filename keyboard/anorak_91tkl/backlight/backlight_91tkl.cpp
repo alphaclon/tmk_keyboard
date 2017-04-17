@@ -63,8 +63,6 @@ void fix_backlight_level()
         backlight_config.level = BACKLIGHT_LEVELS - 1;
         eeconfig_write_backlight(backlight_config.raw);
     }
-
-    backlight_load_region_states();
 #endif
 }
 
@@ -72,11 +70,13 @@ void backlight_setup()
 {
     dprintf("backlight_setup\r\n");
 
-    sector_control_init();
-    fix_backlight_level();
-
+#ifdef BACKLIGHT_ENABLE
     is31fl3733_91tkl_init(&issi);
     is31fl3733_91tkl_power_target(&issi, 450);
+
+    sector_control_init();
+    fix_backlight_level();
+#endif
 }
 
 void backlight_setup_finish()

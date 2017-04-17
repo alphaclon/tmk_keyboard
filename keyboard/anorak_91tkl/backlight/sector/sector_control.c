@@ -115,15 +115,15 @@ void sector_clear_mask(void)
     is31fl3733_clear_mask(issi.lower->device);
 }
 
+bool sector_is_enabled(keyboard_sector sector)
+{
+    return (sector_mask & SECTOR_BV(sector));
+}
+
 void sector_select(keyboard_sector sector)
 {
     selected_sector = sector;
     dprintf("sector_select [%u] on=%u\n", selected_sector, sector_is_enabled(sector));
-}
-
-bool sector_is_enabled(keyboard_sector sector)
-{
-    return (sector_mask & SECTOR_BV(sector));
 }
 
 void sector_set_off(keyboard_sector sector)

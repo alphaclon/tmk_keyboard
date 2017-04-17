@@ -12,33 +12,31 @@
 
 #if defined(LUFA_DEBUG_UART) || defined(DEBUG_ISSI_PERFORMANCE) || defined(DEBUG_OUTPUT_ENABLE)
 #include "uart/uart.h"
-#include "debug.h"
 #include "utils.h"
+#endif
+
+#ifdef DEBUG_HOOKS
+#include "debug.h"
 #else
 #include "nodebug.h"
 #endif
 
-#define BAUD 115200 // 9600 14400 19200 38400 57600 115200
-
-void twi_init(void)
-{
-    TWI_Master_Initialise();
-}
+#define BAUD 38400 // 9600 14400 19200 38400 57600 115200
 
 void hook_early_init(void)
 {
 #ifdef LUFA_DEBUG_UART
 	uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
 #endif
-    twi_init();
+	TWI_Master_Initialise();
 }
 
 void hook_late_init(void)
 {
 #ifdef DEBUG_OUTPUT_ENABLE
     debug_config.enable = 1;
-    debug_config.matrix = 0;
-    debug_config.keyboard = 0;
+    debug_config.matrix = 1;
+    debug_config.keyboard = 1;
 #endif
 
 	dprintf("late_init\n");
@@ -49,17 +47,18 @@ void hook_late_init(void)
 #endif
 }
 
-
 void hook_late_start(void)
 {
+	dprintf("late_test\n");
+	dprintf("free ram: %d\n", freeRam());
+
 #ifdef DEBUG_OUTPUT_ENABLE
     debug_config.enable = 1;
     debug_config.matrix = 0;
     debug_config.keyboard = 0;
 #endif
 #ifdef DEBUG_LATE_TEST
-	dprintf("late_test\n");
-	dprintf("free ram: %d\n", freeRam());
+    dprintf("free ram: %d\n", freeRam());
 
     backlight_enable_region(backlight_region_logo);
     backlight_set_brightness_for_region(backlight_region_logo, 7);

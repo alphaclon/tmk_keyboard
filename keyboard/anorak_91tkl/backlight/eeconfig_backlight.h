@@ -38,19 +38,28 @@ extern "C" {
  *
  */
 
+// sizes
+
+#define EECONFIG_BACKLIGHT_SECTOR_PWM_SIZE (8 * 3)
+
+#define EECONFIG_BACKLIGHT_PWM_MAP_COUNT 5
+#define EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF 192
+#define EECONFIG_BACKLIGHT_PWM_MAP_SIZE (EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF * 2)
+
+// positions, EECONFIG_BACKLIGHT == 6
+
 #define EECONFIG_BACKLIGHT_MAGIC (uint16_t *)7
 
 #define EECONFIG_BACKLIGHT_SECTORS (uint8_t *)9
 #define EECONFIG_BACKLIGHT_SECTOR_PWM (uint8_t *)10
 
-#define EECONFIG_BACKLIGHT_SECTOR_PWM_SIZE (8*3)
+#define EECONFIG_BACKLIGHT_ANIMATION (uint8_t *)11
+
+#define EECONFIG_BACKLIGHT_ANIMATION_HSV_1 (uint8_t *)(EECONFIG_BACKLIGHT_ANIMATION + EECONFIG_BACKLIGHT_SECTOR_PWM_SIZE)
+#define EECONFIG_BACKLIGHT_ANIMATION_HSV_2 (uint8_t *)(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + 3)
 
 #define EECONFIG_BACKLIGHT_PWM_ACTIVE_MAP (uint8_t *)127
 #define EECONFIG_BACKLIGHT_PWM_MAP (uint8_t *)128
-
-#define EECONFIG_BACKLIGHT_PWM_MAP_COUNT 5
-#define EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF 192
-#define EECONFIG_BACKLIGHT_PWM_MAP_SIZE (EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF*2)
 
 bool eeconfig_backlight_is_enabled(void);
 void eeconfig_backlight_init(void);
@@ -59,8 +68,14 @@ void eeconfig_backlight_init(void);
 uint8_t eeconfig_read_backlight_sectors_state(void);
 void eeconfig_write_backlight_sectors_state(uint8_t mask);
 
-void eeconfig_read_backlight_sector_brightness(uint8_t sector, uint8_t *red, uint8_t *green, uint8_t *blue);
-void eeconfig_write_backlight_sector_brightness(uint8_t sector, uint8_t red, uint8_t green, uint8_t blue);
+void eeconfig_read_backlight_sector_values(uint8_t sector, uint8_t *v1, uint8_t *v2, uint8_t *v3);
+void eeconfig_write_backlight_sector_values(uint8_t sector, uint8_t v1, uint8_t v2, uint8_t v3);
+
+uint8_t eeconfig_read_animation_current(void);
+void eeconfig_write_animation_current(uint8_t current);
+
+void eeconfig_read_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, uint8_t *v3);
+void eeconfig_write_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, uint8_t *v3);
 
 uint8_t eeconfig_read_backlight_pwm_active_map();
 void eeconfig_write_backlight_pwm_active_map(uint8_t map);

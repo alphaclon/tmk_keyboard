@@ -96,8 +96,8 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      * FN2:
      * FN3:
      *
-     *     0     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15    16
-     *     A     B     C     D     E     F     G     H     I     J     K     L     M     N     O     P     Q
+     *     0     1     2     3     4     5     6     7     8     9    10    11    12    13     14    15    16
+     *     A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P     Q
      */
     KEYMAP_ISO(\
          ESC,  FN1,   F1,   F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9,  F10,  F11,  F12,  PSCR, SLCK,  BRK,  \
@@ -110,16 +110,16 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
 
     /*
      * 1: FN0-Layer, media keys
-     *     0     1     2     3     4     5     6     7     8     9    10    11    12    13     14    15   16
-     *     A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P    Q
+     *      0     1     2     3     4     5     6     7     8     9    10    11    12    13     14    15    16
+     *      A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P     Q
      */
     KEYMAP_ISO(\
-         TRNS, TRNS, TRNS, TRNS, TRNS,TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-  	     TRNS, TRNS, TRNS, TRNS, TRNS,TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,        TRNS, TRNS, TRNS,   \
-	     TRNS, TRNS, TRNS, TRNS, TRNS,TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-         TRNS, TRNS, TRNS, TRNS, TRNS,TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,                      \
-		 TRNS, TRNS, TRNS, TRNS, TRNS,TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,        TRNS,  TRNS, TRNS,  \
-		 TRNS, TRNS, TRNS, TRNS,                                    TRNS, TRNS, TRNS, TRNS,  TRNS,  TRNS, TRNS  )
+         TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+  	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+         TRNS, FN23, FN24, FN25, FN26, FN27, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,                            \
+		 TRNS, TRNS, FN30, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,         FN2,  TRNS,  FN3,  \
+		 TRNS, TRNS, TRNS, TRNS,                                     TRNS, TRNS, TRNS, TRNS,  TRNS,  TRNS, TRNS  )
 };
 
 /*
@@ -134,12 +134,12 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
 enum function_id {
 	FN91_Backlight_Sector_Toggle,
 	FN91_Backlight_Sector_Select,
-	FN91_Backlight_Sector_Increase_All,
-	FN91_Backlight_Sector_Decrease_All,
-	FN91_Backlight_Sector_Increase_Selected,
-	FN91_Backlight_Sector_Decrease_Selected,
-	FN91_Backlight_Sector_Save_State,
 	FN91_Backlight_Sector_Next_Custom_Map,
+	FN91_Backlight_Color_Increase_All,
+	FN91_Backlight_Color_Decrease_All,
+	FN91_Backlight_Color_Increase_Selected,
+	FN91_Backlight_Color_Decrease_Selected,
+	FN91_Backlight_Save_State,
 	FN91_Backlight_Animate_Toggle,
 	FN91_Backlight_Animate_Increase_Speed,
 	FN91_Backlight_Animate_Decrease_Speed,
@@ -167,35 +167,35 @@ const action_t PROGMEM fn_actions[] =
 
     [4] = ACTION_BACKLIGHT_TOGGLE(),
 	[5] = ACTION_FUNCTION(FN91_Backlight_Sector_Toggle),
-	[6] = ACTION_FUNCTION(FN91_Backlight_Sector_Save_State),
+    [6] = ACTION_FUNCTION(FN91_Backlight_Sector_Next_Custom_Map),
+	[7] = ACTION_FUNCTION(FN91_Backlight_Save_State),
 
-	[7] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Increase_All, hue),
-	[8] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Increase_All, saturation),
-	[9] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Increase_All, value),
+	[8] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, hue),
+	[9] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, saturation),
+   [10] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, value),
 
-   [10] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Decrease_All, hue),
-   [11] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Decrease_All, saturation),
-   [12] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Decrease_All, value),
+   [11] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, hue),
+   [12] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, saturation),
+   [13] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, value),
 
-   [13] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Increase_Selected, hue),
-   [14] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Increase_Selected, saturation),
-   [15] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Increase_Selected, value),
+   [14] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, hue),
+   [15] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, saturation),
+   [16] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, value),
 
-   [16] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Decrease_Selected, hue),
-   [17] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Decrease_Selected, saturation),
-   [18] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Decrease_Selected, value),
+   [17] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, hue),
+   [18] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, saturation),
+   [19] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, value),
 
-   [19] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, WASDKeys),
-   [20] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ControlKeys),
-   [21] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, FunctionKeys),
-   [22] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, CursorKeys),
-   [23] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, OtherKeys),
+   [20] = ACTION_FUNCTION(FN91_Backlight_Animate_Toggle),
+   [21] = ACTION_FUNCTION(FN91_Backlight_Animate_Prev),
+   [22] = ACTION_FUNCTION(FN91_Backlight_Animate_Next),
 
-   [24] = ACTION_FUNCTION(FN91_Backlight_Sector_Next_Custom_Map),
+   [23] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, WASDKeys),
+   [24] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ControlKeys),
+   [25] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, FunctionKeys),
+   [26] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, CursorKeys),
+   [27] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, OtherKeys),
 
-   [25] = ACTION_FUNCTION(FN91_Backlight_Animate_Toggle),
-   [26] = ACTION_FUNCTION(FN91_Backlight_Animate_Prev),
-   [27] = ACTION_FUNCTION(FN91_Backlight_Animate_Next),
    [28] = ACTION_FUNCTION(FN91_Backlight_Animate_Decrease_Speed),
    [29] = ACTION_FUNCTION(FN91_Backlight_Animate_Increase_Speed),
 
@@ -230,28 +230,45 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         switch (id)
         {
         case FN91_Backlight_Sector_Select:
+        	stop_animation();
             sector_select(SECTOR_BV(opt));
             break;
         case FN91_Backlight_Sector_Toggle:
+        	stop_animation();
             sector_toggle_selected();
             break;
-        case FN91_Backlight_Sector_Increase_All:
-            sector_increase_hsv_color(opt);
+        case FN91_Backlight_Color_Increase_All:
+            if (animation_is_running())
+                animation_increase_hsv_color(animation_hsv_1, opt);
+            else
+                sector_increase_hsv_color(opt);
             break;
-        case FN91_Backlight_Sector_Decrease_All:
-            sector_decrease_hsv_color(opt);
+        case FN91_Backlight_Color_Decrease_All:
+            if (animation_is_running())
+                animation_decrease_hsv_color(animation_hsv_1, opt);
+            else
+                sector_decrease_hsv_color(opt);
             break;
-        case FN91_Backlight_Sector_Increase_Selected:
-        	sector_selected_increase_hsv_color(opt);
+        case FN91_Backlight_Color_Increase_Selected:
+            if (animation_is_running())
+                animation_increase_hsv_color(animation_hsv_2, opt);
+            else
+                sector_selected_increase_hsv_color(opt);
             break;
-        case FN91_Backlight_Sector_Decrease_Selected:
-        	sector_selected_decrease_hsv_color(opt);
+        case FN91_Backlight_Color_Decrease_Selected:
+            if (animation_is_running())
+                animation_decrease_hsv_color(animation_hsv_2, opt);
+            else
+                sector_selected_decrease_hsv_color(opt);
             break;
-        case FN91_Backlight_Sector_Save_State:
+        case FN91_Backlight_Save_State:
             sector_save_state();
+            animation_save_state();
             break;
-        case FN91_Backlight_Dump:
-        	break;
+        case FN91_Backlight_Sector_Next_Custom_Map:
+        	stop_animation();
+        	sector_next_custom_map();
+            break;
         case FN91_Backlight_Animate_Toggle:
             animation_toggle();
             break;
@@ -262,10 +279,13 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             animation_decrease_speed();
             break;
         case FN91_Backlight_Animate_Next:
-        	animation_next();
+            animation_next();
             break;
         case FN91_Backlight_Animate_Prev:
-        	animation_previous();
+            animation_previous();
+            break;
+        case FN91_Backlight_Dump:
+        	sector_dump_state();
             break;
         }
     }

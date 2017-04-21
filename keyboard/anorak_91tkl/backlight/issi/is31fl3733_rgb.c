@@ -10,6 +10,24 @@ void is31fl3733_rgb_init(IS31FL3733_RGB *device)
     is31fl3733_init(device->device);
 }
 
+void is31fl3733_rgb_set_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col, RGB *color)
+{
+    for (uint8_t c = 0; c < 3; ++c)
+        is31fl3733_set_pwm(device->device, (row * 3) + device->offsets.color[c], col, color->rgb[c]);
+}
+
+void is31fl3733_hsv_set_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col, HSV *color)
+{
+	RGB color_rgb = hsv_to_rgb(color);
+	is31fl3733_rgb_set_pwm(device, row, col, color_rgb);
+}
+
+void is31fl3733_rgb_get_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col, RGB *color)
+{
+    for (uint8_t c = 0; c < 3; ++c)
+        color->rgb[c] = is31fl3733_get_pwm(device->device, (row * 3) + device->offsets.color[c], col);
+}
+
 void is31fl3733_fill_rgb_masked(IS31FL3733_RGB *device, RGB color)
 {
     uint8_t mask_byte;

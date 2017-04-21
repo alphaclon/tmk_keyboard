@@ -21,6 +21,8 @@ extern IS31FL3733_91TKL issi;
 /// Init LED matrix for normal operation.
 void is31fl3733_91tkl_init(IS31FL3733_91TKL *device);
 
+void is31fl3733_91tkl_hardware_shutdown(IS31FL3733_91TKL *device, bool enabled);
+
 /// Set brightness level for all enabled LEDs.
 void is31fl3733_91tkl_fill_rgb_masked(IS31FL3733_91TKL *device, RGB color);
 
@@ -38,5 +40,7 @@ void is31fl3733_91tkl_update(IS31FL3733_91TKL *device);
 void is31fl3733_91tkl_update_led_enable(IS31FL3733_91TKL *device);
 /// Update LED matrix LED brightness values with internal buffer values.
 void is31fl3733_91tkl_update_led_pwm(IS31FL3733_91TKL *device);
+
+void is31fl3733_91tkl_dump(IS31FL3733_91TKL *device);
 
 #endif /* _is31fl3733_91tkl_H_ */

@@ -6,7 +6,9 @@
 #define	CR_CRLF		    0	// Convert \n to \r\n (+10 bytes)
 #define USE_XPRINTF	    1	// Enable xprintf function (+194 bytes)
 #define USE_XSPRINTF	0	// Add xsprintf function (+78 bytes)
+#ifndef USE_XFPRINTF
 #define USE_XFPRINTF	0	// Add xfprintf function (+54 bytes)
+#endif
 #define USE_XATOI	    0	// Enable xatoi function (+182 bytes)
 
 

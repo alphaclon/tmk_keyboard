@@ -156,6 +156,8 @@ void is31fl3733_disable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
 
 /// Set LED brightness level.
 void is31fl3733_set_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness);
+/// Get LED brightness level.
+uint8_t is31fl3733_get_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw);
 /// Set LED brightness level.
 void is31fl3733_set_pwm_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness);
 /// Set brightness level for all LEDs.
@@ -163,6 +165,7 @@ void is31fl3733_fill(IS31FL3733 *device, uint8_t brightness);
 /// Set brightness level for all LEDs.
 void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness);
 
+uint8_t* is31fl3733_led_buffer(IS31FL3733 *device);
 uint8_t* is31fl3733_pwm_buffer(IS31FL3733 *device);
 
 void is31fl3733_set_mask(IS31FL3733 *device, uint8_t *mask);

@@ -1,13 +1,18 @@
 
 #include "backlight/issi/is31fl3733_91tkl.h"
-#include "mini-snprintf.h"
+#include "backlight/sector/sector_control.h"
+#include "backlight/animations/animation.h"
+#include "backlight/animations/animation_utils.h"
+#include "config.h"
 #include "virtser.h"
+#include "util.h"
 #include "utils.h"
 #include "nfo_led.h"
 #include "timer.h"
 #include "virt_ser_rpc.h"
+#include "xprintf.h"
+#include <inttypes.h>
 #include <avr/pgmspace.h>
-//#include <cstdarg>
 
 #ifdef VIRTSER_ENABLE
 
@@ -22,38 +27,10 @@
 #define MAX_MSG_LENGTH 16
 #define VIRT_SER_PRINTF_BUFFER_SIZE 256
 
-#define vsprint(s) virtser_print(PSTR(s))
-#define vsprintf(arg, ...) virtser_printf(PSTR(s), ...)
-#define vsprintln(s) virtser_print(PSTR(s "\n"))
-
-/* decimal */
-#define print_dec(i) vsprintf("%u", i)
-#define print_decs(i) vsprintf("%d", i)
-/* hex */
-#define print_hex4(i) vsprintf("%X", i)
-#define print_hex8(i) vsprintf("%02X", i)
-#define print_hex16(i) vsprintf("%04X", i)
-#define print_hex32(i) vsprintf("%08lX", i)
-/* binary */
-#define print_bin4(i) vsprintf("%04b", i)
-#define print_bin8(i) vsprintf("%08b", i)
-#define print_bin16(i) vsprintf("%016b", i)
-#define print_bin32(i) vsprintf("%032lb", i)
-#define print_bin_reverse8(i) vsprintf("%08b", bitrev(i))
-#define print_bin_reverse16(i) vsprintf("%016b", bitrev16(i))
-#define print_bin_reverse32(i) vsprintf("%032lb", bitrev32(i))
-/* print value utility */
-#define print_val_dec(v) vsprintf(#v ": %u\n", v)
-#define print_val_decs(v) vsprintf(#v ": %d\n", v)
-#define print_val_hex8(v) vsprintf(#v ": %X\n", v)
-#define print_val_hex16(v) vsprintf(#v ": %02X\n", v)
-#define print_val_hex32(v) vsprintf(#v ": %04lX\n", v)
-#define print_val_bin8(v) vsprintf(#v ": %08b\n", v)
-#define print_val_bin16(v) vsprintf(#v ": %016b\n", v)
-#define print_val_bin32(v) vsprintf(#v ": %032lb\n", v)
-#define print_val_bin_reverse8(v) vsprintf(#v ": %08b\n", bitrev(v))
-#define print_val_bin_reverse16(v) vsprintf(#v ": %016b\n", bitrev16(v))
-#define print_val_bin_reverse32(v) vsprintf(#v ": %032lb\n", bitrev32(v))
+#define vserprint(s) xfprintf(&virtser_send, s)
+#define vserprintf(fmt, ...) xfprintf(&virtser_send, fmt, ##__VA_ARGS__)
+#define vserprintfln(fmt, ...) xfprintf(&virtser_send, fmt "\n", ##__VA_ARGS__)
+#define vserprintln(s) xfprintf(&virtser_send, s "\n")
 
 uint16_t last_receive_ts = 0;
 uint8_t recv_buffer[MAX_MSG_LENGTH];
@@ -77,41 +54,200 @@ struct user_command_t
     char *help_msg;
 };
 
-int virtser_printf(const char *fmt, ...);
+typedef struct user_command_t user_command;
 
-bool cmd_user_nfo(uint8_t argc, char **argv);
+bool cmd_user_help(uint8_t argc, char **argv);
+bool cmd_user_info(uint8_t argc, char **argv);
 bool cmd_user_ram(uint8_t argc, char **argv);
-bool cmd_user_eep(uint8_t argc, char **argv);
+bool cmd_user_dump_eeprom(uint8_t argc, char **argv);
+bool cmd_user_init_issi(uint8_t argc, char **argv);
 bool cmd_user_led(uint8_t argc, char **argv);
 bool cmd_user_pwm(uint8_t argc, char **argv);
+bool cmd_user_rgb(uint8_t argc, char **argv);
+bool cmd_user_hsv(uint8_t argc, char **argv);
+bool cmd_user_sector(uint8_t argc, char **argv);
 
-struct user_command_t user_command_table[] = {{"nfo", &cmd_user_ram, "", "show info"},
-                                              {"ram", &cmd_user_ram, "", "show free ram"},
-                                              {"eep", &cmd_user_eep, "", "show eeprom"},
-                                              {"led", &cmd_user_led, "dev cs sw on", "enable/disable led"},
-                                              {"pwm", &cmd_user_pwm, "dev cs sw bri", "set pwm"},
-                                              {"", 0, "", ""}};
+const user_command user_command_table[] PROGMEM = {{"help", &cmd_user_help, "", "show help"},
+                                                   {"h", &cmd_user_help, "", "show help"},
+                                                   {"?", &cmd_user_help, "", "show help"},
+                                                   {"info", &cmd_user_info, "", "show info"},
+                                                   {"ram", &cmd_user_ram, "", "show free ram"},
+                                                   {"eeprom", &cmd_user_dump_eeprom, "", "dump eeprom"},
+                                                   {"issi", &cmd_user_init_issi, "", "init issi"},
+                                                   {"led", &cmd_user_led, "dev cs sw on", "enable/disable led"},
+                                                   {"pwm", &cmd_user_pwm, "dev cs sw bri", "set pwm"},
+                                                   {"rgb", &cmd_user_rgb, "dev row col r g b", "set rgb"},
+                                                   {"hsv", &cmd_user_hsv, "dev row col h s v", "set hsv"},
+                                                   {"sector", &cmd_user_sector, "selected [on [h s v]]", "set sector"},
+												   {"animation", &cmd_user_sector, "selected [on [c h s v]]", "set animation"},
+                                                   {"", 0, "", ""}};
 
-bool cmd_user_nfo(uint8_t argc, char **argv)
+bool cmd_user_help(uint8_t argc, char **argv)
 {
-    print("\n\t- Version -\n");
-    print("DESC: " STR(DESCRIPTION) "\n");
-    print("VID: " STR(VENDOR_ID) "(" STR(MANUFACTURER) ") "
-                                                       "PID: " STR(PRODUCT_ID) "(" STR(PRODUCT) ") "
-                                                                                                "VER: " STR(
-                                                                                                    DEVICE_VER) "\n");
-    print("BUILD: " STR(VERSION) " (" __TIME__ " " __DATE__ ")\n");
+    uint8_t pos = 0;
+    user_command cmd;
+
+    vserprintf("\n\t- Anorak 91tkl - virtual console - help -\n");
+    vserprintf("\n\nAll commmands must start with a '!'\n\n");
+
+    memcpy_P(&cmd, user_command_table[pos++], sizeof(struct user_commant_t));
+
+    while (cmd.pfn_command)
+    {
+        vserprintfln("%s [%s]: %s", cmd.cmd, cmd.help_args, cmd.help_msg);
+        memcpy_P(&cmd, user_command_table[pos++], sizeof(struct user_commant_t));
+    }
+
+    vserprintf("\n\n");
+    return true;
+}
+
+bool cmd_user_animation(uint8_t argc, char **argv)
+{
+	// [[selected on] | [c h s v]]
+
+	vserprintfln("animation: %u, running:%u", animation_current(), animation_is_running());
+
+    if (argc == 0)
+    {
+    	vserprintfln("\t delay:%u, duration:%u", animation.delay_in_ms, animation.duration_in_ms);
+    	vserprintfln("\t hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
+    	vserprintfln("\t hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
+    	vserprintfln("\t  rgb: r:%u, g:%u, b:%u", animation.rgb.r, animation.rgb.g, animation.rgb.b);
+    	return true;
+    }
+
+    if (argc == 1 && strcmp_P(PSTR("save"), argv[0]) == 0)
+    {
+    	vserprintfln("\t  save state");
+    	animation_save_state();
+    	return true;
+    }
+
+    if (argc == 1)
+    {
+    	uint16_t delay_in_ms = atoi(argv[0]);
+    	animation_set_speed(delay_in_ms);
+    	return true;
+    }
+
+    if (argc == 2)
+    {
+    	uint8_t selected_animation = atoi(argv[0]);
+    	set_animation(selected_animation);
+
+    	bool run_animation = atoi(argv[1]);
+    	if (run_animation)
+    		start_animation();
+    	else
+    		stop_animation();
+
+    	vserprintfln("animation: set:%u, running:%u", animation_current(), animation_is_running());
+    	return true;
+    }
+
+    if (argc >= 4)
+    {
+    	uint8_t pos = atoi(argv[0]);
+
+        if (pos == 0)
+        {
+        	animation.hsv.h = atoi(argv[1]);
+        	animation.hsv.s = atoi(argv[2]);
+        	animation.hsv.v = atoi(argv[3]);
+        }
+        else
+        {
+        	animation.hsv2.h = atoi(argv[1]);
+        	animation.hsv2.s = atoi(argv[2]);
+        	animation.hsv2.v = atoi(argv[3]);
+        }
+
+    	vserprintfln("\t hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
+    	vserprintfln("\t hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
+    	return true;
+    }
+
+    return false;
+}
+
+bool cmd_user_sector(uint8_t argc, char **argv)
+{
+    // selected [on [h s v]]
+
+	vserprintf("sector ");
+
+    if (argc == 0)
+    {
+    	vserprintfln(" state:");
+    	for (uint8_t s = 0; s < SECTOR_MAX; ++s)
+    		vserprintfln("\tsector %u: enabled:%u", s, sector_is_enabled(s));
+    	return true;
+    }
+
+    if (argc == 1 && strcmp_P(PSTR("save"), argv[0]) == 0)
+    {
+    	vserprintfln("\n\t  save state");
+    	sector_save_state();
+    	return true;
+    }
+
+    uint8_t selected_sector = atoi(argv[0]);
+    bool selected_sector_enabled = 0;
+
+    if (argc >= 1)
+    {
+        vserprintfln("%u: enabled:%u", selected_sector, sector_is_enabled(selected_sector));
+    }
+    if (argc >= 2)
+    {
+        selected_sector_enabled = atoi(argv[1]);
+        sector_select(selected_sector);
+        sector_set_selected(selected_sector_enabled);
+
+        vserprintfln("%u: enable:%u, enabled:%u", selected_sector, selected_sector_enabled, sector_is_enabled(selected_sector));
+    }
+    if (argc >= 5)
+    {
+        HSV hsv;
+
+        hsv.h = atoi(argv[2]);
+        hsv.s = atoi(argv[3]);
+        hsv.v = atoi(argv[4]);
+
+        sector_selected_set_hsv_color(hsv);
+        is31fl3733_91tkl_update_led_pwm(&issi);
+
+        vserprintfln("%u: set HSV: h:%u, s:%u, v:%u", selected_sector, hsv.h, hsv.s, hsv.v);
+    }
+
+    return true;
+}
+
+bool cmd_user_info(uint8_t argc, char **argv)
+{
+    vserprintf("\n\t- Anorak 91tkl - version -\n");
+    vserprintf("DESC: " STR(DESCRIPTION) "\n");
+    vserprintf("VID: " STR(VENDOR_ID) "(" STR(MANUFACTURER) ") "
+                                                               "PID: " STR(PRODUCT_ID) "(" STR(
+                                                                   PRODUCT) ") "
+                                                                            "VER: " STR(DEVICE_VER) "\n");
+    vserprintf("BUILD: " STR(VERSION) " (" __TIME__ " " __DATE__ ")\n");
     return true;
 }
 
 bool cmd_user_ram(uint8_t argc, char **argv)
 {
-    printf("free ram: %s\n", freeRam());
+    vserprintf("free ram: %d\n", freeRam());
     return true;
 }
 
-bool cmd_user_eep(uint8_t argc, char **argv)
+bool cmd_user_dump_eeprom(uint8_t argc, char **argv)
 {
+#define print(s) vserprintf(s)
+#define print_dec(i) vserprintf("%u", i)
+#define print_hex8(i) vserprintf("%02X", i)
+
 #ifdef BOOTMAGIC_ENABLE
     print("default_layer: ");
     print_dec(eeconfig_read_default_layer());
@@ -183,6 +319,14 @@ bool cmd_user_eep(uint8_t argc, char **argv)
     return true;
 }
 
+bool cmd_user_init_issi(uint8_t argc, char **argv)
+{
+    vserprintfln("init is31fl3733_91tkl");
+    is31fl3733_91tkl_init(&issi);
+    is31fl3733_91tkl_dump(&issi);
+    return true;
+}
+
 bool cmd_user_led(uint8_t argc, char **argv)
 {
     if (argc != 4)
@@ -192,6 +336,8 @@ bool cmd_user_led(uint8_t argc, char **argv)
     uint8_t cs = atoi(argv[1]);
     uint8_t sw = atoi(argv[2]);
     bool on = atoi(argv[3]);
+
+    vserprintfln("set led: dev:%u, cs:%u, sw:%u, on:%u", dev, cs, sw, on);
 
     IS31FL3733 *device = (dev ? issi.lower->device : issi.upper->device);
 
@@ -211,6 +357,8 @@ bool cmd_user_pwm(uint8_t argc, char **argv)
     uint8_t sw = atoi(argv[2]);
     uint8_t pwm = atoi(argv[3]);
 
+    vserprintfln("set pwm: dev:%u, cs:%u, sw:%u, pwm:%u", dev, cs, sw, pwm);
+
     IS31FL3733 *device = (dev ? issi.lower->device : issi.upper->device);
 
     is31fl3733_set_pwm(device, cs, sw, pwm);
@@ -219,6 +367,55 @@ bool cmd_user_pwm(uint8_t argc, char **argv)
     return true;
 }
 
+bool cmd_user_rgb(uint8_t argc, char **argv)
+{
+    if (argc != 6)
+        return false;
+
+    RGB rgb;
+
+    uint8_t dev = atoi(argv[0]);
+    uint8_t row = atoi(argv[1]);
+    uint8_t col = atoi(argv[2]);
+    rgb.r = atoi(argv[3]);
+    rgb.g = atoi(argv[4]);
+    rgb.b = atoi(argv[5]);
+
+    vserprintfln("set RGB: dev:%u, r:%u, c:%u, r:%u, g:%u, b:%u", dev, row, col, rgb.r, rgb.g, rgb.b);
+
+    IS31FL3733_RGB *device = (dev ? issi.lower : issi.upper);
+
+    is31fl3733_rgb_set_pwm(device, row, col, rgb);
+    is31fl3733_update_led_pwm(device->device);
+
+    return true;
+}
+
+bool cmd_user_hsv(uint8_t argc, char **argv)
+{
+    if (argc != 6)
+        return false;
+
+    HSV hsv;
+
+    uint8_t dev = atoi(argv[0]);
+    uint8_t row = atoi(argv[1]);
+    uint8_t col = atoi(argv[2]);
+    hsv.h = atoi(argv[3]);
+    hsv.s = atoi(argv[4]);
+    hsv.v = atoi(argv[5]);
+
+    vserprintfln("set HSV: dev:%u, r:%u, c:%u, h:%u, s:%u, v:%u", dev, row, col, hsv.h, hsv.s, hsv.v);
+
+    IS31FL3733_RGB *device = (dev ? issi.lower : issi.upper);
+
+    is31fl3733_hsv_set_pwm(device, row, col, hsv);
+    is31fl3733_update_led_pwm(device->device);
+
+    return true;
+}
+
+#if 0
 void virtser_send_data(uint8_t const *data, uint8_t length)
 {
     // dprintf("send ");
@@ -295,9 +492,11 @@ int virtser_print_P(const char *progmem_s)
 
     return ret;
 }
+#endif
 
 void interpret_user_command(uint8_t const *buffer, uint8_t length)
 {
+    uint8_t pos = 0;
     char *str = buffer;
     char *token;
     char *command;
@@ -305,10 +504,7 @@ void interpret_user_command(uint8_t const *buffer, uint8_t length)
     char *argv[10];
     struct user_command_t user_command;
 
-    // user_command =
-
     command = strsep(&str, " ");
-
     dprintf("user_command: %s\n", command);
 
     while ((token = strsep(&str, " ")))
@@ -316,6 +512,8 @@ void interpret_user_command(uint8_t const *buffer, uint8_t length)
         argv[argc] = token;
         argc++;
     }
+
+    memcpy_P(&user_command, user_command_table[pos++], sizeof(struct user_commant_t));
 
     while (user_command.pfn_command)
     {
@@ -331,14 +529,15 @@ void interpret_user_command(uint8_t const *buffer, uint8_t length)
                 print("cmd failed!\n");
             }
         }
-        // user_command =
+
+        memcpy_P(&user_command, user_command_table[pos++], sizeof(struct user_commant_t));
     }
 }
 
 void interpret_command(uint8_t const *buffer, uint8_t length)
 {
     uint8_t cmd = get_datagram_cmd(buffer);
-    // dprintf("cmd: %x %c, l:%u\n", cmd, cmd, length);
+    dprintf("cmd: %x %c, l:%u\n", cmd, cmd, length);
 
     if (cmd == DATAGRAM_CMD_INFO)
     {
@@ -396,7 +595,7 @@ void virtser_recv(uint8_t ucData)
 
     if (datagram_is_data_start(ucData))
     {
-        // dprintf("recv: start\n");
+        dprintf("recv: start\n");
 
         buffer_pos = 0;
 
@@ -407,7 +606,7 @@ void virtser_recv(uint8_t ucData)
     }
     else if (datagram_is_userdata_start(ucData))
     {
-        // dprintf("recv: user start\n");
+        dprintf("recv: user start\n");
 
         buffer_pos = 0;
 
@@ -422,7 +621,7 @@ void virtser_recv(uint8_t ucData)
         // start + len + cmd + payload + crc
         expected_length = ucData + 4;
 
-        // dprintf("recv: expected len %u\n", expected_length);
+        dprintf("recv: expected len %u\n", expected_length);
 
         recv_buffer[buffer_pos] = ucData;
         buffer_pos++;
@@ -464,7 +663,7 @@ void virtser_recv(uint8_t ucData)
 
     else if (recv_status == recvStatusRecvPayload && buffer_pos < expected_length)
     {
-        // dprintf("recv: bpos %u\n", buffer_pos);
+        dprintf("recv: bpos %u\n", buffer_pos);
 
         recv_buffer[buffer_pos] = ucData;
         buffer_pos++;
@@ -475,12 +674,12 @@ void virtser_recv(uint8_t ucData)
 
     else if (recv_status == recvStatusFindStop && ucData == DATAGRAM_STOP)
     {
-        // dprintf("recv: stop %u\n", buffer_pos);
+        dprintf("recv: stop %u\n", buffer_pos);
 
         if (datagram_is_valid(buffer_pos, expected_length))
         {
-            // dprintf("recv: ");
-            // dump_buffer(recv_buffer, buffer_pos);
+            dprintf("recv: ");
+            dump_buffer(recv_buffer, buffer_pos);
             interpret_command(recv_buffer, buffer_pos);
         }
         else

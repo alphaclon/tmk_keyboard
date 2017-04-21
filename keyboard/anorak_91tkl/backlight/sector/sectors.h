@@ -1,7 +1,5 @@
-#ifndef _SECTORS_
-#define _SECTORS_
-
-#include <inttypes.h>
+#ifndef _SECTORS_H_
+#define _SECTORS_H_
 
 enum keyboard_sector_t
 {
@@ -10,17 +8,17 @@ enum keyboard_sector_t
     FunctionKeys,
     CursorKeys,
     OtherKeys,
+	NavKeys,
+	ESCKey,
     User1,
     User2,
-    User3,
-    User4
 };
 
-typedef enum keyboard_sector_t keyboard_sector;
+typedef enum keyboard_sector_t KeyboardSector;
 
 #define SECTOR_BV(arg) (1 << arg)
 
 #define SECTOR_ALL_MASK 0xff
-#define SECTOR_MAX 8
+#define SECTOR_MAX 6
 
 #endif

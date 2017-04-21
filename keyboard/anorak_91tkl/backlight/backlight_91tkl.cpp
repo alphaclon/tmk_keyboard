@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "eeconfig_backlight.h"
 #include "issi/is31fl3733_91tkl.h"
 #include "sector/sector_control.h"
+#include "animations/animation.h"
 
 #ifdef DEBUG_BACKLIGHT
 #include "debug.h"
@@ -34,13 +35,15 @@ void backlight_set(uint8_t level)
 {
     dprintf("backlight_set level:%d\n", level);
 
-     if (level == 0)
+    stop_animation();
+
+    if (level == 0)
     {
-		sector_set_all_off();
+        sector_set_all_off();
     }
     else
     {
-    	sector_restore_state();
+        sector_restore_state();
     }
 }
 
@@ -76,6 +79,7 @@ void backlight_setup()
 
     sector_control_init();
     fix_backlight_level();
+    initialize_animation();
 #endif
 }
 

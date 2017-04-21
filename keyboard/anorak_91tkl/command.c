@@ -60,7 +60,6 @@ bool command_extra(uint8_t code)
     switch (code)
     {
     case KC_PAUSE:
-    case KC_ESCAPE:
         clear_keyboard();
         print("\n\nbootloader... ");
         wait_ms(1000);

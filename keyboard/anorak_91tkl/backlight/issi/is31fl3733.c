@@ -89,7 +89,7 @@ void is31fl3733_update_led_pwm(IS31FL3733 *device)
                               sizeof(device->pwm));
 }
 
-void is31fl3733_Update(IS31FL3733 *device)
+void is31fl3733_update(IS31FL3733 *device)
 {
     is31fl3733_update_led_enable(device);
     is31fl3733_update_led_pwm(device);
@@ -171,6 +171,16 @@ void is31fl3733_set_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brig
     device->pwm[offset] = brightness;
 }
 
+uint8_t is31fl3733_get_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw)
+{
+    uint8_t offset;
+
+    // Calculate LED offset in RAM buffer.
+    offset = sw * IS31FL3733_CS + cs;
+    // Set brightness level of selected LED.
+    return device->pwm[offset];
+}
+
 void is31fl3733_set_pwm_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness)
 {
     uint8_t offset;
@@ -212,6 +222,11 @@ void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness)
         if (device->mask[mask_byte] & (1 << mask_bit))
             device->pwm[i] = brightness;
     }
+}
+
+uint8_t* is31fl3733_led_buffer(IS31FL3733 *device)
+{
+	return device->leds;
 }
 
 uint8_t* is31fl3733_pwm_buffer(IS31FL3733 *device)

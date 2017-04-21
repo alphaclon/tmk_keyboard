@@ -49,7 +49,7 @@ void hook_late_init(void)
 
 void hook_late_start(void)
 {
-	dprintf("late_test\n");
+	dprintf("late_start\n");
 	dprintf("free ram: %d\n", freeRam());
 
 #ifdef DEBUG_OUTPUT_ENABLE
@@ -58,8 +58,6 @@ void hook_late_start(void)
     debug_config.keyboard = 0;
 #endif
 #ifdef DEBUG_LATE_TEST
-    dprintf("free ram: %d\n", freeRam());
-
     backlight_enable_region(backlight_region_logo);
     backlight_set_brightness_for_region(backlight_region_logo, 7);
 
@@ -87,7 +85,7 @@ void hook_usb_suspend_entry(void)
 
 #ifdef BACKLIGHT_ENABLE
     stop_animation();
-    backlight_enableShutdown(true);
+    is31fl3733_91tkl_hardware_shutdown(true);
 #endif
 
 #ifdef SLEEP_LED_ENABLE
@@ -103,18 +101,15 @@ void hook_usb_wakeup(void)
     // clear keyboard state
     matrix_clear();
     clear_keyboard();
-#ifdef BACKLIGHT_ENABLE
+
+    #ifdef BACKLIGHT_ENABLE
     //backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
+    stop_animation();
+    is31fl3733_91tkl_hardware_shutdown(false);
 #endif
 
 #ifdef SLEEP_LED_ENABLE
     sleep_led_disable();
-    //TODO: issi
-    //backlight_enableShutdown(false);
-#endif
-
-#ifdef BACKLIGHT_ENABLE
-    stop_animation();
 #endif
 
     // Restore LED status

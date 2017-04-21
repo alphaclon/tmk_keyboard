@@ -28,6 +28,11 @@ void eeconfig_backlight_init(void)
     for (uint8_t i = 0; i < EECONFIG_BACKLIGHT_SECTOR_PWM_SIZE; i++)
     	eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + i, EECONFIG_BACKLIGHT_DEFAULT_BRIGHTNESS);
     eeprom_update_byte(EECONFIG_BACKLIGHT_PWM_ACTIVE_MAP, 0xFF);
+    eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION, 0);
+
+    eeconfig_write_animation_current(0);
+    eeconfig_write_animation_hsv_values(0, 300, 250, 192);
+    eeconfig_write_animation_hsv_values(1, 130, 70, 194);
 #endif
 }
 
@@ -43,22 +48,46 @@ void eeconfig_write_backlight_sectors_state(uint8_t val)
     eeprom_update_byte(EECONFIG_BACKLIGHT_SECTORS, val);
 }
 
-void eeconfig_read_backlight_sector_brightness(uint8_t sector, uint8_t *red, uint8_t *green, uint8_t *blue)
+void eeconfig_read_backlight_sector_values(uint8_t sector, uint8_t *v1, uint8_t *v2, uint8_t *v3)
 {
-    *red = eeprom_read_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3));
-    *green = eeprom_read_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 1);
-    *blue = eeprom_read_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 2);
+    *v1 = eeprom_read_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3));
+    *v2 = eeprom_read_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 1);
+    *v3 = eeprom_read_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 2);
 }
 
-void eeconfig_write_backlight_sector_brightness(uint8_t sector, uint8_t red, uint8_t green, uint8_t blue)
+void eeconfig_write_backlight_sector_brightness(uint8_t sector, uint8_t v1, uint8_t v2, uint8_t v3)
 {
     //eeprom_write_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3), red);
     //eeprom_write_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 1, green);
     //eeprom_write_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 2, blue);
 
-    eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3), red);
-    eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 1, green);
-    eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 2, blue);
+    eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3), v1);
+    eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 1, v2);
+    eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 2, v3);
+}
+
+uint8_t eeconfig_read_animation_current(void)
+{
+    return eeprom_read_byte(EECONFIG_BACKLIGHT_ANIMATION);
+}
+
+void eeconfig_write_animation_current(uint8_t current)
+{
+	eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION, current);
+}
+
+void eeconfig_read_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, uint8_t *v3)
+{
+    *v1 = eeprom_read_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3));
+    *v2 = eeprom_read_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3) + 1);
+    *v3 = eeprom_read_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3) + 2);
+}
+
+void eeconfig_write_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, uint8_t *v3)
+{
+    eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3), v1);
+    eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3) + 1, v2);
+    eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3) + 2, v3);
 }
 
 uint8_t eeconfig_read_backlight_pwm_active_map()

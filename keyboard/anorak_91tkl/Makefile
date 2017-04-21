@@ -78,7 +78,6 @@ SRC += \
 	command.c \
 	keymap_common.c \
 	keymap_91tkl.c \
-	mini-snprintf.c \
 	virt_ser_rpc.c \
 	uart/uart.c \
 	twi/avr315/TWI_Master.c \
@@ -99,7 +98,14 @@ SRC += \
 	backlight/animations/sweep.c \
 	backlight/animations/breathing.c \
 	backlight/animations/type_o_matic.c \
-	backlight/animations/type_o_circles.c
+	backlight/animations/type_o_circles.c \
+	backlight/animations/type_o_raindrops.c \
+	backlight/animations/color_cycle_all.c \
+	backlight/animations/color_cycle_up_down.c \
+	backlight/animations/color_cycle_left_right.c \
+	backlight/animations/raindrops.c \
+	backlight/animations/jellybean_raindrops.c \
+	
 
 
 CONFIG_H = config.h
@@ -163,7 +169,7 @@ COMMAND_ENABLE = yes        # Commands for debug and configuration
 NKRO_ENABLE = yes           # USB Nkey Rollover - not yet supported in LUFA
 #BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
-#VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
+VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
 #MOUSEKEY_ENABLE = yes      # Mouse keys(+4700)
 
 #OPT_DEFS += -DNO_ACTION_TAPPING

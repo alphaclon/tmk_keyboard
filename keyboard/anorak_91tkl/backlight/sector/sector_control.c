@@ -1,6 +1,7 @@
 
 #include "sector_control.h"
 #include "../issi/is31fl3733_91tkl.h"
+#include "../../utils.h"
 #include "config.h"
 #include "eeconfig.h"
 #include "../eeconfig_backlight.h"
@@ -20,19 +21,15 @@
 typedef union PACKED {
     struct
     {
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
+        uint8_t h;
+        uint8_t s;
+        uint8_t v;
     };
     uint8_t lvl[3];
 } Levels;
 
-#if BACKLIGHT_LEVELS == 8
-uint8_t const gamma_correction_table[BACKLIGHT_LEVELS] PROGMEM = {4, 18, 39, 69, 106, 149, 212, 255};
-#elif BACKLIGHT_LEVELS == 16
-uint8_t const gamma_correction_table[BACKLIGHT_LEVELS] PROGMEM = {4, 18, 39, 69, 106, 149, 212, 255};
-#else
-#error Invalid BACKLIGHT_LEVELS value. Must be 8 or 16!
+#if BACKLIGHT_LEVELS == 0
+#error Invalid BACKLIGHT_LEVELS value. Must be greater zero!
 #endif
 
 uint8_t sector_mask = 0;
@@ -42,7 +39,7 @@ uint8_t custom_pwm_map = 0xff;
 bool has_custom_pwm_map = false;
 uint8_t mask[IS31FL3733_LED_ENABLE_SIZE];
 
-void sector_disable_leds_by_mask(keyboard_sector sector)
+void sector_disable_leds_by_mask(KeyboardSector sector)
 {
     dprintf("sector_disable_leds_by_mask %u:\n", sector);
 
@@ -53,7 +50,7 @@ void sector_disable_leds_by_mask(keyboard_sector sector)
     is31fl3733_disable_leds_by_mask(issi.lower->device, mask);
 }
 
-void sector_enable_leds_by_mask(keyboard_sector sector)
+void sector_enable_leds_by_mask(KeyboardSector sector)
 {
     dprintf("sector_enable_leds_by_mask %u:\n", sector);
 
@@ -75,7 +72,7 @@ void sector_enable_all_leds(void)
     is31fl3733_enable_leds_by_mask(issi.lower->device, mask);
 }
 
-void sector_set_mask(keyboard_sector sector)
+void sector_set_mask(KeyboardSector sector)
 {
     dprintf("sector_set_mask %u:\n", sector);
 
@@ -86,7 +83,7 @@ void sector_set_mask(keyboard_sector sector)
     is31fl3733_set_mask(issi.lower->device, mask);
 }
 
-void sector_nand_mask(keyboard_sector sector)
+void sector_nand_mask(KeyboardSector sector)
 {
     dprintf("sector_nand_mask %u:\n", sector);
 
@@ -97,7 +94,7 @@ void sector_nand_mask(keyboard_sector sector)
     is31fl3733_nand_mask(issi.lower->device, mask);
 }
 
-void sector_or_mask(keyboard_sector sector)
+void sector_or_mask(KeyboardSector sector)
 {
     dprintf("sector_or_mask %u:\n", sector);
 
@@ -115,18 +112,18 @@ void sector_clear_mask(void)
     is31fl3733_clear_mask(issi.lower->device);
 }
 
-bool sector_is_enabled(keyboard_sector sector)
+bool sector_is_enabled(KeyboardSector sector)
 {
     return (sector_mask & SECTOR_BV(sector));
 }
 
-void sector_select(keyboard_sector sector)
+void sector_select(KeyboardSector sector)
 {
     selected_sector = sector;
     dprintf("sector_select [%u] on=%u\n", selected_sector, sector_is_enabled(sector));
 }
 
-void sector_set_off(keyboard_sector sector)
+void sector_set_off(KeyboardSector sector)
 {
     dprintf("sector_set_off %u: off\n", sector);
     sector_disable_leds_by_mask(sector);
@@ -134,7 +131,7 @@ void sector_set_off(keyboard_sector sector)
     is31fl3733_91tkl_update_led_enable(&issi);
 }
 
-void sector_set_on(keyboard_sector sector)
+void sector_set_on(KeyboardSector sector)
 {
     dprintf("sector_set_on %u: on\n", sector);
     sector_enable_leds_by_mask(sector);
@@ -142,7 +139,7 @@ void sector_set_on(keyboard_sector sector)
     is31fl3733_91tkl_update_led_enable(&issi);
 }
 
-void sector_toggle(keyboard_sector sector)
+void sector_toggle(KeyboardSector sector)
 {
     if (sector_is_enabled(sector))
     {
@@ -152,6 +149,14 @@ void sector_toggle(keyboard_sector sector)
     {
         sector_set_on(sector);
     }
+}
+
+void sector_set_selected(bool on)
+{
+	if (on)
+		sector_set_on(selected_sector);
+	else
+		sector_set_on(selected_sector);
 }
 
 void sector_toggle_selected(void)
@@ -182,7 +187,8 @@ void sector_set_all_off(void)
     is31fl3733_91tkl_update_led_enable(&issi);
 }
 
-void sector_set_rgb_color_by_levels(keyboard_sector sector, Levels *levels)
+#ifdef SECTOR_ENABLE_RGB_SUPPORT
+void sector_set_rgb_color_by_levels(KeyboardSector sector, Levels *levels)
 {
     dprintf("sector_set_rgb_color_by_levels: %X%X%X\n", levels->r, levels->g, levels->b);
 
@@ -199,32 +205,10 @@ void sector_set_rgb_color_by_levels(keyboard_sector sector, Levels *levels)
     is31fl3733_91tkl_fill_rgb_masked(&issi, color);
 }
 
-void sector_set_hsv_color_by_levels(keyboard_sector sector, Levels *levels)
+void sector_increase_sector_color(KeyboardSector sector, RGBColorName color_name)
 {
-    dprintf("sector_set_hsv_color_by_levels: %X%X%X\n", levels->r, levels->g, levels->b);
-
-    HSV color;
-    color.h = levels->r * BACKLIGHT_LEVELS;
-    color.s = levels->g * BACKLIGHT_LEVELS;
-    color.v = levels->b * BACKLIGHT_LEVELS;
-
-    dprintf("sector_set_hsv_color_by_levels: %X%X%X\n", color.h, color.s, color.v);
-
-    sector_clear_mask();
-    sector_set_mask(sector);
-
-    is31fl3733_91tkl_fill_hsv_masked(&issi, color);
-}
-
-void sector_increase_sector_color(keyboard_sector sector, RGBColorName color_name)
-{
-    uint8_t *level = &(sector_levels[sector].lvl[color_name]);
-
-    if (*level >= BACKLIGHT_LEVELS)
-    	*level = BACKLIGHT_LEVELS - 1;
-
-    if (*level < (BACKLIGHT_LEVELS - 1))
-    	*level += 1;
+    sector_levels[sector].lvl[color_name] =
+        increment(sector_levels[sector].lvl[color_name], 1, 0, BACKLIGHT_LEVELS - 1);
 
     sector_set_rgb_color_by_levels(sector, &sector_levels[sector]);
     is31fl3733_91tkl_update_led_pwm(&issi);
@@ -241,12 +225,10 @@ void sector_increase_color(RGBColorName color)
         sector_increase_sector_color(sector, color);
 }
 
-void sector_decrease_sector_color(keyboard_sector sector, RGBColorName color_name)
+void sector_decrease_sector_color(KeyboardSector sector, RGBColorName color_name)
 {
-	uint8_t *level = &sector_levels[sector].lvl[color_name];
-
-   if (*level > 0)
-	   *level -= 1;
+    sector_levels[sector].lvl[color_name] =
+        decrement(sector_levels[sector].lvl[color_name], 1, 0, BACKLIGHT_LEVELS - 1);
 
     sector_set_rgb_color_by_levels(sector, &sector_levels[sector]);
     is31fl3733_91tkl_update_led_pwm(&issi);
@@ -262,79 +244,108 @@ void sector_decrease_color(RGBColorName color)
     for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
         sector_decrease_sector_color(sector, color);
 }
+#endif
 
-void sector_increase_sector_hsv_color(keyboard_sector sector, HSVColorName color_name)
+
+void sector_selected_set_hsv_color(HSV color)
 {
-    uint8_t *level = &sector_levels[sector].lvl[color_name];
+    dprintf("sector_set_hsv_color_by_levels: %u, %X%X%X\n", selected_sector, color.h, color.s, color.v);
 
-    if (*level >= BACKLIGHT_LEVELS)
-    	*level = BACKLIGHT_LEVELS - 1;
+    sector_set_mask(selected_sector);
+    is31fl3733_91tkl_fill_hsv_masked(&issi, color);
+}
 
-    if (*level < (BACKLIGHT_LEVELS - 1))
-    	*level += 1;
+void sector_set_hsv_color(KeyboardSector sector, HSV color)
+{
+    dprintf("sector_set_hsv_color_by_levels: %u, %X%X%X\n", sector, color.h, color.s, color.v);
 
-    sector_set_hsv_color_by_levels(sector, &sector_levels[sector]);
-    is31fl3733_91tkl_update_led_pwm(&issi);
+    sector_set_mask(sector);
+    is31fl3733_91tkl_fill_hsv_masked(&issi, color);
+}
+
+void sector_set_hsv_color_by_levels(KeyboardSector sector, Levels *levels)
+{
+    HSV color;
+    color.h = levels->h;
+    color.s = levels->s;
+    color.v = levels->v;
+
+    sector_set_hsv_color(sector, color);
+}
+
+void sector_increase_hsv_by_name(KeyboardSector sector, HSVColorName color_name)
+{
+    dprintf("sector_increase_sector_hsv_by_name: %u %u\n", sector, color_name);
+
+    sector_levels[sector].lvl[color_name] = increment(sector_levels[sector].lvl[color_name], 8, 0, 255);
+
+    sector_set_hsv_color_by_levels(sector, &sector_levels[selected_sector]);
 }
 
 void sector_selected_increase_hsv_color(HSVColorName color)
 {
-    sector_increase_sector_hsv_color(selected_sector, color);
+    sector_increase_hsv_by_name(selected_sector, color);
+    is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
-void sector_increase_hsv_color(HSVColorName color)
+void sector_all_increase_hsv_color(HSVColorName color)
 {
     for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
-        sector_increase_sector_hsv_color(sector, color);
+        sector_increase_hsv_by_name(sector, color);
+    is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
-void sector_decrease_sector_hsv_color(keyboard_sector sector, HSVColorName color_name)
+void sector_decrease_sector_hsv_by_name(KeyboardSector sector, HSVColorName color_name)
 {
-	uint8_t *level = &sector_levels[sector].lvl[color_name];
+    dprintf("sector_decrease_sector_hsv_by_name: %u %u\n", sector, color_name);
 
-   if (*level > 0)
-	   *level -= 1;
+    sector_levels[sector].lvl[color_name] = decrement(sector_levels[sector].lvl[color_name], 8, 0, 255);
 
     sector_set_hsv_color_by_levels(sector, &sector_levels[sector]);
-    is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
 void sector_selected_decrease_hsv_color(HSVColorName color)
 {
-    sector_decrease_sector_hsv_color(selected_sector, color);
+    sector_decrease_sector_hsv_by_name(selected_sector, color);
+    is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
 void sector_decrease_hsv_color(HSVColorName color)
 {
     for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
-        sector_decrease_sector_hsv_color(sector, color);
+        sector_decrease_sector_hsv_by_name(sector, color);
+    is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
 void sector_save_state()
 {
 #ifdef BACKLIGHT_ENABLE
-    dprintf("save\n");
+    dprintf("sector_save_state\n");
 
     eeconfig_write_backlight_sectors_state(sector_mask);
 
     for (uint8_t sector = 0; sector < SECTOR_MAX; sector++)
     {
-        eeconfig_write_backlight_sector_brightness(sector, sector_levels[sector].r, sector_levels[sector].g,
-                                                   sector_levels[sector].b);
+        eeconfig_write_backlight_sector_values(sector, sector_levels[sector].h, sector_levels[sector].s,
+                                               sector_levels[sector].v);
     }
+
+// TODO: custom_pwm_map = eeconfig_read_backlight_pwm_active_map();
 #endif
 }
 
 void sector_load_custom_pwm_map(void)
 {
 #ifdef BACKLIGHT_ENABLE
-	uint8_t *buffer;
-	buffer = is31fl3733_pwm_buffer(issi.upper->device);
-	eeconfig_read_backlight_pwm_map(custom_pwm_map, buffer, false);
-	buffer = is31fl3733_pwm_buffer(issi.lower->device);
-	eeconfig_read_backlight_pwm_map(custom_pwm_map, buffer, true);
+    dprintf("sector_load_custom_pwm_map: %u\n", custom_pwm_map);
 
-	sector_enable_all_leds();
+    uint8_t *buffer;
+    buffer = is31fl3733_pwm_buffer(issi.upper->device);
+    eeconfig_read_backlight_pwm_map(custom_pwm_map, buffer, false);
+    buffer = is31fl3733_pwm_buffer(issi.lower->device);
+    eeconfig_read_backlight_pwm_map(custom_pwm_map, buffer, true);
+
+    sector_enable_all_leds();
 #endif
 }
 
@@ -346,14 +357,14 @@ void sector_load_state()
 
     for (uint8_t sector = 0; sector < SECTOR_MAX; sector++)
     {
-        eeconfig_read_backlight_sector_brightness(sector, &sector_levels[sector].r, &sector_levels[sector].g,
-                                                  &sector_levels[sector].b);
+        eeconfig_read_backlight_sector_values(sector, &sector_levels[sector].h, &sector_levels[sector].s,
+                                              &sector_levels[sector].v);
     }
 
     custom_pwm_map = eeconfig_read_backlight_pwm_active_map();
 
     if (custom_pwm_map >= EECONFIG_BACKLIGHT_PWM_MAP_COUNT)
-    	custom_pwm_map = 0xff;
+        custom_pwm_map = 0xff;
 
     has_custom_pwm_map = (custom_pwm_map < EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
 #endif
@@ -363,8 +374,8 @@ void sector_restore_sector(uint8_t sector)
 {
     if (sector_is_enabled(sector))
     {
-    	sector_enable_leds_by_mask(sector);
-    	sector_set_rgb_color_by_levels(sector, &sector_levels[sector]);
+        sector_enable_leds_by_mask(sector);
+        sector_set_rgb_color_by_levels(sector, &sector_levels[sector]);
     }
 }
 
@@ -377,30 +388,46 @@ void sector_restore_state(void)
 
     if (has_custom_pwm_map)
     {
-    	sector_load_custom_pwm_map();
+        sector_load_custom_pwm_map();
     }
     else
     {
         for (uint8_t sector = 0; sector < SECTOR_MAX; sector++)
-        	sector_restore_sector(sector);
+            sector_restore_sector(sector);
     }
 
     if (sector_mask || has_custom_pwm_map)
     {
-    	is31fl3733_91tkl_update_led_pwm(&issi);
-    	is31fl3733_91tkl_update_led_enable(&issi);
+        is31fl3733_91tkl_update_led_pwm(&issi);
+        is31fl3733_91tkl_update_led_enable(&issi);
     }
 }
 
-void sector_control_set_mode(uint8_t custom_map)
+void sector_set_sector_mode()
 {
-	has_custom_pwm_map = (custom_pwm_map < EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
-	sector_restore_state();
+    sector_set_custom_map(0xff);
+}
+
+void sector_set_custom_map(uint8_t custom_map)
+{
+    custom_pwm_map = custom_map;
+    has_custom_pwm_map = (custom_pwm_map < EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
+    sector_restore_state();
+}
+
+void sector_next_custom_map()
+{
+    custom_pwm_map = increment(custom_pwm_map, 1, 0, EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
+    if (custom_pwm_map >= EECONFIG_BACKLIGHT_PWM_MAP_COUNT)
+        custom_pwm_map = 0xff;
+
+    sector_set_custom_map(custom_pwm_map);
 }
 
 void sector_control_init(void)
 {
     sector_mask = 0;
+    has_custom_pwm_map = false;
     memset(sector_levels, 0, sizeof(sector_levels));
     sector_set_all_off();
 }
@@ -410,9 +437,10 @@ void sector_dump_state(void)
 #ifdef DEBUG_BACKLIGHT
     dprintf("sector_dump_state\n");
     dprintf("sector_mask: 0x%X\n", sector_mask);
+    dprintf("custom_pwm_map: %u\n", custom_pwm_mask);
     for (uint8_t sector = 0; sector < SECTOR_MAX; sector++)
     {
-        dprintf("sector [%u]: %u", sector, sector_is_enabled(sector));
+        dprintf("sector [%u]: e:%u,", sector, sector_is_enabled(sector));
         for (uint8_t color = 0; color < 3; color++)
             dprintf(" %u", sector_levels[sector].lvl[color]);
         dprintf("\n");

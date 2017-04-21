@@ -4,13 +4,32 @@
 #include "config.h"
 #include "matrix.h"
 
+#ifdef DEBUG_ANIMATION
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
+
 uint8_t animation_frame;
+
+void set_animation_breathing()
+{
+	dprintf("breathing\r\n");
+
+    animation.delay_in_ms = 50;
+    animation.duration_in_ms = 0;
+
+    animation.animationStart = &breathing_animation_start;
+    animation.animationStop = &breathing_animation_stop;
+    animation.animationLoop = 0;
+    animation.animation_typematrix_row = 0;
+}
 
 void breathing_animation_start()
 {
     animation_frame = 1;
 
-    animation_prepare(animation_frame);
+    animation_prepare(true);
 
     /*TODO: implement
     issi.setAutoFramePlayConfig(0, 1, 40);
@@ -36,5 +55,5 @@ void breathing_animation_stop()
     issi.setPictureMode();
     */
 
-    animation_postpare(animation_frame);
+    animation_postpare();
 }

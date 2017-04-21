@@ -64,5 +64,6 @@ enum HSVColorName_t
 typedef enum HSVColorName_t HSVColorName;
 
 RGB hsv_to_rgb(HSV hsv);
+HSV rgb_to_hsv(RGB rgb);
 
 #endif /* KEYBOARD_ANORAK_91TKL_BACKLIGHT_ISSI_COLOR_H_ */

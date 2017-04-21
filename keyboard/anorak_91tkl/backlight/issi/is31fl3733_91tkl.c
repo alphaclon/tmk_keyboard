@@ -45,6 +45,17 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     is_initialized = true;
 }
 
+void is31fl3733_91tkl_hardware_shutdown(IS31FL3733_91TKL *device, bool enabled)
+{
+	is31fl3733_hardware_shutdown(device->upper->device, enabled);
+	is31fl3733_hardware_shutdown(device->lower->device, enabled);
+}
+
+void is31fl3733_91tkl_dump(IS31FL3733_91TKL *device)
+{
+
+}
+
 void is31fl3733_91tkl_fill_rgb_masked(IS31FL3733_91TKL *device, RGB color)
 {
 	is31fl3733_fill_rgb_masked(device->upper, color);

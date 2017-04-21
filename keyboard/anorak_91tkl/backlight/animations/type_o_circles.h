@@ -4,6 +4,8 @@
 
 #include "matrix.h"
 
+void set_animation_type_o_circles(void);
+
 void type_o_circles_animation_start(void);
 void type_o_circles_animation_loop(void);
 void type_o_circles_animation_stop(void);

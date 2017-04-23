@@ -2,7 +2,10 @@
 #include "animation_utils.h"
 #include "config.h"
 #include "../sector/sector_control.h"
+#include "../key_led_map.h"
 #include <avr/pgmspace.h>
+#include <stdlib.h>
+#include <string.h>
 
 animation_interface animation;
 
@@ -60,18 +63,18 @@ void draw_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, RGB co
     uint8_t row;
     uint8_t col;
     uint8_t device_number;
-    IS31FL3733 *device;
+    IS31FL3733_RGB *device;
 
     if (x < 0 || x > MATRIX_COLS)
         return;
     if (y < 0 || y > MATRIX_ROWS)
         return;
 
-    getLedPosByMatrixKey(x, y, &device_number, &row, &col);
-
-    device = device_number ? device_91tkl->upper->device : device_91tkl->lower->device;
-
-    is31fl3733_rgb_set_pwm(device, row, col, color);
+    if (getLedPosByMatrixKey(x, y, &device_number, &row, &col))
+    {
+    	device = DEVICE_BY_NUMBER(issi, device_number);
+    	is31fl3733_rgb_set_pwm(device, row, col, color);
+    }
 }
 
 void draw_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, HSV color)
@@ -79,16 +82,16 @@ void draw_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, HSV co
     uint8_t row;
     uint8_t col;
     uint8_t device_number;
-    IS31FL3733 *device;
+    IS31FL3733_RGB *device;
 
     if (x < 0 || x > MATRIX_COLS)
         return;
     if (y < 0 || y > MATRIX_ROWS)
         return;
 
-    getLedPosByMatrixKey(x, y, &device_number, &row, &col);
-
-    device = device_number ? device_91tkl->upper->device : device_91tkl->lower->device;
-
-    is31fl3733_hsv_set_pwm(device, row, col, color);
+    if (getLedPosByMatrixKey(x, y, &device_number, &row, &col))
+    {
+    	device = DEVICE_BY_NUMBER(issi, device_number);
+    	is31fl3733_hsv_set_pwm(device, row, col, color);
+    }
 }

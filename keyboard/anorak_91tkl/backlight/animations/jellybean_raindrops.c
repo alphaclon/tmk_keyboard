@@ -46,8 +46,6 @@ void jellybean_raindrops_animation_loop()
     uint8_t col_to_change = rand() % MATRIX_COLS;
 
     HSV hsv;
-    RGB rgb;
-
     hsv.h = rand() & 0xff;
     hsv.s = rand() & 0xff;
     // Override brightness with global brightness control

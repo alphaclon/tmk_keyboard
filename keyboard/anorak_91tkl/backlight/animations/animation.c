@@ -14,6 +14,7 @@
 #include "color_cycle_all.h"
 #include "color_cycle_left_right.h"
 #include "color_cycle_up_down.h"
+#include <string.h>
 
 #ifdef DEBUG_ANIMATION
 #include "debug.h"
@@ -86,6 +87,8 @@ void set_animation(animation_names animation_by_name)
     case animation_cycle_left_right:
         set_animation_color_cycle_left_right();
         break;
+    case animation_LAST:
+    	break;
     }
 }
 

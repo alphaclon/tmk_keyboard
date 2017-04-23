@@ -1,7 +1,7 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
-#include <inttyptes.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {

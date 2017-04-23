@@ -1,6 +1,7 @@
 
 #include "type_o_matic.h"
 #include "../key_led_map.h"
+#include "../../utils.h"
 #include "animation_utils.h"
 #include "config.h"
 
@@ -49,7 +50,9 @@ void type_o_matic_animation_loop()
     {
         for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
         {
-            getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col);
+            if (!getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
+            	continue;
+
             device = DEVICE_BY_NUMBER(issi, device_number);
 
             if (matrix_is_on(key_row, key_col))
@@ -58,8 +61,7 @@ void type_o_matic_animation_loop()
             }
             else
             {
-                RGB color;
-                is31fl3733_rgb_get_pwm(device, row, col, &color);
+                RGB color = is31fl3733_rgb_get_pwm(device, row, col);
 
                 color.r = decrement(color.r, 5, 0, 255);
                 color.g = decrement(color.g, 5, 0, 255);

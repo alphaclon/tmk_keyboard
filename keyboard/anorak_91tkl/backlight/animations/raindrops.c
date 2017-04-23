@@ -52,7 +52,9 @@ void raindrops_animation_loop()
 
     HSV hsv;
 
-    getLedPosByMatrixKey(row_to_change, col_to_change, &device_number, &row, &col);
+    if (!getLedPosByMatrixKey(row_to_change, col_to_change, &device_number, &row, &col))
+    	return;
+
     device = DEVICE_BY_NUMBER(issi, device_number);
 
     int16_t h1 = animation.hsv.h;

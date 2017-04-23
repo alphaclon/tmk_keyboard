@@ -178,8 +178,8 @@ void sector_set_all_off(void)
 {
     selected_sector = 0;
 
-    is31fl3733_disable_all_leds(issi.upper->device);
-    is31fl3733_disable_all_leds(issi.lower->device);
+    is31fl3733_led_disable_all(issi.upper->device);
+    is31fl3733_led_disable_all(issi.lower->device);
 
     is31fl3733_clear_mask(issi.upper->device);
     is31fl3733_clear_mask(issi.lower->device);
@@ -310,7 +310,7 @@ void sector_selected_decrease_hsv_color(HSVColorName color)
     is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
-void sector_decrease_hsv_color(HSVColorName color)
+void sector_all_decrease_hsv_color(HSVColorName color)
 {
     for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
         sector_decrease_sector_hsv_by_name(sector, color);
@@ -375,7 +375,7 @@ void sector_restore_sector(uint8_t sector)
     if (sector_is_enabled(sector))
     {
         sector_enable_leds_by_mask(sector);
-        sector_set_rgb_color_by_levels(sector, &sector_levels[sector]);
+        sector_set_hsv_color_by_levels(sector, &sector_levels[sector]);
     }
 }
 
@@ -437,7 +437,7 @@ void sector_dump_state(void)
 #ifdef DEBUG_BACKLIGHT
     dprintf("sector_dump_state\n");
     dprintf("sector_mask: 0x%X\n", sector_mask);
-    dprintf("custom_pwm_map: %u\n", custom_pwm_mask);
+    dprintf("custom_pwm_map: %u\n", custom_pwm_map);
     for (uint8_t sector = 0; sector < SECTOR_MAX; sector++)
     {
         dprintf("sector [%u]: e:%u,", sector, sector_is_enabled(sector));

@@ -150,7 +150,7 @@ void is31fl3733_set_led(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enable)
 /// Enable/disable LED. Brightness level is not changed.
 void is31fl3733_set_led_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enabled);
 
-void is31fl3733_disable_all_leds(IS31FL3733 *device);
+void is31fl3733_led_disable_all(IS31FL3733 *device);
 void is31fl3733_enable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
 void is31fl3733_disable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
 

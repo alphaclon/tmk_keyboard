@@ -241,13 +241,13 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             if (animation_is_running())
                 animation_increase_hsv_color(animation_hsv_1, opt);
             else
-                sector_increase_hsv_color(opt);
+                sector_all_increase_hsv_color(opt);
             break;
         case FN91_Backlight_Color_Decrease_All:
             if (animation_is_running())
                 animation_decrease_hsv_color(animation_hsv_1, opt);
             else
-                sector_decrease_hsv_color(opt);
+                sector_all_decrease_hsv_color(opt);
             break;
         case FN91_Backlight_Color_Increase_Selected:
             if (animation_is_running())
@@ -270,7 +270,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         	sector_next_custom_map();
             break;
         case FN91_Backlight_Animate_Toggle:
-            animation_toggle();
+            toggle_animation();
             break;
         case FN91_Backlight_Animate_Increase_Speed:
             animation_increase_speed();

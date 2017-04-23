@@ -6,15 +6,27 @@
 #include "config.h"
 #include "virtser.h"
 #include "util.h"
+#include "crc8.h"
 #include "utils.h"
 #include "nfo_led.h"
 #include "timer.h"
 #include "virt_ser_rpc.h"
-#include "xprintf.h"
+#include "eeconfig.h"
+#include "keyboard.h"
+#include "keycode.h"
+#include "keymap.h"
+#include "backlight/eeconfig_backlight.h"
+#include "../../tmk_core/common/avr/xprintf.h"
 #include <inttypes.h>
 #include <avr/pgmspace.h>
+#include <stdlib.h>
+#include <string.h>
 
-#ifdef VIRTSER_ENABLE
+#ifdef DEBUG_VIRTSER
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
 
 #define DATAGRAM_START 0x02
 #define DATAGRAM_STOP 0x03
@@ -90,12 +102,12 @@ bool cmd_user_help(uint8_t argc, char **argv)
     vserprintf("\n\t- Anorak 91tkl - virtual console - help -\n");
     vserprintf("\n\nAll commmands must start with a '!'\n\n");
 
-    memcpy_P(&cmd, user_command_table[pos++], sizeof(struct user_commant_t));
+    memcpy_P(&cmd, (const void *)&user_command_table[pos++], sizeof(struct user_command_t));
 
     while (cmd.pfn_command)
     {
         vserprintfln("%s [%s]: %s", cmd.cmd, cmd.help_args, cmd.help_msg);
-        memcpy_P(&cmd, user_command_table[pos++], sizeof(struct user_commant_t));
+        memcpy_P(&cmd, (const void *)&user_command_table[pos++], sizeof(struct user_command_t));
     }
 
     vserprintf("\n\n");
@@ -244,8 +256,11 @@ bool cmd_user_ram(uint8_t argc, char **argv)
 
 bool cmd_user_dump_eeprom(uint8_t argc, char **argv)
 {
+#undef print
 #define print(s) vserprintf(s)
+#undef print_dec
 #define print_dec(i) vserprintf("%u", i)
+#undef print_hex8
 #define print_hex8(i) vserprintf("%02X", i)
 
 #ifdef BOOTMAGIC_ENABLE
@@ -494,10 +509,10 @@ int virtser_print_P(const char *progmem_s)
 }
 #endif
 
-void interpret_user_command(uint8_t const *buffer, uint8_t length)
+void interpret_user_command(uint8_t *buffer, uint8_t length)
 {
     uint8_t pos = 0;
-    char *str = buffer;
+    char *str = (char*)buffer;
     char *token;
     char *command;
     uint8_t argc = 0;
@@ -513,7 +528,7 @@ void interpret_user_command(uint8_t const *buffer, uint8_t length)
         argc++;
     }
 
-    memcpy_P(&user_command, user_command_table[pos++], sizeof(struct user_commant_t));
+    memcpy_P(&user_command, &user_command_table[pos++], sizeof(struct user_command_t));
 
     while (user_command.pfn_command)
     {
@@ -530,8 +545,13 @@ void interpret_user_command(uint8_t const *buffer, uint8_t length)
             }
         }
 
-        memcpy_P(&user_command, user_command_table[pos++], sizeof(struct user_commant_t));
+        memcpy_P(&user_command, &user_command_table[pos++], sizeof(struct user_command_t));
     }
+}
+
+uint8_t get_datagram_cmd(uint8_t const *buffer)
+{
+	return buffer[2];
 }
 
 void interpret_command(uint8_t const *buffer, uint8_t length)
@@ -704,4 +724,3 @@ void virtser_recv(uint8_t ucData)
 
     LedInfo2_Off();
 }
-#endif

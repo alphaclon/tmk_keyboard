@@ -10,6 +10,7 @@
 void sector_control_init(void);
 
 void sector_select(KeyboardSector sector);
+bool sector_is_enabled(KeyboardSector sector);
 
 void sector_toggle_selected(void);
 void sector_set_selected_on(void);
@@ -30,10 +31,10 @@ void sector_save_state(void);
 void sector_load_state(void);
 void sector_restore_state(void);
 
-void sector_set_sector_mode();
+void sector_set_sector_mode(void);
 void sector_set_custom_map(uint8_t custom_map);
 
-void sector_next_custom_map();
+void sector_next_custom_map(void);
 
 void sector_dump_state(void);
 void sector_dump_mask(uint8_t *mask);

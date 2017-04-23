@@ -57,11 +57,16 @@ const uint8_t PROGMEM keyledmap[MATRIX_ROWS][MATRIX_COLS] =
 				0D,  0C,  0B,  0A,                                05,  04,  03,  02,  01,  00,  0A
 );
 
-void getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col)
+bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col)
 {
     uint8_t pos = pgm_read_byte(&keyledmap[key_row][key_col]);
+
+    if (pos == 0xff)
+    	return false;
 
     *device_number = (pos & 0x80) >> 7;
     *row = (pos & 0x70) >> 4;
     *col = (pos & 0x0F);
+
+    return true;
 }

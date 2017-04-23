@@ -34,7 +34,7 @@ typedef struct _animation_interface animation_interface;
 extern animation_interface animation;
 
 void animation_prepare(bool set_all_to_black);
-void animation_postpare();
+void animation_postpare(void);
 
 void draw_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, RGB color);
 void draw_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, HSV color);

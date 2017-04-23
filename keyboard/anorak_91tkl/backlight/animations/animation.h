@@ -2,6 +2,7 @@
 #define KEYBOARD_ANORAK_SPLITBRAIN_BACKLIGHT_ANIMATIONS_ANIMATION_H_
 
 #include "matrix.h"
+#include "../color.h"
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -28,8 +29,8 @@ typedef enum animation_names_t animation_names;
 
 enum animation_hsv_names_t
 {
-	animation_hsv_1,
-	animation_hsv_2
+  animation_hsv_1,
+  animation_hsv_2
 };
 
 typedef enum animation_hsv_names_t animation_hsv_names;

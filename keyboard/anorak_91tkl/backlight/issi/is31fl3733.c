@@ -41,7 +41,7 @@ void is31fl3733_init(IS31FL3733 *device)
     is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
 
     // clear all LEDs
-    is31fl3733_disable_all_leds(device);
+    is31fl3733_led_disable_all(device);
     is31fl3733_fill(device, 0);
 
     is31fl3733_software_shutdown(device, false);

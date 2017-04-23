@@ -72,6 +72,7 @@ PROGRAM_CMD = avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B 0.1 -U flash
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
 	led.c \
+	crc8.c \
 	hooks.c \
 	utils.c \
 	matrix.c \

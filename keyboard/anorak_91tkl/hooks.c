@@ -9,6 +9,7 @@
 #include "twi/twi_config.h"
 #include "backlight/animations/animation.h"
 #include "backlight/backlight_91tkl.h"
+#include "backlight/issi/is31fl3733_91tkl.h"
 
 #if defined(LUFA_DEBUG_UART) || defined(DEBUG_ISSI_PERFORMANCE) || defined(DEBUG_OUTPUT_ENABLE)
 #include "uart/uart.h"
@@ -85,7 +86,7 @@ void hook_usb_suspend_entry(void)
 
 #ifdef BACKLIGHT_ENABLE
     stop_animation();
-    is31fl3733_91tkl_hardware_shutdown(true);
+    is31fl3733_91tkl_hardware_shutdown(&issi, true);
 #endif
 
 #ifdef SLEEP_LED_ENABLE
@@ -105,7 +106,7 @@ void hook_usb_wakeup(void)
     #ifdef BACKLIGHT_ENABLE
     //backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
     stop_animation();
-    is31fl3733_91tkl_hardware_shutdown(false);
+    is31fl3733_91tkl_hardware_shutdown(&issi, false);
 #endif
 
 #ifdef SLEEP_LED_ENABLE

@@ -75,9 +75,9 @@ uint8_t eeconfig_read_animation_current(void);
 void eeconfig_write_animation_current(uint8_t current);
 
 void eeconfig_read_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, uint8_t *v3);
-void eeconfig_write_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, uint8_t *v3);
+void eeconfig_write_animation_hsv_values(uint8_t hsv, uint8_t v1, uint8_t v2, uint8_t v3);
 
-uint8_t eeconfig_read_backlight_pwm_active_map();
+uint8_t eeconfig_read_backlight_pwm_active_map(void);
 void eeconfig_write_backlight_pwm_active_map(uint8_t map);
 
 void eeconfig_read_backlight_pwm_map(uint8_t map, uint8_t *buffer, bool read_lower);

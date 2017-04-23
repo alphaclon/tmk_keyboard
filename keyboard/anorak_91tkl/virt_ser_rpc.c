@@ -15,6 +15,7 @@
 #include "keyboard.h"
 #include "keycode.h"
 #include "keymap.h"
+#include "backlight.h"
 #include "backlight/eeconfig_backlight.h"
 #include "../../tmk_core/common/avr/xprintf.h"
 #include <inttypes.h>

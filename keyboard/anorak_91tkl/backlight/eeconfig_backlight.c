@@ -31,7 +31,7 @@ void eeconfig_backlight_init(void)
     eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION, 0);
 
     eeconfig_write_animation_current(0);
-    eeconfig_write_animation_hsv_values(0, 300, 250, 192);
+    eeconfig_write_animation_hsv_values(0, 255, 250, 192);
     eeconfig_write_animation_hsv_values(1, 130, 70, 194);
 #endif
 }
@@ -55,7 +55,7 @@ void eeconfig_read_backlight_sector_values(uint8_t sector, uint8_t *v1, uint8_t 
     *v3 = eeprom_read_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 2);
 }
 
-void eeconfig_write_backlight_sector_brightness(uint8_t sector, uint8_t v1, uint8_t v2, uint8_t v3)
+void eeconfig_write_backlight_sector_values(uint8_t sector, uint8_t v1, uint8_t v2, uint8_t v3)
 {
     //eeprom_write_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3), red);
     //eeprom_write_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + (sector * 3) + 1, green);
@@ -83,7 +83,7 @@ void eeconfig_read_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, u
     *v3 = eeprom_read_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3) + 2);
 }
 
-void eeconfig_write_animation_hsv_values(uint8_t hsv, uint8_t *v1, uint8_t *v2, uint8_t *v3)
+void eeconfig_write_animation_hsv_values(uint8_t hsv, uint8_t v1, uint8_t v2, uint8_t v3)
 {
     eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3), v1);
     eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION_HSV_1 + (hsv * 3) + 1, v2);
@@ -105,7 +105,7 @@ void eeconfig_read_backlight_pwm_map(uint8_t map, uint8_t *buffer, bool read_low
 {
 	uint16_t offset = (map*EECONFIG_BACKLIGHT_PWM_MAP_SIZE);
 	if (read_lower)
-		offset += EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF
+		offset += EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF;
 	eeprom_read_block(buffer, EECONFIG_BACKLIGHT_PWM_MAP + offset, EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF);
 }
 
@@ -113,7 +113,7 @@ void eeconfig_write_backlight_pwm_map(uint8_t map, uint8_t *buffer, bool write_l
 {
 	uint16_t offset = (map*EECONFIG_BACKLIGHT_PWM_MAP_SIZE);
 	if (write_lower)
-		offset += EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF
+		offset += EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF;
 	eeprom_write_block(buffer, EECONFIG_BACKLIGHT_PWM_MAP + offset, EECONFIG_BACKLIGHT_PWM_MAP_SIZE_HALF);
 }
 

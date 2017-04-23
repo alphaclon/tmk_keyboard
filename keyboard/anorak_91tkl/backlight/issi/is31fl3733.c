@@ -47,7 +47,7 @@ void is31fl3733_init(IS31FL3733 *device)
     is31fl3733_software_shutdown(device, false);
 }
 
-void is31fl3733_update_global_gonfiguration(IS31FL3733 *device)
+void is31fl3733_update_global_configuration(IS31FL3733 *device)
 {
     // Set global current control register.
     is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);

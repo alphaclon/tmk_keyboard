@@ -330,7 +330,7 @@ void sector_save_state()
                                                sector_levels[sector].v);
     }
 
-// TODO: custom_pwm_map = eeconfig_read_backlight_pwm_active_map();
+    eeconfig_write_backlight_pwm_active_map(custom_pwm_map);
 #endif
 }
 
@@ -346,6 +346,21 @@ void sector_load_custom_pwm_map(void)
     eeconfig_read_backlight_pwm_map(custom_pwm_map, buffer, true);
 
     sector_enable_all_leds();
+#endif
+}
+
+void sector_save_custom_pwm_map(void)
+{
+#ifdef BACKLIGHT_ENABLE
+    dprintf("sector_save_custom_pwm_map: %u\n", custom_pwm_map);
+
+    uint8_t *buffer;
+    buffer = is31fl3733_pwm_buffer(issi.upper->device);
+    eeconfig_write_backlight_pwm_map(custom_pwm_map, buffer, false);
+    buffer = is31fl3733_pwm_buffer(issi.lower->device);
+    eeconfig_write_backlight_pwm_map(custom_pwm_map, buffer, true);
+
+    eeconfig_write_backlight_pwm_active_map(custom_pwm_map);
 #endif
 }
 
@@ -413,6 +428,11 @@ void sector_set_custom_map(uint8_t custom_map)
     custom_pwm_map = custom_map;
     has_custom_pwm_map = (custom_pwm_map < EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
     sector_restore_state();
+}
+
+uint8_t sector_get_custom_map(void)
+{
+	return custom_pwm_map;
 }
 
 void sector_next_custom_map()

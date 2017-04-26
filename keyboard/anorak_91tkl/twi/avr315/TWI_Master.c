@@ -111,6 +111,46 @@ unsigned char TWI_Get_State_Info(void)
     return (TWI_state); // Return error state.
 }
 
+/*************************************************************************
+  Issues a start condition and sends address and transfer direction.
+  return 0 = device accessible, 1= failed to access device
+*************************************************************************/
+unsigned char TWI_detect(unsigned char slave_address)
+{
+    uint8_t twst;
+
+    if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
+        return 1;
+
+    // send START condition
+    TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
+
+    // wait until transmission completed
+    while (!(TWCR & (1 << TWINT)))
+        ;
+
+    // check value of TWI Status Register. Mask prescaler bits.
+    twst = TW_STATUS & 0xF8;
+    if ((twst != TW_START) && (twst != TW_REP_START))
+        return 1;
+
+    // send device address
+    TWDR = slave_address;
+    TWCR = (1 << TWINT) | (1 << TWEN);
+
+    // wail until transmission completed and ACK/NACK has been received
+    while (!(TWCR & (1 << TWINT)))
+        ;
+
+    // check value of TWI Status Register. Mask prescaler bits.
+    twst = TW_STATUS & 0xF8;
+    if ((twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK))
+        return 1;
+
+    return 0;
+
+} /* i2c_start */
+
 /****************************************************************************
 Call this function to send a prepared message. The first byte must contain the slave address and the
 read/write bit. Consecutive bytes contain the data to be sent, or empty locations for data to be read

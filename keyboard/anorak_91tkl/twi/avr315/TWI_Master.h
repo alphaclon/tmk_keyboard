@@ -84,6 +84,7 @@ extern union TWI_statusReg TWI_statusReg;
 void TWI_Master_Initialise(void);
 unsigned char TWI_Transceiver_Busy(void);
 unsigned char TWI_Get_State_Info(void);
+unsigned char TWI_detect(unsigned char slave_address);
 void TWI_write_byte(unsigned char slave_address, const unsigned char data_byte);
 void TWI_write_byte_to_register(unsigned char slave_address, unsigned char register_address,
                                 const unsigned char data_byte);

@@ -20,6 +20,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_rgb_upper.device = &device_upper;
 
     device_upper.gcc = 128;
+    device_upper.is_master = true;
     device_upper.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
     device_upper.pfn_i2c_read_reg = &i2c_read_reg;
     device_upper.pfn_i2c_write_reg = &i2c_write_reg;
@@ -33,6 +34,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_rgb_lower.device = &device_lower;
 
     device_lower.gcc = 128;
+    device_upper.is_master = false;
     device_lower.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_VCC);
     device_lower.pfn_i2c_read_reg = &i2c_read_reg;
     device_lower.pfn_i2c_write_reg = &i2c_write_reg;

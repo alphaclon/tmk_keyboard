@@ -33,8 +33,11 @@ void sector_restore_state(void);
 
 void sector_set_sector_mode(void);
 void sector_set_custom_map(uint8_t custom_map);
+uint8_t sector_get_custom_map(void);
 
 void sector_next_custom_map(void);
+
+void sector_save_custom_pwm_map(void);
 
 void sector_dump_state(void);
 void sector_dump_mask(uint8_t *mask);

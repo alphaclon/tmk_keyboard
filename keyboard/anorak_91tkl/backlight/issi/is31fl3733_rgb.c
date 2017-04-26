@@ -3,9 +3,9 @@
 
 void is31fl3733_rgb_init(IS31FL3733_RGB *device)
 {
-    device->offsets.r = 0;
-    device->offsets.g = 2;
-    device->offsets.b = 1;
+    device->offsets.r = 1;
+    device->offsets.g = 0;
+    device->offsets.b = 2;
 
     is31fl3733_init(device->device);
 }

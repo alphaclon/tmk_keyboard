@@ -107,10 +107,12 @@ struct IS31FL3733Device
 {
     /// Address on I2C bus.
     uint8_t address;
+    /// Configuration register
+    uint8_t cr;
     /// Global Current Control value. Iout = (840 / Rext) * (GCC / 256). Rext = 20 kOhm, typically.
     uint8_t gcc;
-    /// Configure as clock master device
-    bool master;
+    // This device is the master
+    bool is_master;
     /// LED matrix enabled.
     uint8_t leds[IS31FL3733_LED_ENABLE_SIZE];
     /// LED matrix brightness.
@@ -133,10 +135,15 @@ typedef struct IS31FL3733Device IS31FL3733;
 
 /// Init LED matrix for normal operation.
 void is31fl3733_init(IS31FL3733 *device);
-void is31fl3733_update_global_configuration(IS31FL3733 *device);
 
-void is31fl3733_software_shutdown(IS31FL3733 *device, bool enabled);
-void is31fl3733_hardware_shutdown(IS31FL3733 *device, bool enabled);
+void is31fl3733_update_global_current_control(IS31FL3733 *device);
+void is31fl3733_set_resistor_values(IS31FL3733 *device, uint8_t swpur, uint8_t cspdr);
+
+void is31fl3733_write_interrupt_mask_register(IS31FL3733 *device, uint8_t imr);
+uint8_t is31fl3733_read_interrupt_status_register(IS31FL3733 *device);
+
+void is31fl3733_software_shutdown(IS31FL3733 *device, bool enable);
+void is31fl3733_hardware_shutdown(IS31FL3733 *device, bool enable);
 
 /// Update LED matrix with internal buffer values.
 void is31fl3733_update(IS31FL3733 *device);
@@ -150,7 +157,17 @@ void is31fl3733_set_led(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enable)
 /// Enable/disable LED. Brightness level is not changed.
 void is31fl3733_set_led_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enabled);
 
+// Detect open or short states of LEDs
+// --> Sets all LEDs to enabled and all PWM values to 0x01
+// --> Changes global current control register to 0x01
+void is31fl3733_detect_led_open_short_states(IS31FL3733 *device);
+// Read LED short states and store them into the led buffer
+void is31fl3733_read_led_short_states(IS31FL3733 *device);
+// Read LED open states and store them into the led buffer
+void is31fl3733_read_led_short_states(IS31FL3733 *device);
+
 void is31fl3733_led_disable_all(IS31FL3733 *device);
+void is31fl3733_led_enable_all(IS31FL3733 *device);
 void is31fl3733_enable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
 void is31fl3733_disable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
 

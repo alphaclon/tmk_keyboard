@@ -16,6 +16,7 @@
 #include "keycode.h"
 #include "keymap.h"
 #include "backlight.h"
+#include "keyboard_layout_json.h"
 #include "backlight/eeconfig_backlight.h"
 #include "../../tmk_core/common/avr/xprintf.h"
 #include <inttypes.h>
@@ -35,15 +36,27 @@
 #define DATAGRAM_USER_START '!'
 #define DATAGRAM_USER_STOP '\n'
 
-#define DATAGRAM_CMD_INFO 0x52
+#define DATAGRAM_CMD_SET_PWM_MODE 0x51
+#define DATAGRAM_CMD_SET_PWM_ROW 0x52
+#define DATAGRAM_CMD_UPDATE_PWM 0x53
+#define DATAGRAM_CMD_SAVE_PWM 0x54
+#define DATAGRAM_CMD_GET_PWM_MODE 0x55
+#define DATAGRAM_CMD_GET_PWM_ROW 0x56
 
-#define MAX_MSG_LENGTH 16
-#define VIRT_SER_PRINTF_BUFFER_SIZE 256
+#define MAX_MSG_LENGTH 32
+#define VIRT_SER_BUFFER_SIZE 256
 
 #define vserprint(s) xfprintf(&virtser_send, s)
 #define vserprintf(fmt, ...) xfprintf(&virtser_send, fmt, ##__VA_ARGS__)
 #define vserprintfln(fmt, ...) xfprintf(&virtser_send, fmt "\n", ##__VA_ARGS__)
 #define vserprintln(s) xfprintf(&virtser_send, s "\n")
+
+#undef print
+#define print(s) vserprintf(s)
+#undef print_dec
+#define print_dec(i) vserprintf("%u", i)
+#undef print_hex8
+#define print_hex8(i) vserprintf("%02X", i)
 
 uint16_t last_receive_ts = 0;
 uint8_t recv_buffer[MAX_MSG_LENGTH];
@@ -79,21 +92,188 @@ bool cmd_user_pwm(uint8_t argc, char **argv);
 bool cmd_user_rgb(uint8_t argc, char **argv);
 bool cmd_user_hsv(uint8_t argc, char **argv);
 bool cmd_user_sector(uint8_t argc, char **argv);
+bool cmd_user_debug_config(uint8_t argc, char **argv);
+bool cmd_user_keymap_config(uint8_t argc, char **argv);
+bool cmd_user_bootloader_jump(uint8_t argc, char **argv);
+bool cmd_user_eeprom_clear(uint8_t argc, char **argv);
+bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv);
+bool cmd_user_default_layer(uint8_t argc, char **argv);
+bool cmd_user_keymap_json(uint8_t argc, char **argv);
+bool cmd_user_test_issi(uint8_t argc, char **argv);
 
-const user_command user_command_table[] PROGMEM = {{"help", &cmd_user_help, "", "show help"},
-                                                   {"h", &cmd_user_help, "", "show help"},
-                                                   {"?", &cmd_user_help, "", "show help"},
-                                                   {"info", &cmd_user_info, "", "show info"},
-                                                   {"ram", &cmd_user_ram, "", "show free ram"},
-                                                   {"eeprom", &cmd_user_dump_eeprom, "", "dump eeprom"},
-                                                   {"issi", &cmd_user_init_issi, "", "init issi"},
-                                                   {"led", &cmd_user_led, "dev cs sw on", "enable/disable led"},
-                                                   {"pwm", &cmd_user_pwm, "dev cs sw bri", "set pwm"},
-                                                   {"rgb", &cmd_user_rgb, "dev row col r g b", "set rgb"},
-                                                   {"hsv", &cmd_user_hsv, "dev row col h s v", "set hsv"},
-                                                   {"sector", &cmd_user_sector, "selected [on [h s v]]", "set sector"},
-												   {"animation", &cmd_user_sector, "selected [on [c h s v]]", "set animation"},
-                                                   {"", 0, "", ""}};
+const user_command user_command_table[] PROGMEM = {
+    {"help", &cmd_user_help, "", "show help"},
+    {"h", &cmd_user_help, "", "show help"},
+    {"?", &cmd_user_help, "", "show help"},
+    {"info", &cmd_user_info, "", "show info"},
+    {"ram", &cmd_user_ram, "", "show free ram"},
+    {"eeprom", &cmd_user_dump_eeprom, "", "dump eeprom"},
+    {"dfeeprom", &cmd_user_eeprom_clear, "", "clear eeprom"},
+    {"bleeprom", &cmd_user_backlight_eeprom_clear, "", "clear backlight eeprom"},
+    {"sector", &cmd_user_sector, "selected [on [h s v]]", "set sector"},
+    {"animation", &cmd_user_sector, "selected [on [c h s v]]", "set animation"},
+    {"debug", &cmd_user_debug_config, "", "debug configuration"},
+    {"keymap", &cmd_user_keymap_config, "", "keymap configuration"},
+    {"keymap_json", &cmd_user_keymap_json, "", "keymap json"},
+    {"layer", &cmd_user_default_layer, "", "default layer"},
+    {"bootloader", &cmd_user_bootloader_jump, "", "jump to bootloader"},
+    {"issi", &cmd_user_test_issi, "", "test issi"},
+    {"led", &cmd_user_led, "dev cs sw on", "enable/disable led"},
+    {"pwm", &cmd_user_pwm, "dev cs sw bri", "set pwm"},
+    {"rgb", &cmd_user_rgb, "dev row col r g b", "set rgb"},
+    {"hsv", &cmd_user_hsv, "dev row col h s v", "set hsv"},
+    {"", 0, "", ""}};
+
+static IS31FL3733_RGB device_rgb_upper;
+static IS31FL3733_RGB device_rgb_lower;
+
+static IS31FL3733 device_upper;
+static IS31FL3733 device_lower;
+
+void dump_led_buffer(IS31FL3733 *device)
+{
+    uint8_t *led = is31fl3733_led_buffer(device);
+    vserprintf("led buffer");
+    for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
+    {
+        vserprintf("%u: ");
+        for (uint8_t cs = 0; cs < (IS31FL3733_CS / 8); ++cs)
+        {
+            vserprintf("%X ", led[sw * (IS31FL3733_CS / 8) + cs]);
+        }
+        vserprintf("\n");
+    }
+}
+
+void dump_args(uint8_t argc, char **argv)
+{
+    for (uint8_t i = 0; i < argc; i++)
+        vserprintf("%s ", argv[i]);
+    vserprintf("\n");
+}
+
+bool cmd_user_test_issi(uint8_t argc, char **argv)
+{
+    if (argc == 1 && strcmp_P(PSTR("detect"), argv[0]) == 0)
+    {
+        unsigned char slave_address;
+        unsigned char device_present;
+
+        slave_address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
+        vserprintf("upper device at 0x%X (GND/GND): ", slave_address);
+        device_present = TWI_detect(slave_address);
+        vserprintfln("%u", device_present);
+
+        slave_address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_VCC);
+        vserprintf("lower device at 0x%X (GND/VCC): ", slave_address);
+        device_present = TWI_detect(slave_address);
+        vserprintfln("%u", device_present);
+    }
+    else if (argc == 2 && strcmp_P(PSTR("init"), argv[0]) == 0)
+    {
+        if (atoi(argv[1]) == 0)
+        {
+            vserprintfln("init lower issi");
+            issi.lower = &device_rgb_lower;
+            device_rgb_lower.device = &device_lower;
+
+            device_lower.gcc = 128;
+            device_lower.is_master = false;
+            device_lower.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_VCC);
+            device_lower.pfn_i2c_read_reg = &i2c_read_reg;
+            device_lower.pfn_i2c_write_reg = &i2c_write_reg;
+            device_lower.pfn_i2c_read_reg8 = &i2c_read_reg8;
+            device_lower.pfn_i2c_write_reg8 = &i2c_write_reg8;
+            device_lower.pfn_hardware_enable = &sdb_hardware_enable_lower;
+
+            is31fl3733_rgb_init(issi.lower);
+        }
+        else
+        {
+            vserprintfln("init upper issi");
+            issi.upper = &device_rgb_upper;
+            device_rgb_upper.device = &device_upper;
+
+            device_upper.gcc = 128;
+            device_lower.is_master = true;
+            device_upper.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
+            device_upper.pfn_i2c_read_reg = &i2c_read_reg;
+            device_upper.pfn_i2c_write_reg = &i2c_write_reg;
+            device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
+            device_upper.pfn_i2c_write_reg8 = &i2c_write_reg8;
+            device_upper.pfn_hardware_enable = &sdb_hardware_enable_upper;
+
+            is31fl3733_rgb_init(issi.upper);
+        }
+    }
+    else if (argc == 2 && strcmp_P(PSTR("pwm"), argv[0]) == 0)
+    {
+        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+
+        uint8_t *pwm = is31fl3733_pwm_buffer(device);
+
+        vserprintf("pwm buffer");
+        for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
+        {
+            vserprintf("%u: ");
+            for (uint8_t cs = 0; cs < IS31FL3733_CS; ++cs)
+            {
+                vserprintf("%X ", pwm[sw * IS31FL3733_CS + cs]);
+            }
+            vserprintf("\n");
+        }
+    }
+    else if (argc == 2 && strcmp_P(PSTR("led"), argv[0]) == 0)
+    {
+        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+
+        dump_led_buffer(device);
+    }
+    else if (argc == 2 && strcmp_P(PSTR("open"), argv[0]) == 0)
+    {
+        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+
+        is31fl3733_detect_led_open_short_states(device);
+        is31fl3733_read_led_open_states(device);
+
+        dump_led_buffer(device);
+    }
+    else if (argc == 2 && strcmp_P(PSTR("short"), argv[0]) == 0)
+    {
+        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+
+        is31fl3733_detect_led_open_short_states(device);
+        is31fl3733_read_led_short_states(device);
+
+        dump_led_buffer(device);
+    }
+    else if (argc == 3 && strcmp_P(PSTR("gcc"), argv[0]) == 0)
+    {
+        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+
+        device->gcc = atoi(argv[2]);
+        vserprintfln("gcc: %u", device->gcc);
+        is31fl3733_update_global_current_control(device);
+    }
+    else if (argc == 3 && strcmp_P(PSTR("hsd"), argv[0]) == 0)
+    {
+        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+
+        bool enable = atoi(argv[2]);
+        vserprintfln("hsd: %u", enable);
+        is31fl3733_hardware_shutdown(device, enable);
+    }
+    else if (argc == 3 && strcmp_P(PSTR("ssd"), argv[0]) == 0)
+    {
+        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+
+        bool enable = atoi(argv[2]);
+        vserprintfln("ssd: %u", enable);
+        is31fl3733_software_shutdown(device, enable);
+    }
+
+    return true;
+}
 
 bool cmd_user_help(uint8_t argc, char **argv)
 {
@@ -117,68 +297,68 @@ bool cmd_user_help(uint8_t argc, char **argv)
 
 bool cmd_user_animation(uint8_t argc, char **argv)
 {
-	// [[selected on] | [c h s v]]
+    // [[selected on] | [c h s v]]
 
-	vserprintfln("animation: %u, running:%u", animation_current(), animation_is_running());
+    vserprintfln("animation: %u, running:%u", animation_current(), animation_is_running());
 
     if (argc == 0)
     {
-    	vserprintfln("\t delay:%u, duration:%u", animation.delay_in_ms, animation.duration_in_ms);
-    	vserprintfln("\t hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
-    	vserprintfln("\t hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
-    	vserprintfln("\t  rgb: r:%u, g:%u, b:%u", animation.rgb.r, animation.rgb.g, animation.rgb.b);
-    	return true;
+        vserprintfln("\t delay:%u, duration:%u", animation.delay_in_ms, animation.duration_in_ms);
+        vserprintfln("\t hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
+        vserprintfln("\t hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
+        vserprintfln("\t  rgb: r:%u, g:%u, b:%u", animation.rgb.r, animation.rgb.g, animation.rgb.b);
+        return true;
     }
 
     if (argc == 1 && strcmp_P(PSTR("save"), argv[0]) == 0)
     {
-    	vserprintfln("\t  save state");
-    	animation_save_state();
-    	return true;
+        vserprintfln("\t  save state");
+        animation_save_state();
+        return true;
     }
 
     if (argc == 1)
     {
-    	uint16_t delay_in_ms = atoi(argv[0]);
-    	animation_set_speed(delay_in_ms);
-    	return true;
+        uint16_t delay_in_ms = atoi(argv[0]);
+        animation_set_speed(delay_in_ms);
+        return true;
     }
 
     if (argc == 2)
     {
-    	uint8_t selected_animation = atoi(argv[0]);
-    	set_animation(selected_animation);
+        uint8_t selected_animation = atoi(argv[0]);
+        set_animation(selected_animation);
 
-    	bool run_animation = atoi(argv[1]);
-    	if (run_animation)
-    		start_animation();
-    	else
-    		stop_animation();
+        bool run_animation = atoi(argv[1]);
+        if (run_animation)
+            start_animation();
+        else
+            stop_animation();
 
-    	vserprintfln("animation: set:%u, running:%u", animation_current(), animation_is_running());
-    	return true;
+        vserprintfln("animation: set:%u, running:%u", animation_current(), animation_is_running());
+        return true;
     }
 
     if (argc >= 4)
     {
-    	uint8_t pos = atoi(argv[0]);
+        uint8_t pos = atoi(argv[0]);
 
         if (pos == 0)
         {
-        	animation.hsv.h = atoi(argv[1]);
-        	animation.hsv.s = atoi(argv[2]);
-        	animation.hsv.v = atoi(argv[3]);
+            animation.hsv.h = atoi(argv[1]);
+            animation.hsv.s = atoi(argv[2]);
+            animation.hsv.v = atoi(argv[3]);
         }
         else
         {
-        	animation.hsv2.h = atoi(argv[1]);
-        	animation.hsv2.s = atoi(argv[2]);
-        	animation.hsv2.v = atoi(argv[3]);
+            animation.hsv2.h = atoi(argv[1]);
+            animation.hsv2.s = atoi(argv[2]);
+            animation.hsv2.v = atoi(argv[3]);
         }
 
-    	vserprintfln("\t hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
-    	vserprintfln("\t hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
-    	return true;
+        vserprintfln("\t hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
+        vserprintfln("\t hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
+        return true;
     }
 
     return false;
@@ -188,21 +368,29 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 {
     // selected [on [h s v]]
 
-	vserprintf("sector ");
+    vserprintf("sector ");
 
     if (argc == 0)
     {
-    	vserprintfln(" state:");
-    	for (uint8_t s = 0; s < SECTOR_MAX; ++s)
-    		vserprintfln("\tsector %u: enabled:%u", s, sector_is_enabled(s));
-    	return true;
+        vserprintfln(" state:");
+        for (uint8_t s = 0; s < SECTOR_MAX; ++s)
+            vserprintfln("\tsector %u: enabled:%u", s, sector_is_enabled(s));
+        return true;
     }
 
     if (argc == 1 && strcmp_P(PSTR("save"), argv[0]) == 0)
     {
-    	vserprintfln("\n\t  save state");
-    	sector_save_state();
-    	return true;
+        vserprintfln("\n\t  save state");
+        sector_save_state();
+        return true;
+    }
+
+    if (argc == 2 && strcmp_P(PSTR("map"), argv[0]) == 0)
+    {
+    	uint8_t custom_map = atoi(argv[1]);
+        vserprintfln("\n\t  custom map %u", custom_map);
+        sector_set_custom_map(custom_map);
+        return true;
     }
 
     uint8_t selected_sector = atoi(argv[0]);
@@ -218,7 +406,8 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         sector_select(selected_sector);
         sector_set_selected(selected_sector_enabled);
 
-        vserprintfln("%u: enable:%u, enabled:%u", selected_sector, selected_sector_enabled, sector_is_enabled(selected_sector));
+        vserprintfln("%u: enable:%u, enabled:%u", selected_sector, selected_sector_enabled,
+                     sector_is_enabled(selected_sector));
     }
     if (argc >= 5)
     {
@@ -242,9 +431,9 @@ bool cmd_user_info(uint8_t argc, char **argv)
     vserprintf("\n\t- Anorak 91tkl - version -\n");
     vserprintf("DESC: " STR(DESCRIPTION) "\n");
     vserprintf("VID: " STR(VENDOR_ID) "(" STR(MANUFACTURER) ") "
-                                                               "PID: " STR(PRODUCT_ID) "(" STR(
-                                                                   PRODUCT) ") "
-                                                                            "VER: " STR(DEVICE_VER) "\n");
+                                                            "PID: " STR(PRODUCT_ID) "(" STR(
+                                                                PRODUCT) ") "
+                                                                         "VER: " STR(DEVICE_VER) "\n");
     vserprintf("BUILD: " STR(VERSION) " (" __TIME__ " " __DATE__ ")\n");
     return true;
 }
@@ -255,15 +444,198 @@ bool cmd_user_ram(uint8_t argc, char **argv)
     return true;
 }
 
+bool cmd_user_bootloader_jump(uint8_t argc, char **argv)
+{
+    bootloader_jump();
+    return true;
+}
+
+bool cmd_user_eeprom_clear(uint8_t argc, char **argv)
+{
+    vserprintfln("eeconfig clear");
+    eeconfig_init();
+    return true;
+}
+
+bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv)
+{
+    vserprintfln("backlight eeconfig clear");
+    eeconfig_backlight_init();
+    return true;
+}
+
+bool cmd_user_default_layer(uint8_t argc, char **argv)
+{
+#ifdef BOOTMAGIC_ENABLE
+    if (argc == 1 && strcmp_P(PSTR("save"), argv[0]) == 0)
+    {
+        if (debug_config.raw != eeconfig_read_debug())
+            eeconfig_write_debug(debug_config.raw);
+    }
+    else if (argc == 2 && strcmp_P(PSTR("set"), argv[0]) == 0)
+    {
+        uint8_t default_layer = atoi(argv[1]);
+
+        if (default_layer)
+        {
+            eeconfig_write_default_layer(default_layer);
+            default_layer_set((uint32_t)default_layer);
+        }
+        else
+        {
+            default_layer = eeconfig_read_default_layer();
+            default_layer_set((uint32_t)default_layer);
+        }
+    }
+    else
+    {
+        print("default_layer: ");
+        print_dec(eeconfig_read_default_layer());
+        print("\n");
+    }
+#endif
+    return true;
+}
+
+bool cmd_user_debug_config(uint8_t argc, char **argv)
+{
+#ifdef BOOTMAGIC_ENABLE
+    if (argc == 1 && strcmp_P(PSTR("save"), argv[0]) == 0)
+    {
+        if (debug_config.raw != eeconfig_read_debug())
+            eeconfig_write_debug(debug_config.raw);
+    }
+    else if (argc == 2)
+    {
+        if (strcmp_P(PSTR("enable"), argv[0]) == 0)
+        {
+            debug_config.enable = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("matrix"), argv[0]) == 0)
+        {
+            debug_config.matrix = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("keyboard"), argv[0]) == 0)
+        {
+            debug_config.keyboard = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("mouse"), argv[0]) == 0)
+        {
+            debug_config.mouse = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("raw"), argv[0]) == 0)
+        {
+            debug_config.raw = atoi(argv[1]);
+        }
+    }
+    else
+    {
+        print("debug_config.raw: ");
+        print_hex8(debug_config.raw);
+        print("\n");
+        print(".enable: ");
+        print_dec(debug_config.enable);
+        print("\n");
+        print(".matrix: ");
+        print_dec(debug_config.matrix);
+        print("\n");
+        print(".keyboard: ");
+        print_dec(debug_config.keyboard);
+        print("\n");
+        print(".mouse: ");
+        print_dec(debug_config.mouse);
+        print("\n");
+    }
+#endif
+    return true;
+}
+
+bool cmd_user_keymap_config(uint8_t argc, char **argv)
+{
+#ifdef BOOTMAGIC_ENABLE
+    if (argc == 1 && strcmp_P(PSTR("save"), argv[0]) == 0)
+    {
+        if (keymap_config.raw != eeconfig_read_keymap())
+            eeconfig_write_keymap(keymap_config.raw);
+    }
+    else if (argc == 2)
+    {
+        if (strcmp_P(PSTR("swap_control_capslock"), argv[0]) == 0)
+        {
+            keymap_config.swap_control_capslock = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("capslock_to_control"), argv[0]) == 0)
+        {
+            keymap_config.capslock_to_control = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("swap_lalt_lgui"), argv[0]) == 0)
+        {
+            keymap_config.swap_lalt_lgui = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("swap_ralt_rgui"), argv[0]) == 0)
+        {
+            keymap_config.swap_ralt_rgui = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("no_gui"), argv[0]) == 0)
+        {
+            keymap_config.no_gui = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("swap_grave_esc"), argv[0]) == 0)
+        {
+            keymap_config.swap_grave_esc = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("swap_backslash_backspace"), argv[0]) == 0)
+        {
+            keymap_config.swap_backslash_backspace = atoi(argv[1]);
+        }
+        else if (strcmp_P(PSTR("nkro"), argv[0]) == 0)
+        {
+            keymap_config.nkro = atoi(argv[1]);
+#ifdef NKRO_ENABLE
+            keyboard_nkro = keymap_config.nkro;
+#endif
+        }
+        else if (strcmp_P(PSTR("raw"), argv[0]) == 0)
+        {
+            keymap_config.raw = atoi(argv[1]);
+        }
+    }
+    else
+    {
+        print("keymap_config.raw: ");
+        print_hex8(keymap_config.raw);
+        print("\n");
+        print(".swap_control_capslock: ");
+        print_dec(keymap_config.swap_control_capslock);
+        print("\n");
+        print(".capslock_to_control: ");
+        print_dec(keymap_config.capslock_to_control);
+        print("\n");
+        print(".swap_lalt_lgui: ");
+        print_dec(keymap_config.swap_lalt_lgui);
+        print("\n");
+        print(".swap_ralt_rgui: ");
+        print_dec(keymap_config.swap_ralt_rgui);
+        print("\n");
+        print(".no_gui: ");
+        print_dec(keymap_config.no_gui);
+        print("\n");
+        print(".swap_grave_esc: ");
+        print_dec(keymap_config.swap_grave_esc);
+        print("\n");
+        print(".swap_backslash_backspace: ");
+        print_dec(keymap_config.swap_backslash_backspace);
+        print("\n");
+        print(".nkro: ");
+        print_dec(keymap_config.nkro);
+        print("\n");
+    }
+#endif
+    return true;
+}
+
 bool cmd_user_dump_eeprom(uint8_t argc, char **argv)
 {
-#undef print
-#define print(s) vserprintf(s)
-#undef print_dec
-#define print_dec(i) vserprintf("%u", i)
-#undef print_hex8
-#define print_hex8(i) vserprintf("%02X", i)
-
 #ifdef BOOTMAGIC_ENABLE
     print("default_layer: ");
     print_dec(eeconfig_read_default_layer());
@@ -331,7 +703,6 @@ bool cmd_user_dump_eeprom(uint8_t argc, char **argv)
     print("\n");
 #endif
 #endif
-
     return true;
 }
 
@@ -355,7 +726,7 @@ bool cmd_user_led(uint8_t argc, char **argv)
 
     vserprintfln("set led: dev:%u, cs:%u, sw:%u, on:%u", dev, cs, sw, on);
 
-    IS31FL3733 *device = (dev ? issi.lower->device : issi.upper->device);
+    IS31FL3733 *device = (dev == 0 ? issi.lower->device : issi.upper->device);
 
     is31fl3733_set_led(device, cs, sw, on);
     is31fl3733_update_led_enable(device);
@@ -375,7 +746,7 @@ bool cmd_user_pwm(uint8_t argc, char **argv)
 
     vserprintfln("set pwm: dev:%u, cs:%u, sw:%u, pwm:%u", dev, cs, sw, pwm);
 
-    IS31FL3733 *device = (dev ? issi.lower->device : issi.upper->device);
+    IS31FL3733 *device = (dev == 0 ? issi.lower->device : issi.upper->device);
 
     is31fl3733_set_pwm(device, cs, sw, pwm);
     is31fl3733_update_led_pwm(device);
@@ -399,7 +770,7 @@ bool cmd_user_rgb(uint8_t argc, char **argv)
 
     vserprintfln("set RGB: dev:%u, r:%u, c:%u, r:%u, g:%u, b:%u", dev, row, col, rgb.r, rgb.g, rgb.b);
 
-    IS31FL3733_RGB *device = (dev ? issi.lower : issi.upper);
+    IS31FL3733_RGB *device = (dev == 0 ? issi.lower : issi.upper);
 
     is31fl3733_rgb_set_pwm(device, row, col, rgb);
     is31fl3733_update_led_pwm(device->device);
@@ -423,7 +794,7 @@ bool cmd_user_hsv(uint8_t argc, char **argv)
 
     vserprintfln("set HSV: dev:%u, r:%u, c:%u, h:%u, s:%u, v:%u", dev, row, col, hsv.h, hsv.s, hsv.v);
 
-    IS31FL3733_RGB *device = (dev ? issi.lower : issi.upper);
+    IS31FL3733_RGB *device = (dev == 0 ? issi.lower : issi.upper);
 
     is31fl3733_hsv_set_pwm(device, row, col, hsv);
     is31fl3733_update_led_pwm(device->device);
@@ -431,7 +802,43 @@ bool cmd_user_hsv(uint8_t argc, char **argv)
     return true;
 }
 
-#if 0
+bool cmd_user_keymap_json(uint8_t argc, char **argv)
+{
+    __xprintf(&virtser_send, keyboard_layout_json);
+    return true;
+}
+
+bool cmd_user_keymap_led_map(uint8_t argc, char **argv)
+{
+    uint8_t row;
+    uint8_t col;
+    uint8_t dev;
+
+    vserprint("[");
+
+    for (uint8_t key_row = 0; key_row < MATRIX_ROWS; key_row++)
+    {
+        vserprint("[");
+
+        for (uint8_t key_col = 0; key_col < MATRIX_COLS; key_col++)
+        {
+            if (getLedPosByMatrixKey(key_row, key_col, &dev, &row, &col))
+            {
+                vserprintf("{kr:%u, kc:%u, d:%u, r:%u, c:%u},", key_row, key_col, dev, row, col);
+            }
+            else
+            {
+                vserprintf("{kr:%u, kc:%u, d:255, r:255, c:255},", key_row, key_col);
+            }
+        }
+
+        vserprint("],");
+    }
+
+    vserprintln("]");
+}
+
+
 void virtser_send_data(uint8_t const *data, uint8_t length)
 {
     // dprintf("send ");
@@ -441,6 +848,7 @@ void virtser_send_data(uint8_t const *data, uint8_t length)
         virtser_send(*data++);
 }
 
+#if 0
 /*
         %%       - print '%'
         %c       - character
@@ -513,7 +921,7 @@ int virtser_print_P(const char *progmem_s)
 void interpret_user_command(uint8_t *buffer, uint8_t length)
 {
     uint8_t pos = 0;
-    char *str = (char*)buffer;
+    char *str = (char *)buffer;
     char *token;
     char *command;
     uint8_t argc = 0;
@@ -535,14 +943,17 @@ void interpret_user_command(uint8_t *buffer, uint8_t length)
     {
         if (strcmp(user_command.cmd, command))
         {
+            vserprintfln("exec: %s", command);
+            dump_args(argc, argv);
+
             bool success = user_command.pfn_command(argc, argv);
             if (success)
             {
-                print("OK\n");
+                vserprintfln("OK");
             }
             else
             {
-                print("cmd failed!\n");
+                vserprintfln("cmd failed!");
             }
         }
 
@@ -550,9 +961,145 @@ void interpret_user_command(uint8_t *buffer, uint8_t length)
     }
 }
 
+void command_set_pwm_row(uint8_t const *buffer, uint8_t length)
+{
+    struct cmd_set_pwm_row
+    {
+        // start + len + cmd + payload + crc8
+        uint8_t start;
+        uint8_t len;
+        uint8_t cmd;
+        uint8_t dev;
+        uint8_t row;
+        uint8_t pwm[IS31FL3733_CS];
+    };
+
+    struct cmd_set_pwm_row *cmd = (struct cmd_set_pwm_row *)buffer;
+
+    if (cmd->len != IS31FL3733_CS + 3)
+    {
+        dprintf("invalid length: %d\n", cmd->len);
+        return;
+    }
+
+    IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
+    uint8_t *pwm_buffer = is31fl3733_pwm_buffer(IS31FL3733 * device);
+    memcpy(pwm_buffer+(cmd->row * IS31FL3733_CS), cmd->pwm, IS31FL3733_CS);
+}
+
+void command_update_pwm_row(uint8_t const *buffer, uint8_t length)
+{
+    struct cmd_update_pwm_row
+    {
+        // start + len + cmd + payload + crc8
+        uint8_t start;
+        uint8_t len;
+        uint8_t cmd;
+        uint8_t dev;
+    };
+
+    struct cmd_set_pwm_row *cmd = (struct cmd_set_pwm_row *)buffer;
+
+    if (cmd->len != 2)
+    {
+        dprintf("invalid length: %d\n", cmd->len);
+        return;
+    }
+
+    IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
+    is31fl3733_update_led_pwm(device);
+}
+
+void command_set_pwm_mode(uint8_t const *buffer, uint8_t length)
+{
+    struct cmd_update_pwm_row
+    {
+        // start + len + cmd + payload + crc8
+        uint8_t start;
+        uint8_t len;
+        uint8_t cmd;
+        uint8_t map;
+    };
+
+    struct cmd_set_pwm_row *cmd = (struct cmd_set_pwm_row *)buffer;
+
+    if (cmd->len != 2)
+    {
+        dprintf("invalid length: %d\n", cmd->len);
+        return;
+    }
+
+    vserprintfln("\n\t  custom map %u", cmd->map);
+    sector_set_custom_map(cmd->map);
+}
+
+void command_get_pwm_mode()
+{
+    struct cmd_get_pwm_mode
+    {
+        // start + len + cmd + payload + crc8
+        uint8_t start;
+        uint8_t len;
+        uint8_t cmd;
+        uint8_t map;
+        uint8_t crc;
+        uint8_t stop;
+    };
+
+    struct cmd_get_pwm_row *cmd = (struct cmd_get_pwm_row *)recv_buffer;
+
+    uint8_t payload_length = sizeof(struct cmd_get_pwm_mode) - 2;
+
+    cmd->start = DATAGRAM_START;
+    cmd->stop = DATAGRAM_START;
+    cmd->cmd = DATAGRAM_CMD_GET_PWM_MODE;
+    cmd->len = payload_length;
+    cmd->map = sector_get_custom_map();
+    cmd->crc = crc8_calc(recv_buffer, 0x2D, payload_length);
+
+    virtser_send_data(recv_buffer, sizeof(struct cmd_get_pwm_mode));
+}
+
+void command_get_pwm_row()
+{
+    struct cmd_get_pwm_row
+    {
+        // start + len + cmd + payload + crc8
+        uint8_t start;
+        uint8_t len;
+        uint8_t cmd;
+        uint8_t dev;
+        uint8_t row;
+        uint8_t pwm[IS31FL3733_CS];
+        uint8_t crc;
+        uint8_t stop;
+    };
+
+    struct cmd_get_pwm_row *cmd = (struct cmd_get_pwm_row *)recv_buffer;
+
+    IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
+    uint8_t *pwm_buffer = is31fl3733_pwm_buffer(IS31FL3733 * device);
+    memcpy(cmd->pwm, pwm_buffer+(cmd->row * IS31FL3733_CS), IS31FL3733_CS);
+
+    uint8_t payload_length = sizeof(struct cmd_get_pwm_mode) - 4;
+
+    cmd->start = DATAGRAM_START;
+    cmd->stop = DATAGRAM_START;
+    cmd->cmd = DATAGRAM_CMD_GET_PWM_MODE;
+    cmd->len = payload_length;
+    cmd->crc = crc8_calc(recv_buffer, 0x2D, payload_length);
+
+    virtser_send_data(recv_buffer, sizeof(struct cmd_get_pwm_mode));
+}
+
+void command_set_save_pwm(uint8_t const *buffer, uint8_t length)
+{
+	sector_save_custom_pwm_map();
+}
+
 uint8_t get_datagram_cmd(uint8_t const *buffer)
 {
-	return buffer[2];
+    return buffer[2];
 }
 
 void interpret_command(uint8_t const *buffer, uint8_t length)
@@ -560,9 +1107,39 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     uint8_t cmd = get_datagram_cmd(buffer);
     dprintf("cmd: %x %c, l:%u\n", cmd, cmd, length);
 
-    if (cmd == DATAGRAM_CMD_INFO)
+    if (cmd == DATAGRAM_CMD_SET_PWM_ROW)
     {
-        dprintf("recv info\n");
+        dprintf("recv set_pwm_row\n");
+        command_set_pwm_row(buffer, length);
+    }
+    else if (cmd == DATAGRAM_CMD_UPDATE_PWM)
+    {
+        dprintf("recv update_pwm\n");
+        command_update_pwm(buffer, length);
+    }
+    else if (cmd == DATAGRAM_CMD_SET_PWM_MODE)
+    {
+        dprintf("recv set_pwm_mode\n");
+        command_set_pwm_mode(buffer, length);
+    }
+    else if (cmd == DATAGRAM_CMD_SAVE_PWM)
+    {
+        dprintf("recv save_pwm\n");
+        command_save_pwm(buffer, length);
+    }
+    if (cmd == DATAGRAM_CMD_GET_PWM_ROW)
+    {
+        dprintf("recv get_pwm_row\n");
+        command_get_pwm_row(buffer, length);
+    }
+    else if (cmd == DATAGRAM_CMD_GET_PWM_MODE)
+    {
+        dprintf("recv get_pwm_mode\n");
+        command_get_pwm_mode(buffer, length);
+    }
+    else
+    {
+    	dprintf("recv unknown cmd: %u\n", cmd);
     }
 }
 
@@ -631,6 +1208,7 @@ void virtser_recv(uint8_t ucData)
 
         buffer_pos = 0;
 
+        // do not store the user command start byte
         // recv_buffer[buffer_pos] = ucData;
         // buffer_pos++;
 

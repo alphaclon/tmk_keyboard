@@ -1,8 +1,15 @@
 
 #include "backlight/issi/is31fl3733_91tkl.h"
+#include "backlight/issi/is31fl3733_twi.h"
+#include "backlight/issi/is31fl3733_sdb.h"
 #include "backlight/sector/sector_control.h"
 #include "backlight/animations/animation.h"
 #include "backlight/animations/animation_utils.h"
+#include "backlight/key_led_map.h"
+#include "twi/avr315/TWI_Master.h"
+#include "keymap.h"
+#include "action_layer.h"
+#include "bootloader.h"
 #include "config.h"
 #include "virtser.h"
 #include "util.h"
@@ -10,6 +17,7 @@
 #include "utils.h"
 #include "nfo_led.h"
 #include "timer.h"
+#include "host.h"
 #include "virt_ser_rpc.h"
 #include "eeconfig.h"
 #include "keyboard.h"
@@ -44,7 +52,6 @@
 #define DATAGRAM_CMD_GET_PWM_ROW 0x56
 
 #define MAX_MSG_LENGTH 32
-#define VIRT_SER_BUFFER_SIZE 256
 
 #define vserprint(s) xfprintf(&virtser_send, s)
 #define vserprintf(fmt, ...) xfprintf(&virtser_send, fmt, ##__VA_ARGS__)
@@ -208,7 +215,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     }
     else if (argc == 2 && strcmp_P(PSTR("pwm"), argv[0]) == 0)
     {
-        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         uint8_t *pwm = is31fl3733_pwm_buffer(device);
 
@@ -225,13 +232,13 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     }
     else if (argc == 2 && strcmp_P(PSTR("led"), argv[0]) == 0)
     {
-        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         dump_led_buffer(device);
     }
     else if (argc == 2 && strcmp_P(PSTR("open"), argv[0]) == 0)
     {
-        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         is31fl3733_detect_led_open_short_states(device);
         is31fl3733_read_led_open_states(device);
@@ -240,7 +247,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     }
     else if (argc == 2 && strcmp_P(PSTR("short"), argv[0]) == 0)
     {
-        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         is31fl3733_detect_led_open_short_states(device);
         is31fl3733_read_led_short_states(device);
@@ -249,7 +256,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     }
     else if (argc == 3 && strcmp_P(PSTR("gcc"), argv[0]) == 0)
     {
-        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         device->gcc = atoi(argv[2]);
         vserprintfln("gcc: %u", device->gcc);
@@ -257,7 +264,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     }
     else if (argc == 3 && strcmp_P(PSTR("hsd"), argv[0]) == 0)
     {
-        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         bool enable = atoi(argv[2]);
         vserprintfln("hsd: %u", enable);
@@ -265,7 +272,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     }
     else if (argc == 3 && strcmp_P(PSTR("ssd"), argv[0]) == 0)
     {
-        IS31FL3733 *device = (atoi(argv[1] == 0) ? issi.lower->device : issi.upper->device);
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         bool enable = atoi(argv[2]);
         vserprintfln("ssd: %u", enable);
@@ -550,6 +557,10 @@ bool cmd_user_debug_config(uint8_t argc, char **argv)
     return true;
 }
 
+#ifdef BOOTMAGIC_ENABLE
+extern keymap_config_t keymap_config;
+#endif
+
 bool cmd_user_keymap_config(uint8_t argc, char **argv)
 {
 #ifdef BOOTMAGIC_ENABLE
@@ -804,7 +815,7 @@ bool cmd_user_hsv(uint8_t argc, char **argv)
 
 bool cmd_user_keymap_json(uint8_t argc, char **argv)
 {
-    __xprintf(&virtser_send, keyboard_layout_json);
+    //__xprintf(&virtser_send, keyboard_layout_json);
     return true;
 }
 
@@ -836,6 +847,8 @@ bool cmd_user_keymap_led_map(uint8_t argc, char **argv)
     }
 
     vserprintln("]");
+
+    return true;
 }
 
 
@@ -983,7 +996,7 @@ void command_set_pwm_row(uint8_t const *buffer, uint8_t length)
     }
 
     IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
-    uint8_t *pwm_buffer = is31fl3733_pwm_buffer(IS31FL3733 * device);
+    uint8_t *pwm_buffer = is31fl3733_pwm_buffer(device);
     memcpy(pwm_buffer+(cmd->row * IS31FL3733_CS), cmd->pwm, IS31FL3733_CS);
 }
 
@@ -998,7 +1011,7 @@ void command_update_pwm_row(uint8_t const *buffer, uint8_t length)
         uint8_t dev;
     };
 
-    struct cmd_set_pwm_row *cmd = (struct cmd_set_pwm_row *)buffer;
+    struct cmd_update_pwm_row *cmd = (struct cmd_update_pwm_row *)buffer;
 
     if (cmd->len != 2)
     {
@@ -1012,7 +1025,7 @@ void command_update_pwm_row(uint8_t const *buffer, uint8_t length)
 
 void command_set_pwm_mode(uint8_t const *buffer, uint8_t length)
 {
-    struct cmd_update_pwm_row
+    struct cmd_set_pwm_row
     {
         // start + len + cmd + payload + crc8
         uint8_t start;
@@ -1033,7 +1046,7 @@ void command_set_pwm_mode(uint8_t const *buffer, uint8_t length)
     sector_set_custom_map(cmd->map);
 }
 
-void command_get_pwm_mode()
+void command_get_pwm_mode(uint8_t const *buffer, uint8_t length)
 {
     struct cmd_get_pwm_mode
     {
@@ -1046,7 +1059,7 @@ void command_get_pwm_mode()
         uint8_t stop;
     };
 
-    struct cmd_get_pwm_row *cmd = (struct cmd_get_pwm_row *)recv_buffer;
+    struct cmd_get_pwm_mode *cmd = (struct cmd_get_pwm_mode *)recv_buffer;
 
     uint8_t payload_length = sizeof(struct cmd_get_pwm_mode) - 2;
 
@@ -1060,7 +1073,7 @@ void command_get_pwm_mode()
     virtser_send_data(recv_buffer, sizeof(struct cmd_get_pwm_mode));
 }
 
-void command_get_pwm_row()
+void command_get_pwm_row(uint8_t const *buffer, uint8_t length)
 {
     struct cmd_get_pwm_row
     {
@@ -1078,10 +1091,10 @@ void command_get_pwm_row()
     struct cmd_get_pwm_row *cmd = (struct cmd_get_pwm_row *)recv_buffer;
 
     IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
-    uint8_t *pwm_buffer = is31fl3733_pwm_buffer(IS31FL3733 * device);
+    uint8_t *pwm_buffer = is31fl3733_pwm_buffer(device);
     memcpy(cmd->pwm, pwm_buffer+(cmd->row * IS31FL3733_CS), IS31FL3733_CS);
 
-    uint8_t payload_length = sizeof(struct cmd_get_pwm_mode) - 4;
+    uint8_t payload_length = sizeof(struct cmd_get_pwm_row) - 4;
 
     cmd->start = DATAGRAM_START;
     cmd->stop = DATAGRAM_START;
@@ -1089,12 +1102,17 @@ void command_get_pwm_row()
     cmd->len = payload_length;
     cmd->crc = crc8_calc(recv_buffer, 0x2D, payload_length);
 
-    virtser_send_data(recv_buffer, sizeof(struct cmd_get_pwm_mode));
+    virtser_send_data(recv_buffer, sizeof(struct cmd_get_pwm_row));
 }
 
-void command_set_save_pwm(uint8_t const *buffer, uint8_t length)
+void command_save_pwm(uint8_t const *buffer, uint8_t length)
 {
 	sector_save_custom_pwm_map();
+}
+
+void command_update_pwm(uint8_t const *buffer, uint8_t length)
+{
+	//sector_save_custom_pwm_map();
 }
 
 uint8_t get_datagram_cmd(uint8_t const *buffer)
@@ -1115,7 +1133,7 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     else if (cmd == DATAGRAM_CMD_UPDATE_PWM)
     {
         dprintf("recv update_pwm\n");
-        command_update_pwm(buffer, length);
+        command_update_pwm_row(buffer, length);
     }
     else if (cmd == DATAGRAM_CMD_SET_PWM_MODE)
     {
@@ -1181,7 +1199,7 @@ bool datagram_is_userdata_start(uint8_t ucData)
     return (ucData == DATAGRAM_USER_START && recv_status == recvStatusIdle);
 }
 
-void virtser_recv(uint8_t ucData)
+void virtser_recv_test(uint8_t ucData)
 {
     static uint8_t buffer_pos = 0;
     static uint8_t expected_length = 0;
@@ -1189,7 +1207,7 @@ void virtser_recv(uint8_t ucData)
     last_receive_ts = timer_read();
 
     LedInfo2_On();
-    // dprintf("recv: [%02X] s:%u\n", ucData, recv_status);
+    dprintf("recv: [%02X] s:%u\n", ucData, recv_status);
 
     if (datagram_is_data_start(ucData))
     {

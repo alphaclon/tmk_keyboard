@@ -76,8 +76,8 @@ void is31fl3733_91tkl_power_target(IS31FL3733_91TKL *device, uint16_t milliamper
     device->upper->device->gcc = 128;
     device->lower->device->gcc = 128;
 
-    is31fl3733_update_global_configuration(device->upper->device);
-    is31fl3733_update_global_configuration(device->lower->device);
+    is31fl3733_update_global_current_control(device->upper->device);
+    is31fl3733_update_global_current_control(device->lower->device);
 }
 
 bool is31fl3733_91tkl_initialized(void)

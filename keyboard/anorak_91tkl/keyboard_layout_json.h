@@ -4,6 +4,6 @@
 
 #include <avr/pgmspace.h>
 
-const char keyboard_layout_json[] PROGMEM;
+const char* keyboard_layout_json;
 
 #endif

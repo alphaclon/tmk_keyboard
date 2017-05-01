@@ -47,7 +47,7 @@ void backlight_set(uint8_t level)
     }
 }
 
-void fix_backlight_level()
+void fix_backlight_level(void)
 {
 #ifdef BACKLIGHT_ENABLE
     if (!eeconfig_backlight_is_enabled())

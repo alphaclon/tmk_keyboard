@@ -161,9 +161,9 @@ void is31fl3733_set_led_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool 
 // --> Sets all LEDs to enabled and all PWM values to 0x01
 // --> Changes global current control register to 0x01
 void is31fl3733_detect_led_open_short_states(IS31FL3733 *device);
-// Read LED short states and store them into the led buffer
-void is31fl3733_read_led_short_states(IS31FL3733 *device);
 // Read LED open states and store them into the led buffer
+void is31fl3733_read_led_open_states(IS31FL3733 *device);
+// Read LED short states and store them into the led buffer
 void is31fl3733_read_led_short_states(IS31FL3733 *device);
 
 void is31fl3733_led_disable_all(IS31FL3733 *device);

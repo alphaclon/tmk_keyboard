@@ -50,6 +50,7 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <util/delay.h>
+#include <compat/twi.h>
 
 #if defined(DEBUG_I2C)
 #include "debug.h"

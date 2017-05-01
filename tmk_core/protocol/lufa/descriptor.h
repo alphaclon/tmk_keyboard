@@ -71,6 +71,14 @@ typedef struct
     USB_Descriptor_Endpoint_t             Extrakey_INEndpoint;
 #endif
 
+#ifdef RAW_ENABLE
+    // Raw HID Interface
+    USB_Descriptor_Interface_t            Raw_Interface;
+    USB_HID_Descriptor_HID_t              Raw_HID;
+    USB_Descriptor_Endpoint_t             Raw_INEndpoint;
+    USB_Descriptor_Endpoint_t             Raw_OUTEndpoint;
+#endif
+
 #ifdef CONSOLE_ENABLE
     // Console HID Interface
     USB_Descriptor_Interface_t            Console_Interface;
@@ -86,8 +94,26 @@ typedef struct
     USB_Descriptor_Endpoint_t             NKRO_INEndpoint;
 #endif
 
+#ifdef MIDI_ENABLE
+      // MIDI Audio Control Interface
+      USB_Descriptor_Interface_t                Audio_ControlInterface;
+      USB_Audio_Descriptor_Interface_AC_t       Audio_ControlInterface_SPC;
+
+      // MIDI Audio Streaming Interface
+      USB_Descriptor_Interface_t                Audio_StreamInterface;
+      USB_MIDI_Descriptor_AudioInterface_AS_t   Audio_StreamInterface_SPC;
+      USB_MIDI_Descriptor_InputJack_t           MIDI_In_Jack_Emb;
+      USB_MIDI_Descriptor_InputJack_t           MIDI_In_Jack_Ext;
+      USB_MIDI_Descriptor_OutputJack_t          MIDI_Out_Jack_Emb;
+      USB_MIDI_Descriptor_OutputJack_t          MIDI_Out_Jack_Ext;
+      USB_Audio_Descriptor_StreamEndpoint_Std_t MIDI_In_Jack_Endpoint;
+      USB_MIDI_Descriptor_Jack_Endpoint_t       MIDI_In_Jack_Endpoint_SPC;
+      USB_Audio_Descriptor_StreamEndpoint_Std_t MIDI_Out_Jack_Endpoint;
+      USB_MIDI_Descriptor_Jack_Endpoint_t       MIDI_Out_Jack_Endpoint_SPC;
+#endif
+
 #ifdef VIRTSER_ENABLE
-    USB_Descriptor_Interface_Association_t   CDC_Interface_Association;
+        USB_Descriptor_Interface_Association_t   CDC_Interface_Association;
 
 	// CDC Control Interface
 	USB_Descriptor_Interface_t               CDC_CCI_Interface;
@@ -119,10 +145,16 @@ typedef struct
 #   define EXTRAKEY_INTERFACE       MOUSE_INTERFACE
 #endif
 
-#ifdef CONSOLE_ENABLE
-#   define CONSOLE_INTERFACE        (EXTRAKEY_INTERFACE + 1)
+#ifdef RAW_ENABLE
+#   define RAW_INTERFACE        	(EXTRAKEY_INTERFACE + 1)
 #else
-#   define CONSOLE_INTERFACE        EXTRAKEY_INTERFACE
+#   define RAW_INTERFACE        	EXTRAKEY_INTERFACE
+#endif
+
+#ifdef CONSOLE_ENABLE
+#   define CONSOLE_INTERFACE        (RAW_INTERFACE + 1)
+#else
+#   define CONSOLE_INTERFACE        RAW_INTERFACE
 #endif
 
 #ifdef NKRO_ENABLE
@@ -131,11 +163,18 @@ typedef struct
 #   define NKRO_INTERFACE           CONSOLE_INTERFACE
 #endif
 
-#ifdef VIRTSER_ENABLE
-#   define CCI_INTERFACE         (NKRO_INTERFACE + 1)
-#   define CDI_INTERFACE         (NKRO_INTERFACE + 2)
+#ifdef MIDI_ENABLE
+#   define AC_INTERFACE           (NKRO_INTERFACE + 1)
+#   define AS_INTERFACE           (NKRO_INTERFACE + 2)
 #else
-#   define CDI_INTERFACE         NKRO_INTERFACE
+#   define AS_INTERFACE           NKRO_INTERFACE
+#endif
+
+#ifdef VIRTSER_ENABLE
+#   define CCI_INTERFACE         (AS_INTERFACE + 1)
+#   define CDI_INTERFACE         (AS_INTERFACE + 2)
+#else
+#   define CDI_INTERFACE         AS_INTERFACE
 #endif
 
 /* nubmer of interfaces */
@@ -157,12 +196,19 @@ typedef struct
 #   define EXTRAKEY_IN_EPNUM        MOUSE_IN_EPNUM
 #endif
 
-#ifdef CONSOLE_ENABLE
-#   define CONSOLE_IN_EPNUM         (EXTRAKEY_IN_EPNUM + 1)
-#   define CONSOLE_OUT_EPNUM        (EXTRAKEY_IN_EPNUM + 1)
-//#   define CONSOLE_OUT_EPNUM        (EXTRAKEY_IN_EPNUM + 2)
+#ifdef RAW_ENABLE
+#   define RAW_IN_EPNUM         (EXTRAKEY_IN_EPNUM + 1)
+#   define RAW_OUT_EPNUM        (EXTRAKEY_IN_EPNUM + 2)
 #else
-#   define CONSOLE_OUT_EPNUM        EXTRAKEY_IN_EPNUM
+#   define RAW_OUT_EPNUM        EXTRAKEY_IN_EPNUM
+#endif
+
+#ifdef CONSOLE_ENABLE
+#   define CONSOLE_IN_EPNUM         (RAW_OUT_EPNUM + 1)
+//#   define CONSOLE_OUT_EPNUM        (RAW_OUT_EPNUM + 2)
+#   define CONSOLE_OUT_EPNUM        (RAW_OUT_EPNUM + 1)
+#else
+#   define CONSOLE_OUT_EPNUM        RAW_OUT_EPNUM
 #endif
 
 #ifdef NKRO_ENABLE
@@ -171,15 +217,25 @@ typedef struct
 #   define NKRO_IN_EPNUM            CONSOLE_OUT_EPNUM
 #endif
 
+#ifdef MIDI_ENABLE
+#   define MIDI_STREAM_IN_EPNUM     (NKRO_IN_EPNUM + 1)
+// #   define MIDI_STREAM_OUT_EPNUM    (NKRO_IN_EPNUM + 1)
+#   define MIDI_STREAM_OUT_EPNUM    (NKRO_IN_EPNUM + 2)
+#   define MIDI_STREAM_IN_EPADDR    (ENDPOINT_DIR_IN | MIDI_STREAM_IN_EPNUM)
+#   define MIDI_STREAM_OUT_EPADDR   (ENDPOINT_DIR_OUT | MIDI_STREAM_OUT_EPNUM)
+#else
+#   define MIDI_STREAM_OUT_EPNUM     NKRO_IN_EPNUM
+#endif
+
 #ifdef VIRTSER_ENABLE
-#   define CDC_NOTIFICATION_EPNUM   (NKRO_IN_EPNUM + 1)
-#   define CDC_IN_EPNUM		    (NKRO_IN_EPNUM + 2)
-#   define CDC_OUT_EPNUM		    (NKRO_IN_EPNUM + 3)
+#   define CDC_NOTIFICATION_EPNUM   (MIDI_STREAM_OUT_EPNUM + 1)
+#   define CDC_IN_EPNUM		    (MIDI_STREAM_OUT_EPNUM + 2)
+#   define CDC_OUT_EPNUM		    (MIDI_STREAM_OUT_EPNUM + 3)
 #   define CDC_NOTIFICATION_EPADDR        (ENDPOINT_DIR_IN | CDC_NOTIFICATION_EPNUM)
 #   define CDC_IN_EPADDR                  (ENDPOINT_DIR_IN | CDC_IN_EPNUM)
 #   define CDC_OUT_EPADDR                  (ENDPOINT_DIR_OUT | CDC_OUT_EPNUM)
 #else
-#   define CDC_OUT_EPNUM	NKRO_IN_EPNUM
+#   define CDC_OUT_EPNUM	MIDI_STREAM_OUT_EPNUM
 #endif
 
 #if defined(__AVR_ATmega32U2__) && CDC_OUT_EPNUM > 4
@@ -189,10 +245,13 @@ typedef struct
 #define KEYBOARD_EPSIZE             8
 #define MOUSE_EPSIZE                8
 #define EXTRAKEY_EPSIZE             8
+#define RAW_EPSIZE              	32
 #define CONSOLE_EPSIZE              32
 #define NKRO_EPSIZE                 32
+#define MIDI_STREAM_EPSIZE          64
 #define CDC_NOTIFICATION_EPSIZE     8
 #define CDC_EPSIZE                  16
+
 
 uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                                     const uint8_t wIndex,

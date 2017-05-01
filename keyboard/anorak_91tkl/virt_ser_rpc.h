@@ -1,7 +1,5 @@
 #ifndef KEYBOARD_ANORAK_91TKL_VIRT_SER_RPC_H_
 #define KEYBOARD_ANORAK_91TKL_VIRT_SER_RPC_H_
 
-#include <stdbool.h>
-
 
 #endif /* KEYBOARD_ANORAK_91TKL_VIRT_SER_RPC_H_ */

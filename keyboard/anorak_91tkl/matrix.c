@@ -129,6 +129,8 @@ uint8_t matrix_scan(void)
 				matrix[row] = matrix_debouncing[row];
 				debouncing[row] = false;
 
+				virtser_send(row+'A');
+
 #ifdef BACKLIGHT_ENABLE
 				animation_typematrix_row(row, matrix[row]);
 #endif

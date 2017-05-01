@@ -61,8 +61,6 @@
 #include "descriptor.h"
 #include "lufa.h"
 
-#include "nfo_led.h"
-
 //#define LUFA_DEBUG
 
 #ifdef LUFA_DEBUG_UART
@@ -674,6 +672,72 @@ int8_t sendchar(uint8_t c)
 #endif
 
 /*******************************************************************************
+ * VIRTUAL SERIAL
+ ******************************************************************************/
+
+#ifdef VIRTSER_ENABLE
+void virtser_init(void)
+{
+	println("virtser_init");
+    cdc_device.State.ControlLineStates.DeviceToHost = CDC_CONTROL_LINE_IN_DSR;
+    CDC_Device_SendControlLineStateChange(&cdc_device);
+}
+
+void virtser_recv(uint8_t c) __attribute__((weak));
+void virtser_recv(uint8_t c)
+{
+	println("virtser_recv");
+    virtser_send(c);
+    // Ignore by default
+}
+
+void virtser_task(void)
+{
+    uint16_t count = CDC_Device_BytesReceived(&cdc_device);
+    uint8_t ch;
+    if (count)
+    {
+        ch = CDC_Device_ReceiveByte(&cdc_device);
+        virtser_recv(ch);
+    }
+}
+
+void virtser_send(const uint8_t byte)
+{
+	println("virtser_send");
+
+    uint8_t timeout = 255;
+    uint8_t ep = Endpoint_GetCurrentEndpoint();
+
+    if (cdc_device.State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR)
+    {
+        /* IN packet */
+        Endpoint_SelectEndpoint(cdc_device.Config.DataINEndpoint.Address);
+
+        if (!Endpoint_IsEnabled() || !Endpoint_IsConfigured())
+        {
+            Endpoint_SelectEndpoint(ep);
+            return;
+        }
+
+        while (timeout-- && !Endpoint_IsReadWriteAllowed())
+            _delay_us(40);
+
+        Endpoint_Write_8(byte);
+        CDC_Device_Flush(&cdc_device);
+
+        if (Endpoint_IsINReady())
+        {
+            Endpoint_ClearIN();
+        }
+
+        Endpoint_SelectEndpoint(ep);
+    }
+}
+#endif
+
+
+/*******************************************************************************
  * main
  ******************************************************************************/
 
@@ -847,61 +911,3 @@ __attribute__((weak)) void hook_usb_wakeup(void)
     keyboard_led_stats = _led_stats;
 }
 
-/*******************************************************************************
- * VIRTUAL SERIAL
- ******************************************************************************/
-
-#ifdef VIRTSER_ENABLE
-void virtser_init(void)
-{
-    cdc_device.State.ControlLineStates.DeviceToHost = CDC_CONTROL_LINE_IN_DSR;
-    CDC_Device_SendControlLineStateChange(&cdc_device);
-}
-
-void virtser_recv(uint8_t c) __attribute__((weak));
-void virtser_recv(uint8_t c)
-{
-    // Ignore by default
-}
-
-void virtser_task(void)
-{
-    uint16_t count = CDC_Device_BytesReceived(&cdc_device);
-    uint8_t ch;
-    if (count)
-    {
-        ch = CDC_Device_ReceiveByte(&cdc_device);
-        virtser_recv(ch);
-    }
-}
-void virtser_send(const uint8_t byte)
-{
-    uint8_t timeout = 255;
-    uint8_t ep = Endpoint_GetCurrentEndpoint();
-
-    if (cdc_device.State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR)
-    {
-        /* IN packet */
-        Endpoint_SelectEndpoint(cdc_device.Config.DataINEndpoint.Address);
-
-        if (!Endpoint_IsEnabled() || !Endpoint_IsConfigured())
-        {
-            Endpoint_SelectEndpoint(ep);
-            return;
-        }
-
-        while (timeout-- && !Endpoint_IsReadWriteAllowed())
-            _delay_us(40);
-
-        Endpoint_Write_8(byte);
-        CDC_Device_Flush(&cdc_device);
-
-        if (Endpoint_IsINReady())
-        {
-            Endpoint_ClearIN();
-        }
-
-        Endpoint_SelectEndpoint(ep);
-    }
-}
-#endif

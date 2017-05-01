@@ -1,6 +1,12 @@
 #include "is31fl3733.h"
 #include <string.h>
 
+#ifdef DEBUG_ISSI
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
+
 void is31fl3733_select_page(IS31FL3733 *device, uint8_t page)
 {
     // Unlock Command Register.

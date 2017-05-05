@@ -94,19 +94,19 @@ USB_ClassInfo_CDC_Device_t cdc_device =
     .DataINEndpoint         =
     {
       .Address		= CDC_IN_EPADDR,
-      .Size		= CDC_EPSIZE,
+      .Size		    = CDC_EPSIZE,
       .Banks		= 1,
     },
     .DataOUTEndpoint	    =
     {
       .Address		= CDC_OUT_EPADDR,
-      .Size		= CDC_EPSIZE,
+      .Size		    = CDC_EPSIZE,
       .Banks		= 1,
     },
     .NotificationEndpoint   =
     {
       .Address		= CDC_NOTIFICATION_EPADDR,
-      .Size		= CDC_NOTIFICATION_EPSIZE,
+      .Size		    = CDC_NOTIFICATION_EPSIZE,
       .Banks		= 1,
     },
   },
@@ -306,9 +306,10 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 #endif
 
 #ifdef VIRTSER_ENABLE
-    ConfigSuccess &= Endpoint_ConfigureEndpoint(CDC_NOTIFICATION_EPADDR, EP_TYPE_INTERRUPT, CDC_NOTIFICATION_EPSIZE, ENDPOINT_BANK_SINGLE);
-    ConfigSuccess &= Endpoint_ConfigureEndpoint(CDC_OUT_EPADDR, EP_TYPE_BULK, CDC_EPSIZE, ENDPOINT_BANK_SINGLE);
-    ConfigSuccess &= Endpoint_ConfigureEndpoint(CDC_IN_EPADDR, EP_TYPE_BULK, CDC_EPSIZE, ENDPOINT_BANK_SINGLE);
+    ConfigSuccess &= CDC_Device_ConfigureEndpoints(&cdc_device);
+    //ConfigSuccess &= Endpoint_ConfigureEndpoint(CDC_NOTIFICATION_EPADDR, EP_TYPE_INTERRUPT, CDC_NOTIFICATION_EPSIZE, ENDPOINT_BANK_SINGLE);
+    //ConfigSuccess &= Endpoint_ConfigureEndpoint(CDC_OUT_EPADDR, EP_TYPE_BULK, CDC_EPSIZE, ENDPOINT_BANK_SINGLE);
+    //ConfigSuccess &= Endpoint_ConfigureEndpoint(CDC_IN_EPADDR, EP_TYPE_BULK, CDC_EPSIZE, ENDPOINT_BANK_SINGLE);
 #endif
 }
 

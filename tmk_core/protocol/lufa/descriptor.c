@@ -275,7 +275,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
     .ManufacturerStrIndex   = 0x01,
     .ProductStrIndex        = 0x02,
-    .SerialNumStrIndex      = NO_DESCRIPTOR,
+    .SerialNumStrIndex      = NO_DESCRIPTOR, //USE_INTERNAL_SERIAL
 
     .NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
 };
@@ -890,15 +890,15 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
         case DTYPE_String:
             switch (DescriptorIndex )
             {
-                case 0x00:
+                case STRING_ID_Language:
                     Address = &LanguageString;
                     Size    = pgm_read_byte(&LanguageString.Header.Size);
                     break;
-                case 0x01:
+                case STRING_ID_Manufacturer:
                     Address = &ManufacturerString;
                     Size    = pgm_read_byte(&ManufacturerString.Header.Size);
                     break;
-                case 0x02:
+                case STRING_ID_Product:
                     Address = &ProductString;
                     Size    = pgm_read_byte(&ProductString.Header.Size);
                     break;

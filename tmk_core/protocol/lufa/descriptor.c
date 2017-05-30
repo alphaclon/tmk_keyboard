@@ -890,15 +890,15 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
         case DTYPE_String:
             switch (DescriptorIndex )
             {
-                case STRING_ID_Language:
+                case 0x00:
                     Address = &LanguageString;
                     Size    = pgm_read_byte(&LanguageString.Header.Size);
                     break;
-                case STRING_ID_Manufacturer:
+                case 0x01:
                     Address = &ManufacturerString;
                     Size    = pgm_read_byte(&ManufacturerString.Header.Size);
                     break;
-                case STRING_ID_Product:
+                case 0x02:
                     Address = &ProductString;
                     Size    = pgm_read_byte(&ProductString.Header.Size);
                     break;

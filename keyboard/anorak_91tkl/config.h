@@ -53,8 +53,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define NO_DEBUG
 //#define NO_DEBUG_LEDS
 
-#define USE_XFPRINTF 1
-
 /* disable print */
 //#define NO_PRINT
 

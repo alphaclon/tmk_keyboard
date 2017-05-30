@@ -687,7 +687,7 @@ void virtser_init(void)
 void virtser_recv(uint8_t c) __attribute__((weak));
 void virtser_recv(uint8_t c)
 {
-	println("virtser_recv");
+	//println("virtser_recv");
     virtser_send(c);
     // Ignore by default
 }
@@ -705,7 +705,7 @@ void virtser_task(void)
 
 void virtser_send(const uint8_t byte)
 {
-	println("virtser_send");
+	//println("virtser_send");
 
     uint8_t timeout = 255;
     uint8_t ep = Endpoint_GetCurrentEndpoint();

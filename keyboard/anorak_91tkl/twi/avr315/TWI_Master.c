@@ -123,6 +123,8 @@ unsigned char TWI_detect(unsigned char slave_address)
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return 1;
 
+    dprintf("TWI_detect 0x%X\n", slave_address);
+
     // send START condition
     TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
 
@@ -134,6 +136,8 @@ unsigned char TWI_detect(unsigned char slave_address)
     twst = TW_STATUS & 0xF8;
     if ((twst != TW_START) && (twst != TW_REP_START))
         return 1;
+
+    dprintf("TWI_detect start\n");
 
     // send device address
     TWDR = slave_address;
@@ -147,6 +151,8 @@ unsigned char TWI_detect(unsigned char slave_address)
     twst = TW_STATUS & 0xF8;
     if ((twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK))
         return 1;
+
+    dprintf("TWI_detect ack\n");
 
     return 0;
 
@@ -164,10 +170,7 @@ void TWI_write_byte(unsigned char slave_address, unsigned char data_byte)
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("TWI_write_byte\n");
-
-    if (!tx_queue_is_empty())
-        ; // Wait until tx queue is empty
+    dprintf("TWI_write_byte slv:%X d:%02X\n", slave_address, data_byte);
 
     while (!tx_queue_is_empty())
         ; // Wait until tx queue is empty
@@ -203,7 +206,7 @@ void TWI_write_byte_to_register(unsigned char slave_address, unsigned char regis
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("TWI_write_byte_to_register %u %u\n", register_address, data_byte);
+    dprintf("TWI_write_byte_to_register slv:%X reg:%X d:%02X\n", slave_address, register_address, data_byte);
 
     while (!tx_queue_is_empty())
         ; // Wait until tx queue is empty
@@ -239,7 +242,7 @@ void TWI_write_data_to_register(unsigned char slave_address, unsigned char regis
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("TWI_write_data_to_register l:%u\n", data_length);
+    dprintf("TWI_write_data_to_register slv:%X reg:%X l:%u d:%02X\n", slave_address, register_address, data_length, data[0]);
 
     while (!tx_queue_is_empty())
         ; // Wait until tx queue is empty

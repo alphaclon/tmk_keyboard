@@ -1,4 +1,5 @@
 #include "is31fl3733.h"
+#include <util/delay.h>
 #include <string.h>
 
 #ifdef DEBUG_ISSI
@@ -29,25 +30,48 @@ void is31fl3733_write_paged_reg(IS31FL3733 *device, uint16_t reg_addr, uint8_t r
     device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(reg_addr), &reg_value, sizeof(uint8_t));
 }
 
+uint8_t is31fl3733_read_paged_reg(IS31FL3733 *device, uint16_t reg_addr)
+{
+  uint8_t reg_value;
+
+  // Select register page.
+  is31fl3733_select_page (device, IS31FL3733_GET_PAGE(reg_addr));
+  // Read value from register.
+  device->pfn_i2c_read_reg (device->address, IS31FL3733_GET_ADDR(reg_addr), &reg_value, sizeof(uint8_t));
+  // Return register value.
+  return reg_value;
+}
+
 void is31fl3733_init(IS31FL3733 *device)
 {
     memset(device->leds, 0, IS31FL3733_LED_ENABLE_SIZE);
     memset(device->mask, 0, IS31FL3733_LED_ENABLE_SIZE);
     memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
 
-    device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
+    //device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
+    device->cr = IS31FL3733_CR_SSD;
 
-    is31fl3733_software_shutdown(device, true);
     is31fl3733_hardware_shutdown(device, false);
+    dprintf("hsd\n");
 
-    // Clear software reset in configuration register.
-    is31fl3733_write_paged_reg(device, IS31FL3733_CR, IS31FL3733_CR_SSD);
-    // Set master/slave bit
-    is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr);
+    // Read reset register to reset device.
+    is31fl3733_read_paged_reg(device, IS31FL3733_RESET);
+    dprintf("reset\n");
+
     // Set global current control register.
     is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
+    dprintf("gcc\n");
 
-    is31fl3733_software_shutdown(device, false);
+
+    is31fl3733_update(device);
+
+    // Clear software reset in configuration register.
+    // Set master/slave bit
+    is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr);
+    dprintf("ssd\n");
+
+    //dprintf("ssd\n");
+    //is31fl3733_software_shutdown(device, false);
 }
 
 void is31fl3733_update_global_current_control(IS31FL3733 *device)
@@ -56,9 +80,11 @@ void is31fl3733_update_global_current_control(IS31FL3733 *device)
     is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
 }
 
-void is31fl3733_set_resistor_values(IS31FL3733 *device, uint8_t swpur, uint8_t cspdr)
+void is31fl3733_set_resistor_values(IS31FL3733 *device, IS31FL3733_RESISTOR swpur, IS31FL3733_RESISTOR cspdr)
 {
+	// Write resistor value to SWPUR register.
     is31fl3733_write_paged_reg(device, IS31FL3733_SWPUR, swpur);
+    // Write resistor value to CSPDR register.
     is31fl3733_write_paged_reg(device, IS31FL3733_CSPDR, cspdr);
 }
 
@@ -110,6 +136,8 @@ uint8_t is31fl3733_read_interrupt_status_register(IS31FL3733 *device)
 
 void is31fl3733_update_led_enable(IS31FL3733 *device)
 {
+	dprintf("issi: up led %X\n", device->address);
+
     // Select IS31FL3733_LEDONOFF register page.
     is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDONOFF));
 
@@ -145,10 +173,13 @@ void is31fl3733_detect_led_open_short_states(IS31FL3733 *device)
 	is31fl3733_write_paged_reg(device, IS31FL3733_GCC, 0x01);
 
 	is31fl3733_led_enable_all(device);
-	is31fl3733_fill(device, 0x01);
+	is31fl3733_fill(device, 0x7f);
 	is31fl3733_update(device);
 
+	is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr & ~IS31FL3733_CR_OSD);
     is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr | IS31FL3733_CR_OSD);
+
+    _delay_ms(5);
 }
 
 void is31fl3733_read_led_open_states(IS31FL3733 *device)
@@ -191,6 +222,8 @@ void is31fl3733_read_led_short_states(IS31FL3733 *device)
 
 void is31fl3733_update_led_pwm(IS31FL3733 *device)
 {
+	dprintf("issi: up pwm %X\n", device->address);
+
     // Select IS31FL3733_LEDPWM register page.
     is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDPWM));
 
@@ -225,21 +258,27 @@ void is31fl3733_set_led(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enabled
 {
     uint8_t offset;
 
-    // TODO: fix this
 
-    // Calculate LED offset in RAM buffer.
-    offset = sw * IS31FL3733_CS + cs;
-    uint8_t mask_byte = offset / 8;
-    uint8_t mask_bit = (1 << (offset % 8));
 
-    if (enabled)
-    {
-        device->leds[mask_byte] |= mask_bit;
-    }
-    else
-    {
-        device->leds[mask_byte] &= ~(mask_bit);
-    }
+	// Set state of individual LED.
+	// Calculate LED bit offset.
+	offset = (sw << 1) + (cs / 8);
+
+	dprintf("set_led: dev:%X, cs:%u, sw:%u, on:%u -> offset: %u", device->address, cs, sw, enabled, offset);
+
+	// Update state of LED in internal buffer.
+	if (enabled)
+	{
+		// Set bit for selected LED.
+		device->leds[offset] |= 0x01 << (cs % 8);
+	}
+	else
+	{
+		// Clear bit for selected LED.
+		device->leds[offset] &= ~(0x01 << (cs % 8));
+	}
+
+	dprintf(" leds: %u\n", device->leds[offset]);
 }
 
 void is31fl3733_set_led_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enabled)

@@ -13,6 +13,14 @@
 uint8_t i2c_write_reg(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *buffer, uint8_t count)
 {
     TWI_write_data_to_register(i2c_addr, reg_addr, buffer, count);
+
+    unsigned char state = TWI_NO_STATE;
+    state = TWI_Get_State_Info();
+	if (state != TWI_NO_STATE)
+	{
+		xprintf("i2c_write_reg: write byte failed: 0x%X\n", state);
+	}
+
     return count;
 }
 
@@ -70,6 +78,14 @@ uint8_t i2c_read_no_errorhandling_reg(uint8_t i2c_addr, uint8_t reg_addr, uint8_
 uint8_t i2c_write_reg8(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data)
 {
     TWI_write_byte_to_register(i2c_addr, reg_addr, data);
+
+    unsigned char state = TWI_NO_STATE;
+    state = TWI_Get_State_Info();
+	if (state != TWI_NO_STATE)
+	{
+		xprintf("i2c_write_reg8: write byte failed: 0x%X\n", state);
+	}
+
     return 1;
 }
 

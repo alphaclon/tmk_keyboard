@@ -81,6 +81,7 @@ SRC += \
 	keymap_91tkl.c \
 	virt_ser_rpc.c \
 	uart/uart.c \
+	mini-snprintf.c \
 	twi/avr315/TWI_Master.c \
 	twi/avr315/twi_transmit_queue.c \
 	backlight/issi/is31fl3733.c \
@@ -167,7 +168,7 @@ BOOTMAGIC_ENABLE = yes      # Virtual DIP switch configuration(+1000)
 EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
 CONSOLE_ENABLE = yes        # Console for debug(+400)
 COMMAND_ENABLE = yes        # Commands for debug and configuration
-NKRO_ENABLE = yes           # USB Nkey Rollover - not yet supported in LUFA
+#NKRO_ENABLE = yes           # USB Nkey Rollover - not yet supported in LUFA
 #BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
@@ -190,14 +191,14 @@ debug-on: EXTRAFLAGS += -DDEBUG
 debug-on: EXTRAFLAGS += -DDEBUG_OUTPUT_ENABLE
 #debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
 debug-on: EXTRAFLAGS += -DDEBUG_ISSI
-#debug-on: EXTRAFLAGS += -DDEBUG_I2C
+debug-on: EXTRAFLAGS += -DDEBUG_I2C
 #debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
 debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
 debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 debug-on: EXTRAFLAGS += -DDEBUG_VIRTSER
-debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all

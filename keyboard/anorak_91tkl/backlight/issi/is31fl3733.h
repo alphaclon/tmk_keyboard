@@ -101,6 +101,33 @@
 #define IS31FL3733_CR_BEN (0x02)         /// Auto breath mode enable bit.
 #define IS31FL3733_CR_SSD (0x01)         /// Software shutdown bit.
 
+/// LED state enumeration.
+typedef enum {
+  IS31FL3733_LED_STATE_OFF = 0x00, ///< LED is off.
+  IS31FL3733_LED_STATE_ON  = 0x01  ///< LED is on.
+} IS31FL3733_LED_STATE;
+
+/// LED status enumeration.
+typedef enum {
+  IS31FL3733_LED_STATUS_NORMAL  = 0x00, ///< Normal LED status.
+  IS31FL3733_LED_STATUS_OPEN    = 0x01, ///< LED is open.
+  IS31FL3733_LED_STATUS_SHORT   = 0x02, ///< LED is short.
+  IS31FL3733_LED_STATUS_UNKNOWN = 0x03  ///< Unknown LED status.
+} IS31FL3733_LED_STATUS;
+
+/// Pull-Up or Pull-Down resistor value.
+typedef enum {
+  IS31FL3733_RESISTOR_OFF = 0x00, ///< No resistor.
+  IS31FL3733_RESISTOR_500 = 0x01, ///< 0.5 kOhm pull-up resistor.
+  IS31FL3733_RESISTOR_1K  = 0x02, ///< 1.0 kOhm pull-up resistor.
+  IS31FL3733_RESISTOR_2K  = 0x03, ///< 2.0 kOhm pull-up resistor.
+  IS31FL3733_RESISTOR_4K  = 0x04, ///< 4.0 kOhm pull-up resistor.
+  IS31FL3733_RESISTOR_8K  = 0x05, ///< 8.0 kOhm pull-up resistor.
+  IS31FL3733_RESISTOR_16K = 0x06, ///< 16 kOhm pull-up resistor.
+  IS31FL3733_RESISTOR_32K = 0x07  ///< 32 kOhm pull-up resistor.
+} IS31FL3733_RESISTOR;
+
+
 /** IS31FL3733 structure.
   */
 struct IS31FL3733Device
@@ -137,7 +164,7 @@ typedef struct IS31FL3733Device IS31FL3733;
 void is31fl3733_init(IS31FL3733 *device);
 
 void is31fl3733_update_global_current_control(IS31FL3733 *device);
-void is31fl3733_set_resistor_values(IS31FL3733 *device, uint8_t swpur, uint8_t cspdr);
+void is31fl3733_set_resistor_values(IS31FL3733 *device, IS31FL3733_RESISTOR swpur, IS31FL3733_RESISTOR cspdr);
 
 void is31fl3733_write_interrupt_mask_register(IS31FL3733 *device, uint8_t imr);
 uint8_t is31fl3733_read_interrupt_status_register(IS31FL3733 *device);

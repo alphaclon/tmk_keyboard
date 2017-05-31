@@ -1,6 +1,7 @@
 
 #include "is31fl3733_twi.h"
 #include "../../twi/twi_config.h"
+#include "debug.h"
 #include <util/delay.h>
 #include <stdbool.h>
 

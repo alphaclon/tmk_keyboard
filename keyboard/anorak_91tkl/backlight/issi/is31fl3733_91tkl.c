@@ -98,8 +98,8 @@ void is31fl3733_91tkl_power_target(IS31FL3733_91TKL *device, uint16_t milliamper
 {
 	dprintf("issi: power target %u\n", milliampere);
 
-    uint16_t gcc2 = 5 + (2560 * milliampere) / 6720;
-    gcc2 /= 2;
+    uint32_t gcc2 = 5 + (2560L * (milliampere * 10L)) / 6720L;
+    gcc2 /= 20;
 
 	dprintf("issi: gcc %u\n", gcc2);
 

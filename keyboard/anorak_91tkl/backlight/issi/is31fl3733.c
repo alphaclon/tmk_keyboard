@@ -381,7 +381,7 @@ void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness)
     for (i = 0; i < IS31FL3733_LED_PWM_SIZE; i++)
     {
     	offset = i / 8;
-        uint8_t mask_bit = (0x01 << (i % 8));
+        mask_bit = (0x01 << (i % 8));
 
         if (device->mask[offset] & mask_bit)
         {

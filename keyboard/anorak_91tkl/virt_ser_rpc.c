@@ -128,6 +128,7 @@ bool cmd_user_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_default_layer(uint8_t argc, char **argv);
 bool cmd_user_keymap_json(uint8_t argc, char **argv);
+bool cmd_user_keymap_led_map(uint8_t argc, char **argv);
 bool cmd_user_test_issi(uint8_t argc, char **argv);
 
 const user_command user_command_table[] PROGMEM = {
@@ -142,6 +143,7 @@ const user_command user_command_table[] PROGMEM = {
     {"debug", &cmd_user_debug_config, 0, "debug configuration"},
     {"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
     {"keymap_json", &cmd_user_keymap_json, 0, "keymap json"},
+	{"ledmap", &cmd_user_keymap_led_map, 0, "row/col to led pos map"},
     {"layer", &cmd_user_default_layer, 0, "default layer"},
     {"bootloader", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
     {"issi", &cmd_user_test_issi, 0, "test issi"},
@@ -165,6 +167,23 @@ void dump_led_buffer(IS31FL3733 *device)
             vserprintf("%02X ", led[sw * (IS31FL3733_CS / 8) + cs]);
         }
         vserprintf("\n");
+    }
+}
+
+void dump_led_buffer_inverted(IS31FL3733 *device)
+{
+    uint8_t *led = is31fl3733_led_buffer(device);
+    vserprintf("led buffer\n");
+    for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
+    {
+        vserprintf("%02u: ", sw);
+        for (uint8_t cs = 0; cs < (IS31FL3733_CS / 8); ++cs)
+        {
+            vserprintf("0x%02X ", (uint8_t)~(led[sw * (IS31FL3733_CS / 8) + cs]));
+            dprintf("b%b ", (uint8_t)~(led[sw * (IS31FL3733_CS / 8) + cs]));
+        }
+        vserprintf("\n");
+        dprintf("\n");
     }
 }
 
@@ -223,7 +242,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         unsigned char slave_address;
         unsigned char device_present;
 
-        // 0 = device accessible, 1= failed to access device
+        // TWI_detect: 0 = device accessible, 1= failed to access device
 
         slave_address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
         vserprintf("issi: upper device at 0x%X (GND, GND): ", slave_address);
@@ -235,6 +254,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         device_present = TWI_detect(slave_address);
         vserprintfln("%u", device_present ? 0 : 1);
 
+        /*
         for (uint8_t i = 0; i <= 3; i++)
         {
         	for (uint8_t j = 0; j <= 3; j++)
@@ -245,6 +265,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
 				vserprintfln("%u", device_present ? 0 : 1);
         	}
         }
+        */
 
         found = true;
     }
@@ -263,10 +284,38 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         dump_pwm_buffer(device);
         found = true;
     }
+    else if (argc == 3 && strcmp_P(argv[0], PSTR("pwm")) == 0)
+    {
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
+        uint8_t pwm = atoi(argv[2]);
+
+        is31fl3733_fill(device, pwm);
+        is31fl3733_update_led_pwm(device);
+
+        found = true;
+    }
     else if (argc == 2 && strcmp_P(argv[0], PSTR("led")) == 0)
     {
         IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
         dump_led_buffer(device);
+        found = true;
+    }
+    else if (argc == 3 && strcmp_P(argv[0], PSTR("led")) == 0)
+    {
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
+        bool on = atoi(argv[2]);
+
+        if (on)
+        {
+        	is31fl3733_led_enable_all(device);
+        }
+        else
+        {
+        	is31fl3733_led_disable_all(device);
+        }
+
+        is31fl3733_update_led_enable(device);
+
         found = true;
     }
     else if (argc == 2 && strcmp_P(argv[0], PSTR("open")) == 0)
@@ -277,6 +326,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         is31fl3733_read_led_open_states(device);
 
         dump_led_buffer(device);
+        dump_led_buffer_inverted(device);
 
         found = true;
     }
@@ -295,7 +345,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     {
         uint16_t power = atoi(argv[1]);
         vserprintfln("issi: power: %u", power);
-        is31fl3733_91tkl_power_target(power);
+        is31fl3733_91tkl_power_target(&issi, power);
 
         found = true;
     }
@@ -326,6 +376,17 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         bool enable = atoi(argv[2]);
         vserprintfln("issi: ssd: %u", enable);
         is31fl3733_software_shutdown(device, enable);
+
+        found = true;
+    }
+    else if (argc == 4 && strcmp_P(argv[0], PSTR("res")) == 0)
+    {
+        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
+
+        uint8_t swpur = atoi(argv[2]);
+        uint8_t cspdr = atoi(argv[3]);
+
+        is31fl3733_set_resistor_values(device, swpur, cspdr);
 
         found = true;
     }
@@ -498,19 +559,19 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 {
     // save | map # | # 0|1 | # h s v
 
-    vserprintf("sector ");
+    vserprintf("sectors ");
 
     if (argc == 0)
     {
-        vserprintfln(" state:");
+        vserprintfln(" ");
         for (uint8_t s = 0; s < SECTOR_MAX; ++s)
-            vserprintfln("  sector %u: enabled:%u", s, sector_is_enabled(s));
+            vserprintfln("%u:%u ", s, sector_is_enabled(s));
         return true;
     }
 
     if (argc == 1 && strcmp_P(argv[0], PSTR("save")) == 0)
     {
-        vserprintfln("\n  save state");
+        vserprintfln("saved");
         sector_save_state();
         return true;
     }
@@ -518,7 +579,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
     if (argc == 2 && strcmp_P(argv[0], PSTR("map")) == 0)
     {
     	uint8_t custom_map = atoi(argv[1]);
-        vserprintfln("\n  custom map %u", custom_map);
+        vserprintfln("map:%u", custom_map);
         sector_set_custom_map(custom_map);
         return true;
     }
@@ -528,7 +589,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 
     if (argc >= 1)
     {
-        vserprintfln("%u: enabled:%u", selected_sector, sector_is_enabled(selected_sector));
+        vserprintfln("%u:%u", selected_sector, sector_is_enabled(selected_sector));
     }
     if (argc >= 2)
     {
@@ -536,7 +597,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         sector_select(selected_sector);
         sector_set_selected(selected_sector_enabled);
 
-        vserprintfln("%u: enable:%u, enabled:%u", selected_sector, selected_sector_enabled,
+        vserprintfln(" %u:%u %u", selected_sector, selected_sector_enabled,
                      sector_is_enabled(selected_sector));
     }
     if (argc >= 5)
@@ -550,7 +611,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         sector_selected_set_hsv_color(hsv);
         is31fl3733_91tkl_update_led_pwm(&issi);
 
-        vserprintfln("%u: set HSV: h:%u, s:%u, v:%u", selected_sector, hsv.h, hsv.s, hsv.v);
+        vserprintfln("%u: h:%u, s:%u, v:%u", selected_sector, hsv.h, hsv.s, hsv.v);
     }
 
     return true;
@@ -856,11 +917,11 @@ bool cmd_user_keymap_led_map(uint8_t argc, char **argv)
         {
             if (getLedPosByMatrixKey(key_row, key_col, &dev, &row, &col))
             {
-                vserprintf("{kr:%u, kc:%u, d:%u, r:%u, c:%u},", key_row, key_col, dev, row, col);
+                vserprintf("{\"kr\":%u,\"kc\":%u,\"d\":%u,\"r\":%u,\"c\":%u},", key_row, key_col, dev, row, col);
             }
             else
             {
-                vserprintf("{kr:%u, kc:%u, d:255, r:255, c:255},", key_row, key_col);
+                vserprintf("{\"kr\":%u,\"kc\":%u,\"d\":255,\"r:\"255,\"c\":255},", key_row, key_col);
             }
         }
 
@@ -875,8 +936,7 @@ bool cmd_user_keymap_led_map(uint8_t argc, char **argv)
 
 bool cmd_user_keymap_json(uint8_t argc, char **argv)
 {
-    //__xprintf(&virtser_send, keyboard_layout_json);
-	cmd_user_keymap_led_map(argc, argv);
+	virtser_print_P(keyboard_layout_json);
     return true;
 }
 

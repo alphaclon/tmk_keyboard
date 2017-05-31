@@ -151,11 +151,7 @@ const user_command user_command_table[] PROGMEM = {
     {"hsv", &cmd_user_hsv, "dev row col h s v", "set hsv"},
     {0, 0, 0, 0}};
 
-static IS31FL3733_RGB device_rgb_upper;
-static IS31FL3733_RGB device_rgb_lower;
 
-static IS31FL3733 device_upper;
-static IS31FL3733 device_lower;
 
 void dump_led_buffer(IS31FL3733 *device)
 {
@@ -167,6 +163,21 @@ void dump_led_buffer(IS31FL3733 *device)
         for (uint8_t cs = 0; cs < (IS31FL3733_CS / 8); ++cs)
         {
             vserprintf("%02X ", led[sw * (IS31FL3733_CS / 8) + cs]);
+        }
+        vserprintf("\n");
+    }
+}
+
+void dump_pwm_buffer(IS31FL3733 *device)
+{
+    uint8_t *pwm = is31fl3733_pwm_buffer(device);
+    vserprintf("issi: pwm buffer\n");
+    for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
+    {
+        vserprintf("%02u: ", sw);
+        for (uint8_t cs = 0; cs < IS31FL3733_CS; ++cs)
+        {
+            vserprintf("%02X ", pwm[sw * IS31FL3733_CS + cs]);
         }
         vserprintf("\n");
     }
@@ -235,93 +246,27 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         	}
         }
 
-        for (uint8_t i = 80; i < 100; i++)
-        {
-        	slave_address = i << 1;
-        	vserprintf("issi: device at 0x%X: ", slave_address);
-			device_present = TWI_detect(slave_address);
-			vserprintfln("%u", device_present ? 0 : 1);
-        }
-
         found = true;
     }
-    else if (argc == 2 && strcmp_P(argv[0], PSTR("init")) == 0)
+    else if (argc == 1 && strcmp_P(argv[0], PSTR("init")) == 0)
     {
-        if (atoi(argv[1]) == 0)
-        {
-            vserprintfln("init lower issi");
+		vserprintfln("init is31fl3733_91tkl");
 
-            issi.lower = &device_rgb_lower;
-            device_rgb_lower.device = &device_lower;
+		is31fl3733_91tkl_init(&issi);
+		is31fl3733_91tkl_dump(&issi);
 
-            device_lower.gcc = 128;
-            device_lower.is_master = false;
-            device_lower.address = IS31FL3733_I2C_ADDR(ADDR_VCC, ADDR_GND);
-            device_lower.pfn_i2c_read_reg = &i2c_read_reg;
-            device_lower.pfn_i2c_write_reg = &i2c_write_reg;
-            device_lower.pfn_i2c_read_reg8 = &i2c_read_reg8;
-            device_lower.pfn_i2c_write_reg8 = &i2c_write_reg8;
-            device_lower.pfn_hardware_enable = &sdb_hardware_enable_lower;
-
-            is31fl3733_rgb_init(issi.lower);
-
-            found = true;
-        }
-        else if (atoi(argv[1]) == 1)
-        {
-            vserprintfln("init upper issi");
-
-            issi.upper = &device_rgb_upper;
-            device_rgb_upper.device = &device_upper;
-
-            device_upper.gcc = 128;
-            device_upper.is_master = true;
-            device_upper.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
-            device_upper.pfn_i2c_read_reg = &i2c_read_reg;
-            device_upper.pfn_i2c_write_reg = &i2c_write_reg;
-            device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
-            device_upper.pfn_i2c_write_reg8 = &i2c_write_reg8;
-            device_upper.pfn_hardware_enable = &sdb_hardware_enable_upper;
-
-            is31fl3733_rgb_init(issi.upper);
-
-            found = true;
-        }
-        else
-        {
-            vserprintfln("init is31fl3733_91tkl");
-
-            is31fl3733_91tkl_init(&issi);
-            is31fl3733_91tkl_dump(&issi);
-
-            found = true;
-        }
+		found = true;
     }
     else if (argc == 2 && strcmp_P(argv[0], PSTR("pwm")) == 0)
     {
         IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
-
-        uint8_t *pwm = is31fl3733_pwm_buffer(device);
-
-        vserprintf("issi: pwm buffer\n");
-        for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
-        {
-            vserprintf("%02u: ", sw);
-            for (uint8_t cs = 0; cs < IS31FL3733_CS; ++cs)
-            {
-                vserprintf("%02X ", pwm[sw * IS31FL3733_CS + cs]);
-            }
-            vserprintf("\n");
-        }
-
+        dump_pwm_buffer(device);
         found = true;
     }
     else if (argc == 2 && strcmp_P(argv[0], PSTR("led")) == 0)
     {
         IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
-
         dump_led_buffer(device);
-
         found = true;
     }
     else if (argc == 2 && strcmp_P(argv[0], PSTR("open")) == 0)
@@ -343,6 +288,14 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         is31fl3733_read_led_short_states(device);
 
         dump_led_buffer(device);
+
+        found = true;
+    }
+    else if (argc == 2 && strcmp_P(argv[0], PSTR("power")) == 0)
+    {
+        uint16_t power = atoi(argv[1]);
+        vserprintfln("issi: power: %u", power);
+        is31fl3733_91tkl_power_target(power);
 
         found = true;
     }

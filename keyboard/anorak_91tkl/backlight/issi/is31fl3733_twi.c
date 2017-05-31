@@ -4,12 +4,6 @@
 #include <util/delay.h>
 #include <stdbool.h>
 
-#if defined(DEBUG_I2C)
-#include "debug.h"
-#else
-#include "nodebug.h"
-#endif
-
 uint8_t i2c_write_reg(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *buffer, uint8_t count)
 {
     TWI_write_data_to_register(i2c_addr, reg_addr, buffer, count);

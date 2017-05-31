@@ -1,8 +1,14 @@
 
 #include "is31fl3733_91tkl.h"
-
 #include "is31fl3733_sdb.h"
 #include "is31fl3733_twi.h"
+
+#ifdef DEBUG_ISSI
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
+
 
 IS31FL3733_91TKL issi;
 
@@ -22,10 +28,19 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_upper.gcc = 128;
     device_upper.is_master = true;
     device_upper.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
+
+#ifdef DEBUG_ISSI
     device_upper.pfn_i2c_read_reg = &i2c_read_reg;
     device_upper.pfn_i2c_write_reg = &i2c_write_reg;
     device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
     device_upper.pfn_i2c_write_reg8 = &i2c_write_reg8;
+#else
+    device_upper.pfn_i2c_read_reg = &i2c_read_reg;
+    device_upper.pfn_i2c_write_reg = &i2c_queued_write_reg;
+    device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
+    device_upper.pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
+#endif
+
     device_upper.pfn_hardware_enable = &sdb_hardware_enable_upper;
 
     is31fl3733_rgb_init(device->upper);
@@ -36,10 +51,19 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_lower.gcc = 128;
     device_upper.is_master = false;
     device_lower.address = IS31FL3733_I2C_ADDR(ADDR_VCC, ADDR_GND);
+
+#ifdef DEBUG_ISSI
     device_lower.pfn_i2c_read_reg = &i2c_read_reg;
     device_lower.pfn_i2c_write_reg = &i2c_write_reg;
     device_lower.pfn_i2c_read_reg8 = &i2c_read_reg8;
     device_lower.pfn_i2c_write_reg8 = &i2c_write_reg8;
+#else
+    device_lower.pfn_i2c_read_reg = &i2c_read_reg;
+    device_lower.pfn_i2c_write_reg = &i2c_queued_write_reg;
+    device_lower.pfn_i2c_read_reg8 = &i2c_read_reg8;
+    device_lower.pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
+#endif
+
     device_lower.pfn_hardware_enable = &sdb_hardware_enable_lower;
 
     is31fl3733_rgb_init(device->lower);
@@ -72,9 +96,15 @@ void is31fl3733_91tkl_fill_hsv_masked(IS31FL3733_91TKL *device, HSV color)
 
 void is31fl3733_91tkl_power_target(IS31FL3733_91TKL *device, uint16_t milliampere)
 {
-    // TODO: set a value
-    device->upper->device->gcc = 128;
-    device->lower->device->gcc = 128;
+	dprintf("issi: power target %u\n", milliampere);
+
+    uint16_t gcc2 = 5 + (2560 * milliampere) / 6720;
+    gcc2 /= 2;
+
+	dprintf("issi: gcc %u\n", gcc2);
+
+    device->upper->device->gcc = gcc2;
+    device->lower->device->gcc = gcc2;
 
     is31fl3733_update_global_current_control(device->upper->device);
     is31fl3733_update_global_current_control(device->lower->device);

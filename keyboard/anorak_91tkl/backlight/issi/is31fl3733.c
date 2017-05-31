@@ -258,8 +258,6 @@ void is31fl3733_set_led(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool enabled
 {
     uint8_t offset;
 
-
-
 	// Set state of individual LED.
 	// Calculate LED bit offset.
 	offset = (sw << 1) + (cs / 8);
@@ -285,23 +283,22 @@ void is31fl3733_set_led_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, bool 
 {
     uint8_t offset;
 
-    // TODO: fix this
-
     // Calculate LED offset in RAM buffer.
-    offset = sw * IS31FL3733_CS + cs;
-    uint8_t mask_byte = offset / 8;
-    uint8_t mask_bit = (1 << (offset % 8));
+	offset = (sw << 1) + (cs / 8);
+    uint8_t mask_bit = (0x01 << (cs % 8));
 
-    if (!(device->leds[mask_byte] & mask_bit))
+    dprintf("set_led_masked: dev:%X, cs:%u, sw:%u, on:%u -> offset: %u, bit: %u, mask: %u", device->address, cs, sw, enabled, offset, mask_bit, device->mask[offset]);
+
+    if (!(device->mask[offset] & mask_bit))
         return;
 
     if (enabled)
     {
-        device->leds[mask_byte] |= mask_bit;
+        device->leds[offset] |= mask_bit;
     }
     else
     {
-        device->leds[mask_byte] &= ~(mask_bit);
+        device->leds[offset] &= ~(mask_bit);
     }
 }
 
@@ -355,47 +352,41 @@ void is31fl3733_set_pwm_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8
 {
     uint8_t offset;
 
+	offset = (sw << 1) + (cs / 8);
+    uint8_t mask_bit = (0x01 << (cs % 8));
+
+    dprintf("set_led_masked: dev:%X, cs:%u, sw:%u, bri:%u -> offset: %u, bit: %u, mask: %u", device->address, cs, sw, brightness, offset, mask_bit, device->mask[offset]);
+
+    if (!(device->mask[offset] & mask_bit))
+        return;
+
     // Calculate LED offset in RAM buffer.
     offset = sw * IS31FL3733_CS + cs;
-
-    // Set brightness level of selected LED.
-    uint8_t mask_byte = offset / 8;
-    uint8_t mask_bit = offset % 8;
-
-    if (device->mask[mask_byte] & (1 << mask_bit))
-        device->pwm[offset] = brightness;
+    device->pwm[offset] = brightness;
 }
 
 void is31fl3733_fill(IS31FL3733 *device, uint8_t brightness)
 {
 	// Set brightness level of all LED's.
 	memset(device->pwm, brightness, IS31FL3733_LED_PWM_SIZE);
-
-	/*
-    uint8_t i;
-
-    // Set brightness level of all LED's.
-    for (i = 0; i < IS31FL3733_LED_PWM_SIZE; i++)
-    {
-        device->pwm[i] = brightness;
-    }
-    */
 }
 
 void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness)
 {
     uint8_t i;
-    uint8_t mask_byte;
+    uint8_t offset;
     uint8_t mask_bit;
 
     // Set brightness level of all LED's.
     for (i = 0; i < IS31FL3733_LED_PWM_SIZE; i++)
     {
-        mask_byte = i / 8;
-        mask_bit = i % 8;
+    	offset = i / 8;
+        uint8_t mask_bit = (0x01 << (i % 8));
 
-        if (device->mask[mask_byte] & (1 << mask_bit))
+        if (device->mask[offset] & mask_bit)
+        {
             device->pwm[i] = brightness;
+        }
     }
 }
 
@@ -437,13 +428,13 @@ void is31fl3733_nand_mask(IS31FL3733 *device, uint8_t *mask)
 
 void is31fl3733_dump_led_buffer(IS31FL3733 *device)
 {
-    dprintf("led buffer");
+    dprintf("led buffer\n");
     for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
     {
-        dprintf("%u: ");
+        dprintf("%02u: ");
         for (uint8_t cs = 0; cs < (IS31FL3733_CS / 8); ++cs)
         {
-            dprintf("%X ", device->leds[sw * (IS31FL3733_CS / 8) + cs]);
+            dprintf("%02X ", device->leds[sw * (IS31FL3733_CS / 8) + cs]);
         }
         dprintf("\n");
     }
@@ -451,13 +442,13 @@ void is31fl3733_dump_led_buffer(IS31FL3733 *device)
 
 void is31fl3733_dump_pwm_buffer(IS31FL3733 *device)
 {
-    dprintf("pwm buffer");
+    dprintf("pwm buffer\n");
     for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
     {
-        dprintf("%u: ");
+        dprintf("%02u: ");
         for (uint8_t cs = 0; cs < IS31FL3733_CS; ++cs)
         {
-            dprintf("%X ", device->pwm[sw * IS31FL3733_CS + cs]);
+            dprintf("%02X ", device->pwm[sw * IS31FL3733_CS + cs]);
         }
         dprintf("\n");
     }

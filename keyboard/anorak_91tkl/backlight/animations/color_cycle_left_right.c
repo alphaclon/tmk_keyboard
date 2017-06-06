@@ -13,10 +13,14 @@
 #endif
 
 static uint8_t offset;
+static uint8_t offset2;
 
 void set_animation_color_cycle_left_right()
 {
 	dprintf("color_cycle_left_right\n");
+
+	offset = 0;
+	offset2 = 0;
 
     animation.delay_in_ms = FPS_TO_DELAY(20);    // 50ms = 20 fps
     animation.duration_in_ms = 0;
@@ -29,7 +33,7 @@ void set_animation_color_cycle_left_right()
 
 void color_cycle_left_right_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
-	offset = timer_read();
+	offset2 = row;
 }
 
 void color_cycle_left_right_animation_start()
@@ -52,8 +56,8 @@ void color_cycle_left_right_animation_loop()
         for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
         {
         	// Relies on hue being 8-bit and wrapping
-            hsv.h = key_col + offset;
-            draw_hsv_pixel(&issi, key_col, key_row, hsv);
+            hsv.h = key_col + offset + offset2;
+            draw_keymatrix_hsv_pixel(&issi, key_row, key_col, hsv);
         }
     }
 

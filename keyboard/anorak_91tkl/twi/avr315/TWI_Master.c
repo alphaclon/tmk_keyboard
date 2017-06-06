@@ -114,7 +114,7 @@ unsigned char TWI_Get_State_Info(void)
 
 /*************************************************************************
   Issues a start condition and sends address and transfer direction.
-  return 0 = device accessible, 1= failed to access device
+  return 0 = device accessible, 1 = failed to access device
 *************************************************************************/
 unsigned char TWI_detect(unsigned char slave_address)
 {

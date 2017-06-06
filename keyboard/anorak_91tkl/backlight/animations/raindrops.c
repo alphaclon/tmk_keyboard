@@ -15,7 +15,7 @@ void set_animation_raindrops()
 {
 	dprintf("raindrops\n");
 
-    animation.delay_in_ms = FPS_TO_DELAY(20);    // = 20 fps
+    animation.delay_in_ms = FPS_TO_DELAY(10);    // = 20 fps
     animation.duration_in_ms = 0;
 
     animation.animationStart = &raindrops_animation_start;
@@ -81,7 +81,7 @@ void raindrops_animation_loop()
     // Override brightness with global brightness control
     hsv.v = animation.hsv.v;
 
-    is31fl3733_hsv_set_pwm(device, row, col, hsv);
+    is31fl3733_hsv_set_pwm(device, col, row, hsv);
 
     // TODO: optimize: write rgb values directly to device by ignoring the buffer
     is31fl3733_91tkl_update_led_pwm(&issi);

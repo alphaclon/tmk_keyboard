@@ -10,23 +10,23 @@ void is31fl3733_rgb_init(IS31FL3733_RGB *device)
     is31fl3733_init(device->device);
 }
 
-void is31fl3733_rgb_set_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col, RGB color)
+void is31fl3733_rgb_set_pwm(IS31FL3733_RGB *device, uint8_t x, uint8_t y, RGB color)
 {
     for (uint8_t c = 0; c < 3; ++c)
-        is31fl3733_set_pwm(device->device, row, (col * 3) + device->offsets.color[c], color.rgb[c]);
+        is31fl3733_set_pwm(device->device, x, (y * 3) + device->offsets.color[c], color.rgb[c]);
 }
 
-void is31fl3733_hsv_set_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col, HSV color)
+void is31fl3733_hsv_set_pwm(IS31FL3733_RGB *device, uint8_t x, uint8_t y, HSV color)
 {
 	RGB color_rgb = hsv_to_rgb(color);
-	is31fl3733_rgb_set_pwm(device, row, col, color_rgb);
+	is31fl3733_rgb_set_pwm(device, x, y, color_rgb);
 }
 
-RGB is31fl3733_rgb_get_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col)
+RGB is31fl3733_rgb_get_pwm(IS31FL3733_RGB *device, uint8_t x, uint8_t y)
 {
 	RGB color;
     for (uint8_t c = 0; c < 3; ++c)
-        color.rgb[c] = is31fl3733_get_pwm(device->device, row , (col * 3) + device->offsets.color[c]);
+        color.rgb[c] = is31fl3733_get_pwm(device->device, x, (y * 3) + device->offsets.color[c]);
     return color;
 }
 

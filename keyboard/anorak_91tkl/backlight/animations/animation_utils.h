@@ -36,7 +36,7 @@ extern animation_interface animation;
 void animation_prepare(bool set_all_to_black);
 void animation_postpare(void);
 
-void draw_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, RGB color);
-void draw_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, HSV color);
+void draw_keymatrix_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t row, int16_t col, RGB color);
+void draw_keymatrix_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t row, int16_t col, HSV color);
 
 #endif

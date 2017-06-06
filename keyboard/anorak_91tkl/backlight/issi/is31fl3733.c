@@ -58,11 +58,13 @@ void is31fl3733_init(IS31FL3733 *device)
 #endif
 
     // TWI_detect: 0 = device accessible, 1= failed to access device
-    bool device_present = (TWI_detect(device->address) ? false : true);
+    bool device_present = i2c_detect(device->address);
     dprintf("issi: device at 0x%X: %u\n", device->address, device_present);
 
     if (!device_present)
     {
+    	xprintf("issi: no device at 0x%X!\n", device->address);
+
         device->pfn_i2c_read_reg = &i2c_dummy_read_reg;
         device->pfn_i2c_write_reg = &i2c_dummy_write_reg;
         device->pfn_i2c_read_reg8 = &i2c_dummy_read_reg8;
@@ -160,7 +162,7 @@ uint8_t is31fl3733_read_interrupt_status_register(IS31FL3733 *device)
 
 void is31fl3733_update_led_enable(IS31FL3733 *device)
 {
-	dprintf("issi: up led %X\n", device->address);
+	//dprintf("issi: up led %X\n", device->address);
 
     // Select IS31FL3733_LEDONOFF register page.
     is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDONOFF));
@@ -181,7 +183,7 @@ void is31fl3733_update_led_enable(IS31FL3733 *device)
 
 void is31fl3733_update_led_pwm(IS31FL3733 *device)
 {
-	dprintf("issi: up pwm %X\n", device->address);
+	//dprintf("issi: up pwm %X\n", device->address);
 
     // Select IS31FL3733_LEDPWM register page.
     is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDPWM));

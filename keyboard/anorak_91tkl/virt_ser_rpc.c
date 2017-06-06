@@ -410,14 +410,14 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         {
             for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
             {
-            	if (getLedPosByMatrixKey(key_col, key_row, &device_number, &row, &col))
+            	if (getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
 				{
 					device = (device_number ? issi.upper : issi.lower);
-					is31fl3733_hsv_set_pwm(device, row, col, hsv);
+					is31fl3733_hsv_set_pwm(device, col, row, hsv);
 
 					is31fl3733_91tkl_update_led_pwm(&issi);
 
-					_delay_ms(750);
+					_delay_ms(500);
 					hsv.h += 3;
 				}
             }
@@ -574,6 +574,8 @@ bool cmd_user_animation(uint8_t argc, char **argv)
             animation.hsv.h = atoi(argv[1]);
             animation.hsv.s = atoi(argv[2]);
             animation.hsv.v = atoi(argv[3]);
+
+            animation.rgb = hsv_to_rgb(animation.hsv);
         }
         else
         {

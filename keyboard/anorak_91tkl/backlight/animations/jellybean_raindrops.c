@@ -15,7 +15,7 @@ void set_animation_jellybean_raindrops()
 {
 	dprintf("jellybean_raindrops\n");
 
-    animation.delay_in_ms = FPS_TO_DELAY(20);    // 50ms = 20 fps
+    animation.delay_in_ms = FPS_TO_DELAY(10);    // 50ms = 20 fps
     animation.duration_in_ms = 0;
 
     animation.animationStart = &jellybean_raindrops_animation_start;
@@ -51,7 +51,7 @@ void jellybean_raindrops_animation_loop()
     // Override brightness with global brightness control
     hsv.v = animation.hsv.v;
 
-    draw_hsv_pixel(&issi, col_to_change, row_to_change, hsv);
+    draw_keymatrix_hsv_pixel(&issi, row_to_change, col_to_change, hsv);
 
     // TODO: optimize: write rgb values directly to device by ignoring the buffer
 

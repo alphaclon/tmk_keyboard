@@ -14,13 +14,13 @@
 #define RADIUS_COUNT 15
 static uint8_t *pressed_keys = 0;
 
-void draw_circle_outline(IS31FL3733_91TKL *device, int16_t x0, int16_t y0, int16_t r, RGB color);
+void draw_circle_outline(IS31FL3733_91TKL *device, int16_t key_col, int16_t key_row, int16_t r, RGB color);
 
 void set_animation_type_o_circles()
 {
 	dprintf("type_o_circles\n");
 
-    animation.delay_in_ms = FPS_TO_DELAY(4);
+    animation.delay_in_ms = FPS_TO_DELAY(2);
     animation.duration_in_ms = 0;
 
     animation.animationStart = &type_o_circles_animation_start;
@@ -64,7 +64,7 @@ void type_o_circles_animation_loop()
 
                 // TODO: Farbe abhängig vom Radius setzen
 
-                draw_circle_outline(&issi, key_col, key_row, r, animation.rgb);
+                draw_circle_outline(&issi, key_row, key_col, r, animation.rgb);
                 pressed_keys[key_row * MATRIX_ROWS + key_col]--;
             }
         }
@@ -74,7 +74,7 @@ void type_o_circles_animation_loop()
 }
 
 // Draw a circle outline
-void draw_circle_outline(IS31FL3733_91TKL *device, int16_t x0, int16_t y0, int16_t r, RGB color)
+void draw_circle_outline(IS31FL3733_91TKL *device, int16_t key_row, int16_t key_col, int16_t r, RGB color)
 {
     int16_t f = 1 - r;
     int16_t ddF_x = 1;
@@ -82,10 +82,10 @@ void draw_circle_outline(IS31FL3733_91TKL *device, int16_t x0, int16_t y0, int16
     int16_t x = 0;
     int16_t y = r;
 
-    draw_rgb_pixel(device, x0, y0 + r, color);
-    draw_rgb_pixel(device, x0, y0 - r, color);
-    draw_rgb_pixel(device, x0 + r, y0, color);
-    draw_rgb_pixel(device, x0 - r, y0, color);
+    draw_keymatrix_rgb_pixel(device, key_col, key_row + r, color);
+    draw_keymatrix_rgb_pixel(device, key_col, key_row - r, color);
+    draw_keymatrix_rgb_pixel(device, key_col + r, key_row, color);
+    draw_keymatrix_rgb_pixel(device, key_col - r, key_row, color);
 
     while (x < y)
     {
@@ -99,13 +99,13 @@ void draw_circle_outline(IS31FL3733_91TKL *device, int16_t x0, int16_t y0, int16
         ddF_x += 2;
         f += ddF_x;
 
-        draw_rgb_pixel(device, x0 + x, y0 + y, color);
-        draw_rgb_pixel(device, x0 - x, y0 + y, color);
-        draw_rgb_pixel(device, x0 + x, y0 - y, color);
-        draw_rgb_pixel(device, x0 - x, y0 - y, color);
-        draw_rgb_pixel(device, x0 + y, y0 + x, color);
-        draw_rgb_pixel(device, x0 - y, y0 + x, color);
-        draw_rgb_pixel(device, x0 + y, y0 - x, color);
-        draw_rgb_pixel(device, x0 - y, y0 - x, color);
+        draw_keymatrix_rgb_pixel(device, key_col + x, key_row + y, color);
+        draw_keymatrix_rgb_pixel(device, key_col - x, key_row + y, color);
+        draw_keymatrix_rgb_pixel(device, key_col + x, key_row - y, color);
+        draw_keymatrix_rgb_pixel(device, key_col - x, key_row - y, color);
+        draw_keymatrix_rgb_pixel(device, key_col + y, key_row + x, color);
+        draw_keymatrix_rgb_pixel(device, key_col - y, key_row + x, color);
+        draw_keymatrix_rgb_pixel(device, key_col + y, key_row - x, color);
+        draw_keymatrix_rgb_pixel(device, key_col - y, key_row - x, color);
     }
 }

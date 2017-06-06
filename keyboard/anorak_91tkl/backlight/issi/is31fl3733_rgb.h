@@ -27,12 +27,12 @@ typedef struct IS31FL3733_RGB_Device IS31FL3733_RGB;
 void is31fl3733_rgb_init(IS31FL3733_RGB *device);
 
 /// Set LED brightness level.
-void is31fl3733_rgb_set_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col, RGB color);
+void is31fl3733_rgb_set_pwm(IS31FL3733_RGB *device, uint8_t x, uint8_t y, RGB color);
 /// Get LED brightness level.
-RGB is31fl3733_rgb_get_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col);
+RGB is31fl3733_rgb_get_pwm(IS31FL3733_RGB *device, uint8_t x, uint8_t y);
 
 /// Set LED brightness level.
-void is31fl3733_hsv_set_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col, HSV color);
+void is31fl3733_hsv_set_pwm(IS31FL3733_RGB *device, uint8_t x, uint8_t y, HSV color);
 
 /// Set brightness level for all enabled LEDs.
 void is31fl3733_fill_rgb_masked(IS31FL3733_RGB *device, RGB color);

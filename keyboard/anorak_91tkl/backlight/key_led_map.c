@@ -59,6 +59,10 @@ const uint8_t PROGMEM keyledmap[MATRIX_ROWS][MATRIX_COLS] =
 		   DL(2,0), DL(2,1),  DL(2,2),  DL(2,3),                                                              DL(2,9),  DL(2,10),  DL(2,11),  DL(2,12), DL(2,13),  DL(2,14),  DL(2,15)
 );
 
+/*
+ * maps keyboard key map row and column to LED matrix row and column
+ *
+ */
 bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col)
 {
     uint8_t pos = pgm_read_byte(&keyledmap[key_row][key_col]);

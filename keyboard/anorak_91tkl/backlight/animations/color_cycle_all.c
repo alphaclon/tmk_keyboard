@@ -51,7 +51,7 @@ void color_cycle_all_animation_loop()
         for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
         {
         	hsv.h = offset;
-            draw_hsv_pixel(&issi, key_col, key_row, hsv);
+            draw_keymatrix_hsv_pixel(&issi, key_row, key_col, hsv);
         }
     }
 

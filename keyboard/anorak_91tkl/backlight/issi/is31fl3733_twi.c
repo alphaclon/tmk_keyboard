@@ -152,3 +152,11 @@ uint8_t i2c_dummy_read_reg8(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *data)
 	return 0;
 }
 
+/*************************************************************************
+  Issues a start condition and sends address and transfer direction.
+  return 0 = device accessible, 1 = failed to access device
+*************************************************************************/
+bool i2c_detect(unsigned char slave_address)
+{
+	return TWI_detect(slave_address) == 0 ? true : false;
+}

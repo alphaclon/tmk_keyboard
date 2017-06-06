@@ -7,6 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef DEBUG_ANIMATION
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
+
 animation_interface animation;
 
 static uint8_t* upper_leds;
@@ -38,6 +44,8 @@ void animation_prepare(bool set_all_to_black)
 
 	is31fl3733_91tkl_update_led_pwm(&issi);
 	is31fl3733_91tkl_update_led_enable(&issi);
+
+	dprintf("go\n");
 }
 
 void animation_postpare()
@@ -58,40 +66,40 @@ void animation_postpare()
 	free(lower_pwm);
 }
 
-void draw_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, RGB color)
+void draw_keymatrix_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t key_row, int16_t key_col, RGB color)
 {
     uint8_t row;
     uint8_t col;
     uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    if (x < 0 || x >= MATRIX_COLS)
+    if (key_col < 0 || key_col >= MATRIX_COLS)
         return;
-    if (y < 0 || y >= MATRIX_ROWS)
+    if (key_row < 0 || key_row >= MATRIX_ROWS)
         return;
 
-    if (getLedPosByMatrixKey(y, x, &device_number, &row, &col))
+    if (getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
     {
     	device = DEVICE_BY_NUMBER(issi, device_number);
-    	is31fl3733_rgb_set_pwm(device, row, col, color);
+    	is31fl3733_rgb_set_pwm(device, col, row, color);
     }
 }
 
-void draw_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, HSV color)
+void draw_keymatrix_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t key_row, int16_t key_col, HSV color)
 {
     uint8_t row;
     uint8_t col;
     uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    if (x < 0 || x >= MATRIX_COLS)
+    if (key_col < 0 || key_col >= MATRIX_COLS)
         return;
-    if (y < 0 || y >= MATRIX_ROWS)
+    if (key_row < 0 || key_row >= MATRIX_ROWS)
         return;
 
-    if (getLedPosByMatrixKey(y, x, &device_number, &row, &col))
+    if (getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
     {
     	device = DEVICE_BY_NUMBER(issi, device_number);
-    	is31fl3733_hsv_set_pwm(device, row, col, color);
+    	is31fl3733_hsv_set_pwm(device, col, row, color);
     }
 }

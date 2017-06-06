@@ -12,9 +12,9 @@
 #endif
 
 static int16_t fb_x;
-static uint8_t fb_x_dir;
+static int8_t fb_x_dir;
 static int16_t fb_y;
-static uint8_t fb_y_dir;
+static int8_t fb_y_dir;
 static uint8_t offset;
 static HSV hsv;
 static RGB rgb;
@@ -23,7 +23,7 @@ void set_animation_flying_ball()
 {
 	dprintf("flying_ball\n");
 
-    animation.delay_in_ms = FPS_TO_DELAY(20);    // 50ms = 20 fps
+    animation.delay_in_ms = FPS_TO_DELAY(5);    // 50ms = 20 fps
     animation.duration_in_ms = 0;
 
     animation.animationStart = &flying_ball_animation_start;
@@ -39,7 +39,13 @@ void flying_ball_typematrix_row(uint8_t row_number, matrix_row_t row)
 
 void flying_ball_animation_start()
 {
+	animation_prepare(true);
+
 	offset = 0;
+
+	rgb.r = animation.rgb.r;
+	rgb.g = animation.rgb.g;
+	rgb.b = animation.rgb.b;
 
 	hsv.h = animation.hsv.h;
 	hsv.s = animation.hsv.s;
@@ -48,10 +54,21 @@ void flying_ball_animation_start()
     fb_x = rand() % MATRIX_COLS;
     fb_y = rand() % MATRIX_ROWS;
 
-    fb_x_dir = rand() % 2;
-    fb_y_dir = rand() % 2;
+    fb_x_dir = rand() % 2 ? 1 : - 1;
+    fb_y_dir = rand() % 2 ? 1 : - 1;
 
-    animation_prepare(false);
+    dprintf("x:%d/%d y:%d/%d  ", fb_x, fb_x_dir, fb_y, fb_y_dir);
+
+	uint8_t row;
+	uint8_t col;
+	uint8_t device_number;
+    IS31FL3733_RGB *device;
+
+    if (getLedPosByMatrixKey(fb_y, fb_x, &device_number, &row, &col))
+	{
+    	device = DEVICE_BY_NUMBER(issi, device_number);
+    	rgb = is31fl3733_rgb_get_pwm(device, col, row);
+	}
 }
 
 void flying_ball_animation_stop()
@@ -66,7 +83,7 @@ void flying_ball_animation_loop()
 	uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    draw_rgb_pixel(&issi, fb_x, fb_y, rgb);
+    draw_keymatrix_rgb_pixel(&issi, fb_y, fb_x, rgb);
 
     fb_x += fb_x_dir;
     fb_y += fb_y_dir;
@@ -93,15 +110,17 @@ void flying_ball_animation_loop()
     	fb_y = 0;
     }
 
+    dprintf("x:%d/%d y:%d/%d  ", fb_x, fb_x_dir, fb_y, fb_y_dir);
+
     if (getLedPosByMatrixKey(fb_y, fb_x, &device_number, &row, &col))
     {
 		device = DEVICE_BY_NUMBER(issi, device_number);
-		rgb = is31fl3733_rgb_get_pwm(device, row, col);
+		rgb = is31fl3733_rgb_get_pwm(device, col, row);
 
-		draw_hsv_pixel(&issi, fb_x, fb_y, hsv);
+		draw_keymatrix_hsv_pixel(&issi, fb_y, fb_x, hsv);
     }
 
-    is31fl3733_91tkl_update_led_pwm(&issi);
+	is31fl3733_91tkl_update_led_pwm(&issi);
 
     offset++;
 }

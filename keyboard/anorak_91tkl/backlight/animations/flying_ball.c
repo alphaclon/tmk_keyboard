@@ -66,7 +66,7 @@ void flying_ball_animation_loop()
 	uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    draw_rgb_pixel(&issi, col, fb_x, fb_y);
+    draw_rgb_pixel(&issi, fb_x, fb_y, rgb);
 
     fb_x += fb_x_dir;
     fb_y += fb_y_dir;

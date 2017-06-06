@@ -107,6 +107,7 @@ SRC += \
 	backlight/animations/color_cycle_left_right.c \
 	backlight/animations/raindrops.c \
 	backlight/animations/jellybean_raindrops.c \
+	backlight/animations/flying_ball.c
 	
 
 

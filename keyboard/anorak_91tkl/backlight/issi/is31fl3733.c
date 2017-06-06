@@ -1,4 +1,5 @@
 #include "is31fl3733.h"
+#include "is31fl3733_twi.h"
 #include <util/delay.h>
 #include <string.h>
 
@@ -45,15 +46,15 @@ uint8_t is31fl3733_read_paged_reg(IS31FL3733 *device, uint16_t reg_addr)
 void is31fl3733_init(IS31FL3733 *device)
 {
 #ifdef DEBUG_ISSI
-    device_upper.pfn_i2c_read_reg = &i2c_read_reg;
-    device_upper.pfn_i2c_write_reg = &i2c_write_reg;
-    device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
-    device_upper.pfn_i2c_write_reg8 = &i2c_write_reg8;
+    device->pfn_i2c_read_reg = &i2c_read_reg;
+    device->pfn_i2c_write_reg = &i2c_write_reg;
+    device->pfn_i2c_read_reg8 = &i2c_read_reg8;
+    device->pfn_i2c_write_reg8 = &i2c_write_reg8;
 #else
-    device_upper.pfn_i2c_read_reg = &i2c_read_reg;
-    device_upper.pfn_i2c_write_reg = &i2c_queued_write_reg;
-    device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
-    device_upper.pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
+    device->pfn_i2c_read_reg = &i2c_read_reg;
+    device->pfn_i2c_write_reg = &i2c_queued_write_reg;
+    device->pfn_i2c_read_reg8 = &i2c_read_reg8;
+    device->pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
 #endif
 
     // TWI_detect: 0 = device accessible, 1= failed to access device
@@ -62,10 +63,10 @@ void is31fl3733_init(IS31FL3733 *device)
 
     if (!device_present)
     {
-        device_upper.pfn_i2c_read_reg = &i2c_dummy_read_reg;
-        device_upper.pfn_i2c_write_reg = &i2c_dummy_write_reg;
-        device_upper.pfn_i2c_read_reg8 = &i2c_dummy_read_reg8;
-        device_upper.pfn_i2c_write_reg8 = &i2c_dummy_write_reg8;
+        device->pfn_i2c_read_reg = &i2c_dummy_read_reg;
+        device->pfn_i2c_write_reg = &i2c_dummy_write_reg;
+        device->pfn_i2c_read_reg8 = &i2c_dummy_read_reg8;
+        device->pfn_i2c_write_reg8 = &i2c_dummy_write_reg8;
     }
 
     memset(device->leds, 0, IS31FL3733_LED_ENABLE_SIZE);

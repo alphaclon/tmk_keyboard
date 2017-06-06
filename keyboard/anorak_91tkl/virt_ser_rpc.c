@@ -30,6 +30,7 @@
 #include "mini-snprintf.h"
 #include <inttypes.h>
 #include <avr/pgmspace.h>
+#include <util/delay.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -399,10 +400,10 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
 
     	HSV hsv = {.h = 0, .s = 255, .v = 128};
 
-        is31fl3733_fill(issi.upper, 0);
-        is31fl3733_fill(issi.lower, 0);
-        is31fl3733_led_enable_all(issi.upper);
-        is31fl3733_led_enable_all(issi.lower);
+        is31fl3733_fill(issi.upper->device, 0);
+        is31fl3733_fill(issi.lower->device, 0);
+        is31fl3733_led_enable_all(issi.upper->device);
+        is31fl3733_led_enable_all(issi.lower->device);
         is31fl3733_91tkl_update(&issi);
 
         for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)

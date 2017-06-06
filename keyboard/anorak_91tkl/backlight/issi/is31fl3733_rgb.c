@@ -33,7 +33,7 @@ RGB is31fl3733_rgb_get_pwm(IS31FL3733_RGB *device, uint8_t row, uint8_t col)
 void is31fl3733_fill_rgb_masked(IS31FL3733_RGB *device, RGB color)
 {
     for (uint8_t c = 0; c < 3; ++c)
-    	is31fl3733_fill_masked(device, color.rgb[device->offsets.color[c]]);
+    	is31fl3733_fill_masked(device->device, color.rgb[device->offsets.color[c]]);
 }
 
 void is31fl3733_fill_hsv_masked(IS31FL3733_RGB *device, HSV color)

@@ -48,14 +48,14 @@ void animation_postpare()
 	memcpy(is31fl3733_led_buffer(issi.lower->device), lower_leds, IS31FL3733_LED_ENABLE_SIZE * sizeof(uint8_t));
 	memcpy(is31fl3733_pwm_buffer(issi.lower->device), lower_pwm, IS31FL3733_LED_PWM_SIZE * sizeof(uint8_t));
 
+	is31fl3733_91tkl_update_led_pwm(&issi);
+	is31fl3733_91tkl_update_led_enable(&issi);
+
 	free(upper_leds);
 	free(upper_pwm);
 
 	free(lower_leds);
 	free(lower_pwm);
-
-	is31fl3733_91tkl_update_led_pwm(&issi);
-	is31fl3733_91tkl_update_led_enable(&issi);
 }
 
 void draw_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, RGB color)
@@ -65,12 +65,12 @@ void draw_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, RGB co
     uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    if (x < 0 || x > MATRIX_COLS)
+    if (x < 0 || x >= MATRIX_COLS)
         return;
-    if (y < 0 || y > MATRIX_ROWS)
+    if (y < 0 || y >= MATRIX_ROWS)
         return;
 
-    if (getLedPosByMatrixKey(x, y, &device_number, &row, &col))
+    if (getLedPosByMatrixKey(y, x, &device_number, &row, &col))
     {
     	device = DEVICE_BY_NUMBER(issi, device_number);
     	is31fl3733_rgb_set_pwm(device, row, col, color);
@@ -84,12 +84,12 @@ void draw_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t x, int16_t y, HSV co
     uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    if (x < 0 || x > MATRIX_COLS)
+    if (x < 0 || x >= MATRIX_COLS)
         return;
-    if (y < 0 || y > MATRIX_ROWS)
+    if (y < 0 || y >= MATRIX_ROWS)
         return;
 
-    if (getLedPosByMatrixKey(x, y, &device_number, &row, &col))
+    if (getLedPosByMatrixKey(y, x, &device_number, &row, &col))
     {
     	device = DEVICE_BY_NUMBER(issi, device_number);
     	is31fl3733_hsv_set_pwm(device, row, col, color);

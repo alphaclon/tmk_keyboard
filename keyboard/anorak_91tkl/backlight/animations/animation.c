@@ -14,6 +14,7 @@
 #include "color_cycle_all.h"
 #include "color_cycle_left_right.h"
 #include "color_cycle_up_down.h"
+#include "flying_ball.h"
 #include <string.h>
 
 #ifdef DEBUG_ANIMATION
@@ -22,7 +23,10 @@
 #include "nodebug.h"
 #endif
 
-static animation_names current_animation = animation_sweep;
+#define HSV_COLOR_STEP 8
+#define MINIMAL_DELAY_TIME_MS 5
+
+static animation_names current_animation = animation_cycle_all;
 
 void initialize_animation(void)
 {
@@ -87,6 +91,10 @@ void set_animation(animation_names animation_by_name)
     case animation_cycle_left_right:
         set_animation_color_cycle_left_right();
         break;
+    case animation_flying_ball:
+        set_animation_flying_ball();
+        break;
+
     case animation_LAST:
     	break;
     }
@@ -122,19 +130,19 @@ void animation_previous()
 
 void animation_set_speed(uint16_t delay_in_ms)
 {
-	if (delay_in_ms < 10)
-		animation.delay_in_ms = 10;
+	if (delay_in_ms < MINIMAL_DELAY_TIME_MS)
+		animation.delay_in_ms = MINIMAL_DELAY_TIME_MS;
 	animation.delay_in_ms = delay_in_ms;
 }
 
 void animation_increase_speed(void)
 {
-    animation.delay_in_ms = decrement16(animation.delay_in_ms, 25, 10, 1000);
+    animation.delay_in_ms = decrement16(animation.delay_in_ms, 25, MINIMAL_DELAY_TIME_MS, 1000);
 }
 
 void animation_decrease_speed(void)
 {
-    animation.delay_in_ms = increment16(animation.delay_in_ms, 25, 10, 1000);
+    animation.delay_in_ms = increment16(animation.delay_in_ms, 25, MINIMAL_DELAY_TIME_MS, 1000);
 }
 
 void toggle_animation(void)
@@ -187,11 +195,11 @@ void animation_decrease_hsv_color(animation_hsv_names hsv_name, HSVColorName col
     switch (hsv_name)
     {
     case animation_hsv_1:
-        animation.hsv.hsv[color_name] = decrement(animation.hsv.hsv[color_name], 8, 0, 255);
+        animation.hsv.hsv[color_name] = decrement(animation.hsv.hsv[color_name], HSV_COLOR_STEP, 0, 255);
         animation.rgb = hsv_to_rgb(animation.hsv);
         break;
     case animation_hsv_2:
-        animation.hsv2.hsv[color_name] = decrement(animation.hsv2.hsv[color_name], 8, 0, 255);
+        animation.hsv2.hsv[color_name] = decrement(animation.hsv2.hsv[color_name], HSV_COLOR_STEP, 0, 255);
         break;
     }
 }
@@ -201,11 +209,11 @@ void animation_increase_hsv_color(animation_hsv_names hsv_name, HSVColorName col
     switch (hsv_name)
     {
     case animation_hsv_1:
-        animation.hsv.hsv[color_name] = increment(animation.hsv.hsv[color_name], 8, 0, 255);
+        animation.hsv.hsv[color_name] = increment(animation.hsv.hsv[color_name], HSV_COLOR_STEP, 0, 255);
         animation.rgb = hsv_to_rgb(animation.hsv);
         break;
     case animation_hsv_2:
-        animation.hsv2.hsv[color_name] = increment(animation.hsv2.hsv[color_name], 8, 0, 255);
+        animation.hsv2.hsv[color_name] = increment(animation.hsv2.hsv[color_name], HSV_COLOR_STEP, 0, 255);
         break;
     }
 }

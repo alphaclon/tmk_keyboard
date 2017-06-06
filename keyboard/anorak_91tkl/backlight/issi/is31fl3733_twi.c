@@ -131,3 +131,24 @@ uint8_t i2c_read_no_errorhandling_reg8(uint8_t i2c_addr, uint8_t reg_addr, uint8
     TWI_get_data_from_transceiver(data, 1);
     return 1;
 }
+
+uint8_t i2c_dummy_write_reg(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *buffer, uint8_t count)
+{
+	return 0;
+}
+
+uint8_t i2c_dummy_read_reg(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *buffer, uint8_t count)
+{
+	return 0;
+}
+
+uint8_t i2c_dummy_write_reg8(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data)
+{
+	return 0;
+}
+
+uint8_t i2c_dummy_read_reg8(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *data)
+{
+	return 0;
+}
+

@@ -390,6 +390,40 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
 
         found = true;
     }
+    else if (argc == 1 && strcmp_P(argv[0], PSTR("map")) == 0)
+    {
+        uint8_t device_number;
+        IS31FL3733_RGB *device;
+        uint8_t row;
+        uint8_t col;
+
+    	HSV hsv = {.h = 0, .s = 255, .v = 128};
+
+        is31fl3733_fill(issi.upper, 0);
+        is31fl3733_fill(issi.lower, 0);
+        is31fl3733_led_enable_all(issi.upper);
+        is31fl3733_led_enable_all(issi.lower);
+        is31fl3733_91tkl_update(&issi);
+
+        for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
+        {
+            for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
+            {
+            	if (getLedPosByMatrixKey(key_col, key_row, &device_number, &row, &col))
+				{
+					device = (device_number ? issi.upper : issi.lower);
+					is31fl3733_hsv_set_pwm(device, row, col, hsv);
+
+					is31fl3733_91tkl_update_led_pwm(&issi);
+
+					_delay_ms(750);
+					hsv.h += 3;
+				}
+            }
+        }
+
+        found = true;
+    }
 
     return found;
 }
@@ -559,13 +593,14 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 {
     // save | map # | # 0|1 | # h s v
 
-    vserprintf("sectors ");
+    vserprintf("sector ");
 
     if (argc == 0)
     {
         vserprintfln(" ");
         for (uint8_t s = 0; s < SECTOR_MAX; ++s)
-            vserprintfln("%u:%u ", s, sector_is_enabled(s));
+            vserprintf("%u:%u ", s, sector_is_enabled(s));
+        vserprintfln("");
         return true;
     }
 
@@ -597,8 +632,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         sector_select(selected_sector);
         sector_set_selected(selected_sector_enabled);
 
-        vserprintfln(" %u:%u %u", selected_sector, selected_sector_enabled,
-                     sector_is_enabled(selected_sector));
+        vserprintfln(" -> %u", sector_is_enabled(selected_sector));
     }
     if (argc >= 5)
     {
@@ -611,7 +645,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         sector_selected_set_hsv_color(hsv);
         is31fl3733_91tkl_update_led_pwm(&issi);
 
-        vserprintfln("%u: h:%u, s:%u, v:%u", selected_sector, hsv.h, hsv.s, hsv.v);
+        vserprintfln(" h:%u, s:%u, v:%u", hsv.h, hsv.s, hsv.v);
     }
 
     return true;

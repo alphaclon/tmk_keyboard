@@ -8,18 +8,18 @@
 #include "nodebug.h"
 #endif
 
+void is31fl3733_write_common_reg(IS31FL3733 *device, uint8_t reg_addr, uint8_t reg_value)
+{
+    // Write value to register.
+    device->pfn_i2c_write_reg8(device->address, reg_addr, reg_value);
+}
+
 void is31fl3733_select_page(IS31FL3733 *device, uint8_t page)
 {
     // Unlock Command Register.
     is31fl3733_write_common_reg(device, IS31FL3733_PSWL, IS31FL3733_PSWL_ENABLE);
     // Select requested page in Command Register.
     is31fl3733_write_common_reg(device, IS31FL3733_PSR, page);
-}
-
-void is31fl3733_write_common_reg(IS31FL3733 *device, uint8_t reg_addr, uint8_t reg_value)
-{
-    // Write value to register.
-    device->pfn_i2c_write_reg8(device->address, reg_addr, reg_value);
 }
 
 void is31fl3733_write_paged_reg(IS31FL3733 *device, uint16_t reg_addr, uint8_t reg_value)
@@ -44,34 +44,57 @@ uint8_t is31fl3733_read_paged_reg(IS31FL3733 *device, uint16_t reg_addr)
 
 void is31fl3733_init(IS31FL3733 *device)
 {
+#ifdef DEBUG_ISSI
+    device_upper.pfn_i2c_read_reg = &i2c_read_reg;
+    device_upper.pfn_i2c_write_reg = &i2c_write_reg;
+    device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
+    device_upper.pfn_i2c_write_reg8 = &i2c_write_reg8;
+#else
+    device_upper.pfn_i2c_read_reg = &i2c_read_reg;
+    device_upper.pfn_i2c_write_reg = &i2c_queued_write_reg;
+    device_upper.pfn_i2c_read_reg8 = &i2c_read_reg8;
+    device_upper.pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
+#endif
+
+    // TWI_detect: 0 = device accessible, 1= failed to access device
+    bool device_present = (TWI_detect(device->address) ? false : true);
+    dprintf("issi: device at 0x%X: %u\n", device->address, device_present);
+
+    if (!device_present)
+    {
+        device_upper.pfn_i2c_read_reg = &i2c_dummy_read_reg;
+        device_upper.pfn_i2c_write_reg = &i2c_dummy_write_reg;
+        device_upper.pfn_i2c_read_reg8 = &i2c_dummy_read_reg8;
+        device_upper.pfn_i2c_write_reg8 = &i2c_dummy_write_reg8;
+    }
+
     memset(device->leds, 0, IS31FL3733_LED_ENABLE_SIZE);
     memset(device->mask, 0, IS31FL3733_LED_ENABLE_SIZE);
     memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
 
-    //device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
-    device->cr = IS31FL3733_CR_SSD;
+    device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
+    //device->cr = IS31FL3733_CR_SSD;
 
-    is31fl3733_hardware_shutdown(device, false);
+    is31fl3733_hardware_shutdown(device, true);
     dprintf("hsd\n");
 
     // Read reset register to reset device.
     is31fl3733_read_paged_reg(device, IS31FL3733_RESET);
     dprintf("reset\n");
 
+    is31fl3733_update(device);
+
     // Set global current control register.
     is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
     dprintf("gcc\n");
-
-
-    is31fl3733_update(device);
 
     // Clear software reset in configuration register.
     // Set master/slave bit
     is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr);
     dprintf("ssd\n");
 
-    //dprintf("ssd\n");
-    //is31fl3733_software_shutdown(device, false);
+    is31fl3733_hardware_shutdown(device, false);
+    dprintf("hsd\n");
 }
 
 void is31fl3733_update_global_current_control(IS31FL3733 *device)
@@ -151,71 +174,6 @@ void is31fl3733_update_led_enable(IS31FL3733 *device)
     {
         device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDONOFF) + offset,
                                   device->leds + offset, IS31FL3733_LED_ENABLE_SIZE / 2);
-    }
-#endif
-}
-
-/*
-By setting the OSD bit of the Configuration Register (PG3, 00h) from "0" to “1”, the LED Open Register
-and LED Short Register will start to store the open/short information and after at least 2 scanning
-cycle (3.264ms) the MCU can get the open/short information by reading the 18h~2fh/30h~47h, for
-those dots are turned off via LED On/Off Registers (PG0, 00h~17h), the open/short data will not get
-refreshed when setting the OSD bit of the Configuration Register (PG3, 00h) from "0" to “1”.
-
-The Global Current Control Register (PG3, 01h) need to set to 0x01 in order to get the right open/short data.
-
-The detect action is one-off event and each time before reading out the open/short information, the
-OSD bit of the Configuration Register (PG3, 00h) need to be set from "0" to “1” (clear before set operation).
-*/
-
-void is31fl3733_detect_led_open_short_states(IS31FL3733 *device)
-{
-	is31fl3733_write_paged_reg(device, IS31FL3733_GCC, 0x01);
-
-	is31fl3733_led_enable_all(device);
-	is31fl3733_fill(device, 0x7f);
-	is31fl3733_update(device);
-
-	is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr & ~IS31FL3733_CR_OSD);
-    is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr | IS31FL3733_CR_OSD);
-
-    _delay_ms(5);
-}
-
-void is31fl3733_read_led_open_states(IS31FL3733 *device)
-{
-    // Select IS31FL3733_LEDOPEN register page.
-    is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDOPEN));
-
-#if 0
-    // Read LED open states.
-    device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDOPEN), device->leds,
-                              sizeof(device->leds));
-#else
-    // Read LED open states.
-    for (uint8_t offset = 0; offset < IS31FL3733_LED_ENABLE_SIZE; offset += IS31FL3733_LED_ENABLE_SIZE / 2)
-    {
-        device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDOPEN) + offset,
-                                 device->leds + offset, IS31FL3733_LED_ENABLE_SIZE / 2);
-    }
-#endif
-}
-
-void is31fl3733_read_led_short_states(IS31FL3733 *device)
-{
-    // Select IS31FL3733_LEDSHORT register page.
-    is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDSHORT));
-
-#if 0
-    // Read LED short states.
-    device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDSHORT), device->leds,
-                              sizeof(device->leds));
-#else
-    // Read LED short states.
-    for (uint8_t offset = 0; offset < IS31FL3733_LED_ENABLE_SIZE; offset += IS31FL3733_LED_ENABLE_SIZE / 2)
-    {
-        device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDSHORT) + offset,
-                                 device->leds + offset, IS31FL3733_LED_ENABLE_SIZE / 2);
     }
 #endif
 }
@@ -424,6 +382,71 @@ void is31fl3733_nand_mask(IS31FL3733 *device, uint8_t *mask)
     {
         device->mask[i] &= ~(mask[i]);
     }
+}
+
+/*
+By setting the OSD bit of the Configuration Register (PG3, 00h) from "0" to “1”, the LED Open Register
+and LED Short Register will start to store the open/short information and after at least 2 scanning
+cycle (3.264ms) the MCU can get the open/short information by reading the 18h~2fh/30h~47h, for
+those dots are turned off via LED On/Off Registers (PG0, 00h~17h), the open/short data will not get
+refreshed when setting the OSD bit of the Configuration Register (PG3, 00h) from "0" to “1”.
+
+The Global Current Control Register (PG3, 01h) need to set to 0x01 in order to get the right open/short data.
+
+The detect action is one-off event and each time before reading out the open/short information, the
+OSD bit of the Configuration Register (PG3, 00h) need to be set from "0" to “1” (clear before set operation).
+*/
+
+void is31fl3733_detect_led_open_short_states(IS31FL3733 *device)
+{
+	is31fl3733_write_paged_reg(device, IS31FL3733_GCC, 0x01);
+
+	is31fl3733_led_enable_all(device);
+	is31fl3733_fill(device, 0x7f);
+	is31fl3733_update(device);
+
+	is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr & ~IS31FL3733_CR_OSD);
+    is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr | IS31FL3733_CR_OSD);
+
+    _delay_ms(5);
+}
+
+void is31fl3733_read_led_open_states(IS31FL3733 *device)
+{
+    // Select IS31FL3733_LEDOPEN register page.
+    is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDOPEN));
+
+#if 0
+    // Read LED open states.
+    device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDOPEN), device->leds,
+                              sizeof(device->leds));
+#else
+    // Read LED open states.
+    for (uint8_t offset = 0; offset < IS31FL3733_LED_ENABLE_SIZE; offset += IS31FL3733_LED_ENABLE_SIZE / 2)
+    {
+        device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDOPEN) + offset,
+                                 device->leds + offset, IS31FL3733_LED_ENABLE_SIZE / 2);
+    }
+#endif
+}
+
+void is31fl3733_read_led_short_states(IS31FL3733 *device)
+{
+    // Select IS31FL3733_LEDSHORT register page.
+    is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDSHORT));
+
+#if 0
+    // Read LED short states.
+    device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDSHORT), device->leds,
+                              sizeof(device->leds));
+#else
+    // Read LED short states.
+    for (uint8_t offset = 0; offset < IS31FL3733_LED_ENABLE_SIZE; offset += IS31FL3733_LED_ENABLE_SIZE / 2)
+    {
+        device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDSHORT) + offset,
+                                 device->leds + offset, IS31FL3733_LED_ENABLE_SIZE / 2);
+    }
+#endif
 }
 
 void is31fl3733_dump_led_buffer(IS31FL3733 *device)

@@ -15,7 +15,7 @@ void set_animation_jellybean_raindrops()
 {
 	dprintf("jellybean_raindrops\n");
 
-    animation.delay_in_ms = 50;    // 50ms = 20 fps
+    animation.delay_in_ms = FPS_TO_DELAY(20);    // 50ms = 20 fps
     animation.duration_in_ms = 0;
 
     animation.animationStart = &jellybean_raindrops_animation_start;
@@ -54,6 +54,7 @@ void jellybean_raindrops_animation_loop()
     draw_hsv_pixel(&issi, col_to_change, row_to_change, hsv);
 
     // TODO: optimize: write rgb values directly to device by ignoring the buffer
+
     is31fl3733_91tkl_update_led_pwm(&issi);
 }
 

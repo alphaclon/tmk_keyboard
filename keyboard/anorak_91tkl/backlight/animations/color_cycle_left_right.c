@@ -2,6 +2,7 @@
 #include "color_cycle_left_right.h"
 #include "../key_led_map.h"
 #include "animation_utils.h"
+#include "timer.h"
 #include "config.h"
 #include <stdlib.h>
 
@@ -17,24 +18,24 @@ void set_animation_color_cycle_left_right()
 {
 	dprintf("color_cycle_left_right\n");
 
-    animation.delay_in_ms = 50;    // 50ms = 20 fps
+    animation.delay_in_ms = FPS_TO_DELAY(20);    // 50ms = 20 fps
     animation.duration_in_ms = 0;
 
     animation.animationStart = &color_cycle_left_right_animation_start;
     animation.animationStop = &color_cycle_left_right_animation_stop;
     animation.animationLoop = &color_cycle_left_right_animation_loop;
-    animation.animation_typematrix_row = 0;
+    animation.animation_typematrix_row = &color_cycle_left_right_typematrix_row;
 }
 
 void color_cycle_left_right_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+	offset = timer_read();
 }
 
 void color_cycle_left_right_animation_start()
 {
-    offset = 0;
+    offset = timer_read();
     animation_prepare(true);
-    // TODO: Initialize with random colors?
 }
 
 void color_cycle_left_right_animation_stop()
@@ -44,12 +45,13 @@ void color_cycle_left_right_animation_stop()
 
 void color_cycle_left_right_animation_loop()
 {
-	HSV hsv = {.h = 0, .s = 255, .v = animation.hsv.v};
+	HSV hsv = {.h = 0, .s = animation.hsv.s, .v = animation.hsv.v};
 
     for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
     {
         for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
         {
+        	// Relies on hue being 8-bit and wrapping
             hsv.h = key_col + offset;
             draw_hsv_pixel(&issi, key_col, key_row, hsv);
         }

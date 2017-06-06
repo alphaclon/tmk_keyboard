@@ -12,15 +12,16 @@ extern "C" {
 
 enum animation_names_t
 {
-    animation_sweep = 0,
-    animation_type_o_matic,
-    animation_type_o_raindrops,
-    animation_type_o_circles,
-    animation_raindrops,
-    animation_jellybean_raindrops,
     animation_cycle_all,
     animation_cycle_up_down,
     animation_cycle_left_right,
+    animation_raindrops,
+    animation_jellybean_raindrops,
+	animation_flying_ball,
+    animation_sweep,
+    animation_type_o_matic,
+    animation_type_o_raindrops,
+    animation_type_o_circles,
     animation_breathing,
     animation_LAST
 };

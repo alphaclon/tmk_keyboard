@@ -15,7 +15,7 @@ void set_animation_raindrops()
 {
 	dprintf("raindrops\n");
 
-    animation.delay_in_ms = 50;    // = 20 fps
+    animation.delay_in_ms = FPS_TO_DELAY(20);    // = 20 fps
     animation.duration_in_ms = 0;
 
     animation.animationStart = &raindrops_animation_start;

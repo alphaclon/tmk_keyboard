@@ -23,7 +23,7 @@ void set_animation_sweep()
 {
 	dprintf("sweep\n");
 
-    animation.delay_in_ms = 50;
+    animation.delay_in_ms = FPS_TO_DELAY(20);
     animation.duration_in_ms = 0;
 
     animation.animationStart = &sweep_animation_start;

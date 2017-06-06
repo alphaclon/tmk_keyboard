@@ -8,10 +8,7 @@ enum keyboard_sector_t
     FunctionKeys,
     CursorKeys,
     OtherKeys,
-	NavKeys,
-	ESCKey,
-    User1,
-    User2,
+	ESCKey
 };
 
 typedef enum keyboard_sector_t KeyboardSector;

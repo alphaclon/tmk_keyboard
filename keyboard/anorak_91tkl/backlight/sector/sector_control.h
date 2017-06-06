@@ -44,13 +44,4 @@ void sector_dump_mask(uint8_t *mask);
 
 void sector_enable_all_leds(void);
 
-
-#ifdef SECTOR_ENABLE_RGB_SUPPORT
-void sector_all_increase_color(RGBColorName color);
-void sector_selected_increase_color(RGBColorName color);
-
-void sector_all_decrease_color(RGBColorName color);
-void sector_selected_decrease_color(RGBColorName color);
-#endif
-
 #endif

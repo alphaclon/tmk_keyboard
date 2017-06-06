@@ -18,6 +18,8 @@
 #include "nodebug.h"
 #endif
 
+#define HSV_COLOR_STEP 8
+
 typedef union PACKED {
     struct
     {
@@ -156,7 +158,7 @@ void sector_set_selected(bool on)
 	if (on)
 		sector_set_on(selected_sector);
 	else
-		sector_set_on(selected_sector);
+		sector_set_off(selected_sector);
 }
 
 void sector_toggle_selected(void)
@@ -187,66 +189,6 @@ void sector_set_all_off(void)
     is31fl3733_91tkl_update_led_enable(&issi);
 }
 
-#ifdef SECTOR_ENABLE_RGB_SUPPORT
-void sector_set_rgb_color_by_levels(KeyboardSector sector, Levels *levels)
-{
-    dprintf("sector_set_rgb_color_by_levels: %X%X%X\n", levels->r, levels->g, levels->b);
-
-    RGB color;
-    color.r = pgm_read_byte(&gamma_correction_table[levels->r]);
-    color.g = pgm_read_byte(&gamma_correction_table[levels->g]);
-    color.b = pgm_read_byte(&gamma_correction_table[levels->b]);
-
-    dprintf("sector_set_rgb_color_by_levels: %X%X%X\n", color.r, color.g, color.b);
-
-    sector_clear_mask();
-    sector_set_mask(sector);
-
-    is31fl3733_91tkl_fill_rgb_masked(&issi, color);
-}
-
-void sector_increase_sector_color(KeyboardSector sector, RGBColorName color_name)
-{
-    sector_levels[sector].lvl[color_name] =
-        increment(sector_levels[sector].lvl[color_name], 1, 0, BACKLIGHT_LEVELS - 1);
-
-    sector_set_rgb_color_by_levels(sector, &sector_levels[sector]);
-    is31fl3733_91tkl_update_led_pwm(&issi);
-}
-
-void sector_selected_increase_color(RGBColorName color)
-{
-    sector_increase_sector_color(selected_sector, color);
-}
-
-void sector_increase_color(RGBColorName color)
-{
-    for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
-        sector_increase_sector_color(sector, color);
-}
-
-void sector_decrease_sector_color(KeyboardSector sector, RGBColorName color_name)
-{
-    sector_levels[sector].lvl[color_name] =
-        decrement(sector_levels[sector].lvl[color_name], 1, 0, BACKLIGHT_LEVELS - 1);
-
-    sector_set_rgb_color_by_levels(sector, &sector_levels[sector]);
-    is31fl3733_91tkl_update_led_pwm(&issi);
-}
-
-void sector_selected_decrease_color(RGBColorName color)
-{
-    sector_decrease_sector_color(selected_sector, color);
-}
-
-void sector_decrease_color(RGBColorName color)
-{
-    for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
-        sector_decrease_sector_color(sector, color);
-}
-#endif
-
-
 void sector_selected_set_hsv_color(HSV color)
 {
     dprintf("sector_set_hsv_color_by_levels: %u, %X%X%X\n", selected_sector, color.h, color.s, color.v);
@@ -276,9 +218,7 @@ void sector_set_hsv_color_by_levels(KeyboardSector sector, Levels *levels)
 void sector_increase_hsv_by_name(KeyboardSector sector, HSVColorName color_name)
 {
     dprintf("sector_increase_sector_hsv_by_name: %u %u\n", sector, color_name);
-
-    sector_levels[sector].lvl[color_name] = increment(sector_levels[sector].lvl[color_name], 8, 0, 255);
-
+    sector_levels[sector].lvl[color_name] = increment(sector_levels[sector].lvl[color_name], HSV_COLOR_STEP, 0, 255);
     sector_set_hsv_color_by_levels(sector, &sector_levels[selected_sector]);
 }
 
@@ -298,9 +238,7 @@ void sector_all_increase_hsv_color(HSVColorName color)
 void sector_decrease_sector_hsv_by_name(KeyboardSector sector, HSVColorName color_name)
 {
     dprintf("sector_decrease_sector_hsv_by_name: %u %u\n", sector, color_name);
-
-    sector_levels[sector].lvl[color_name] = decrement(sector_levels[sector].lvl[color_name], 8, 0, 255);
-
+    sector_levels[sector].lvl[color_name] = decrement(sector_levels[sector].lvl[color_name], HSV_COLOR_STEP, 0, 255);
     sector_set_hsv_color_by_levels(sector, &sector_levels[sector]);
 }
 

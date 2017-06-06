@@ -9,12 +9,14 @@ extern uint8_t const LedMaskOthr_Top[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskWASD_Top[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskCtrl_Top[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskCurs_Top[IS31FL3733_LED_ENABLE_SIZE];
+extern uint8_t const LedMaskESC_Top[IS31FL3733_LED_ENABLE_SIZE];
 
 extern uint8_t const LedMaskFull_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskOthr_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskWASD_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskCtrl_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 extern uint8_t const LedMaskCurs_Bottom[IS31FL3733_LED_ENABLE_SIZE];
+extern uint8_t const LedMaskESC_Bottom[IS31FL3733_LED_ENABLE_SIZE];
 
 extern const uint8_t* LedMasksTop[];
 extern const uint8_t* LedMasksBottom[];

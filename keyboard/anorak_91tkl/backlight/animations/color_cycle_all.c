@@ -17,24 +17,24 @@ void set_animation_color_cycle_all()
 {
 	dprintf("color_cycle_all\n");
 
-    animation.delay_in_ms = 50;    // 50ms = 20 fps
+    animation.delay_in_ms = FPS_TO_DELAY(20);    // 50ms = 20 fps
     animation.duration_in_ms = 0;
 
     animation.animationStart = &color_cycle_all_animation_start;
     animation.animationStop = &color_cycle_all_animation_stop;
     animation.animationLoop = &color_cycle_all_animation_loop;
-    animation.animation_typematrix_row = 0;
+    animation.animation_typematrix_row = &color_cycle_all_typematrix_row;
 }
 
 void color_cycle_all_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+	offset = 255 - offset;
 }
 
 void color_cycle_all_animation_start()
 {
     offset = 0;
     animation_prepare(true);
-    // TODO: Initialize with random colors?
 }
 
 void color_cycle_all_animation_stop()
@@ -44,7 +44,7 @@ void color_cycle_all_animation_stop()
 
 void color_cycle_all_animation_loop()
 {
-	HSV hsv = {.h = offset, .s = 255, .v = animation.hsv.v};
+	HSV hsv = {.h = offset, .s = animation.hsv.s, .v = animation.hsv.v};
 
     for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
     {
@@ -59,27 +59,3 @@ void color_cycle_all_animation_loop()
 
     offset++;
 }
-
-/*
-void backlight_effect_cycle_all(void)
-{
-        uint8_t offset = g_tick & 0xFF;
-
-        // Relies on hue being 8-bit and wrapping
-        for ( int i=0; i<72; i++ )
-        {
-                uint16_t offset2 = g_key_hit[i]<<2;
-                // stabilizer LEDs use spacebar hits
-                if ( i == 36+6 || i == 54+13 || // LC6, LD13
-                                ( g_config.use_7u_spacebar && i == 54+14 ) ) // LD14
-                {
-                        offset2 = g_key_hit[36+0]<<2;
-                }
-                offset2 = (offset2<=63) ? (63-offset2) : 0;
-
-                HSV hsv = { .h = offset+offset2, .s = 255, .v = g_config.brightness };
-                RGB rgb = hsv_to_rgb( hsv );
-                backlight_set_color( i, rgb.r, rgb.g, rgb.b );
-        }
-}
-*/

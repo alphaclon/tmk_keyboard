@@ -19,6 +19,7 @@ enum animation_names_t
     animation_jellybean_raindrops,
 	animation_flying_ball,
     animation_sweep,
+	animation_wave,
     animation_type_o_matic,
     animation_type_o_raindrops,
     animation_type_o_circles,

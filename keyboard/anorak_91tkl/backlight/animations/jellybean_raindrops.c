@@ -11,34 +11,6 @@
 #include "nodebug.h"
 #endif
 
-void set_animation_jellybean_raindrops()
-{
-	dprintf("jellybean_raindrops\n");
-
-    animation.delay_in_ms = FPS_TO_DELAY(10);    // 50ms = 20 fps
-    animation.duration_in_ms = 0;
-
-    animation.animationStart = &jellybean_raindrops_animation_start;
-    animation.animationStop = &jellybean_raindrops_animation_stop;
-    animation.animationLoop = &jellybean_raindrops_animation_loop;
-    animation.animation_typematrix_row = 0;
-}
-
-void jellybean_raindrops_typematrix_row(uint8_t row_number, matrix_row_t row)
-{
-}
-
-void jellybean_raindrops_animation_start()
-{
-    animation_prepare(false);
-    // TODO: Initialize with random colors?
-}
-
-void jellybean_raindrops_animation_stop()
-{
-    animation_postpare();
-}
-
 void jellybean_raindrops_animation_loop()
 {
     // Change one LED every tick
@@ -56,6 +28,19 @@ void jellybean_raindrops_animation_loop()
     // TODO: optimize: write rgb values directly to device by ignoring the buffer
 
     is31fl3733_91tkl_update_led_pwm(&issi);
+}
+
+void set_animation_jellybean_raindrops()
+{
+	dprintf("jellybean_raindrops\n");
+
+    animation.delay_in_ms = FPS_TO_DELAY(5);
+    animation.duration_in_ms = 0;
+
+    animation.animationStart = &animation_default_animation_start_clear;
+    animation.animationStop = &animation_default_animation_stop;
+    animation.animationLoop = &jellybean_raindrops_animation_loop;
+    animation.animation_typematrix_row = 0;
 }
 
 /*

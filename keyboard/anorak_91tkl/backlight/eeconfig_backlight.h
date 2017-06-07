@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 #define EECONFIG_BACKLIGHT_MAGIC_NUMBER (uint16_t)0xAFFE
-#define EECONFIG_BACKLIGHT_DEFAULT_BRIGHTNESS 3
+#define EECONFIG_BACKLIGHT_DEFAULT_BRIGHTNESS 16
 
 /* eeprom parameteter address */
 /* size for sectors is: 8*3 = 24 bytes

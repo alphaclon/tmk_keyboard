@@ -1,6 +1,7 @@
 
 #include "is31fl3733_91tkl.h"
 #include "is31fl3733_sdb.h"
+#include "is31fl3733_iicrst.h"
 #include "is31fl3733_twi.h"
 
 #ifdef DEBUG_ISSI
@@ -29,6 +30,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_upper.is_master = true;
     device_upper.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
     device_upper.pfn_hardware_enable = &sdb_hardware_enable_upper;
+    device_upper.pfn_iic_reset = &iic_reset_upper;
 
     is31fl3733_rgb_init(device->upper);
 
@@ -39,6 +41,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_upper.is_master = false;
     device_lower.address = IS31FL3733_I2C_ADDR(ADDR_VCC, ADDR_GND);
     device_lower.pfn_hardware_enable = &sdb_hardware_enable_lower;
+    device_lower.pfn_iic_reset = &iic_reset_lower;
 
     is31fl3733_rgb_init(device->lower);
 

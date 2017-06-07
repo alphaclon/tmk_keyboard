@@ -156,6 +156,8 @@ struct IS31FL3733Device
     uint8_t (*pfn_i2c_read_reg8)(uint8_t i2c_addr, uint8_t reg_addr, uint8_t *data);
     /// Hardware enable (SDB)
     void (*pfn_hardware_enable)(bool enabled);
+    /// Hardware I2C reset (IICRSET)
+    void (*pfn_iic_reset)();
 };
 
 typedef struct IS31FL3733Device IS31FL3733;

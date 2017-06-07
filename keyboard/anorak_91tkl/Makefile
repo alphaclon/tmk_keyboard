@@ -87,6 +87,7 @@ SRC += \
 	backlight/issi/is31fl3733.c \
 	backlight/issi/is31fl3733_twi.c \
 	backlight/issi/is31fl3733_sdb.c \
+	backlight/issi/is31fl3733_iicrst.c \
 	backlight/issi/is31fl3733_rgb.c \
 	backlight/issi/is31fl3733_91tkl.c \
 	backlight/sector/sector_control.c \
@@ -105,6 +106,7 @@ SRC += \
 	backlight/animations/color_cycle_all.c \
 	backlight/animations/color_cycle_up_down.c \
 	backlight/animations/color_cycle_left_right.c \
+	backlight/animations/color_wave.c \
 	backlight/animations/raindrops.c \
 	backlight/animations/jellybean_raindrops.c \
 	backlight/animations/flying_ball.c

@@ -14,6 +14,7 @@
 #include "color_cycle_all.h"
 #include "color_cycle_left_right.h"
 #include "color_cycle_up_down.h"
+#include "color_wave.h"
 #include "flying_ball.h"
 #include <string.h>
 
@@ -93,6 +94,9 @@ void set_animation(animation_names animation_by_name)
         break;
     case animation_flying_ball:
         set_animation_flying_ball();
+        break;
+    case animation_wave:
+        set_animation_color_wave();
         break;
 
     case animation_LAST:
@@ -238,9 +242,11 @@ void animate()
 
 void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+	animation_default_typematrix_row(row_number, row);
+
     if (animation.animation_typematrix_row)
     {
-        animation.loop_timer = timer_read();
+    	//animation.loop_timer = timer_read();
         animation.animation_typematrix_row(row_number, row);
     }
 }

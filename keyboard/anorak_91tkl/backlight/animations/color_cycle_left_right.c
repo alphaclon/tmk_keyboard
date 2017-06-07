@@ -15,6 +15,26 @@
 static uint8_t offset;
 static uint8_t offset2;
 
+void color_cycle_left_right_animation_loop()
+{
+	HSV hsv = {.h = 0, .s = animation.hsv.s, .v = animation.hsv.v};
+
+    for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
+    {
+        for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
+        {
+        	offset2 = key_was_pressed(key_row, key_col) << 2;
+        	// Relies on hue being 8-bit and wrapping
+            hsv.h = key_col + offset + offset2;
+            draw_keymatrix_hsv_pixel(&issi, key_row, key_col, hsv);
+        }
+    }
+
+    is31fl3733_91tkl_update_led_pwm(&issi);
+
+    offset++;
+}
+
 void set_animation_color_cycle_left_right()
 {
 	dprintf("color_cycle_left_right\n");
@@ -25,45 +45,10 @@ void set_animation_color_cycle_left_right()
     animation.delay_in_ms = FPS_TO_DELAY(20);    // 50ms = 20 fps
     animation.duration_in_ms = 0;
 
-    animation.animationStart = &color_cycle_left_right_animation_start;
-    animation.animationStop = &color_cycle_left_right_animation_stop;
+    animation.animationStart = &animation_default_animation_start_clear;
+    animation.animationStop = &animation_default_animation_stop;
     animation.animationLoop = &color_cycle_left_right_animation_loop;
-    animation.animation_typematrix_row = &color_cycle_left_right_typematrix_row;
-}
-
-void color_cycle_left_right_typematrix_row(uint8_t row_number, matrix_row_t row)
-{
-	offset2 = row;
-}
-
-void color_cycle_left_right_animation_start()
-{
-    offset = timer_read();
-    animation_prepare(true);
-}
-
-void color_cycle_left_right_animation_stop()
-{
-    animation_postpare();
-}
-
-void color_cycle_left_right_animation_loop()
-{
-	HSV hsv = {.h = 0, .s = animation.hsv.s, .v = animation.hsv.v};
-
-    for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
-    {
-        for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
-        {
-        	// Relies on hue being 8-bit and wrapping
-            hsv.h = key_col + offset + offset2;
-            draw_keymatrix_hsv_pixel(&issi, key_row, key_col, hsv);
-        }
-    }
-
-    is31fl3733_91tkl_update_led_pwm(&issi);
-
-    offset++;
+    animation.animation_typematrix_row = 0;
 }
 
 /*

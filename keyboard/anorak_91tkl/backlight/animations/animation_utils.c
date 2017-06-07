@@ -3,6 +3,7 @@
 #include "config.h"
 #include "../sector/sector_control.h"
 #include "../key_led_map.h"
+#include "../../utils.h"
 #include <avr/pgmspace.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +21,9 @@ static uint8_t* upper_pwm;
 static uint8_t* lower_leds;
 static uint8_t* lower_pwm;
 
+static uint8_t *key_pressed_count = 0;
+static uint32_t any_key_pressed = 0;
+
 void animation_prepare(bool set_all_to_black)
 {
 	upper_leds = (uint8_t*)malloc(IS31FL3733_LED_ENABLE_SIZE * sizeof(uint8_t));
@@ -28,11 +32,15 @@ void animation_prepare(bool set_all_to_black)
 	lower_leds = (uint8_t*)malloc(IS31FL3733_LED_ENABLE_SIZE * sizeof(uint8_t));
 	lower_pwm = (uint8_t*)malloc(IS31FL3733_LED_PWM_SIZE * sizeof(uint8_t));
 
+	key_pressed_count = (uint8_t *)calloc(MATRIX_ROWS * MATRIX_COLS, sizeof(uint8_t));
+
 	memcpy(upper_leds, is31fl3733_led_buffer(issi.upper->device), IS31FL3733_LED_ENABLE_SIZE * sizeof(uint8_t));
 	memcpy(upper_pwm, is31fl3733_pwm_buffer(issi.upper->device), IS31FL3733_LED_PWM_SIZE * sizeof(uint8_t));
 
 	memcpy(lower_leds, is31fl3733_led_buffer(issi.lower->device), IS31FL3733_LED_ENABLE_SIZE * sizeof(uint8_t));
 	memcpy(lower_pwm, is31fl3733_pwm_buffer(issi.lower->device), IS31FL3733_LED_PWM_SIZE * sizeof(uint8_t));
+
+	any_key_pressed = 0;
 
 	sector_enable_all_leds();
 
@@ -45,7 +53,7 @@ void animation_prepare(bool set_all_to_black)
 	is31fl3733_91tkl_update_led_pwm(&issi);
 	is31fl3733_91tkl_update_led_enable(&issi);
 
-	dprintf("go\n");
+    dprintf("ram: %d\n", freeRam());
 }
 
 void animation_postpare()
@@ -64,6 +72,37 @@ void animation_postpare()
 
 	free(lower_leds);
 	free(lower_pwm);
+
+	dprintf("ram: %d\n", freeRam());
+}
+
+void animation_default_animation_start()
+{
+    animation_prepare(false);
+}
+
+void animation_default_animation_start_clear()
+{
+    animation_prepare(true);
+}
+
+void animation_default_animation_stop()
+{
+    animation_postpare();
+}
+
+uint8_t key_was_pressed(uint8_t key_row, uint8_t key_col)
+{
+	return key_pressed_count[key_row * MATRIX_ROWS + key_col];
+}
+
+void animation_default_typematrix_row(uint8_t row_number, matrix_row_t row)
+{
+	for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
+	{
+		if ((row & ((matrix_row_t) 1 << key_col)))
+			key_pressed_count[row_number * MATRIX_ROWS + key_col]++;
+	}
 }
 
 void draw_keymatrix_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t key_row, int16_t key_col, RGB color)

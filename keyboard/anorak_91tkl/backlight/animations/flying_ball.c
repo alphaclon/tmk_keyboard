@@ -19,19 +19,6 @@ static uint8_t offset;
 static HSV hsv;
 static RGB rgb;
 
-void set_animation_flying_ball()
-{
-	dprintf("flying_ball\n");
-
-    animation.delay_in_ms = FPS_TO_DELAY(5);    // 50ms = 20 fps
-    animation.duration_in_ms = 0;
-
-    animation.animationStart = &flying_ball_animation_start;
-    animation.animationStop = &flying_ball_animation_stop;
-    animation.animationLoop = &flying_ball_animation_loop;
-    animation.animation_typematrix_row = &flying_ball_typematrix_row;
-}
-
 void flying_ball_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
 	hsv.h = rand() % 255;
@@ -69,11 +56,6 @@ void flying_ball_animation_start()
     	device = DEVICE_BY_NUMBER(issi, device_number);
     	rgb = is31fl3733_rgb_get_pwm(device, col, row);
 	}
-}
-
-void flying_ball_animation_stop()
-{
-    animation_postpare();
 }
 
 void flying_ball_animation_loop()
@@ -123,4 +105,17 @@ void flying_ball_animation_loop()
 	is31fl3733_91tkl_update_led_pwm(&issi);
 
     offset++;
+}
+
+void set_animation_flying_ball()
+{
+	dprintf("flying_ball\n");
+
+    animation.delay_in_ms = FPS_TO_DELAY(5);    // 50ms = 20 fps
+    animation.duration_in_ms = 0;
+
+    animation.animationStart = &flying_ball_animation_start;
+    animation.animationStop = &animation_default_animation_stop();
+    animation.animationLoop = &flying_ball_animation_loop;
+    animation.animation_typematrix_row = &flying_ball_typematrix_row;
 }

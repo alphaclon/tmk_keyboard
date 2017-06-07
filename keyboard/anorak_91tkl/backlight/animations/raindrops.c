@@ -11,32 +11,8 @@
 #include "nodebug.h"
 #endif
 
-void set_animation_raindrops()
-{
-	dprintf("raindrops\n");
-
-    animation.delay_in_ms = FPS_TO_DELAY(10);    // = 20 fps
-    animation.duration_in_ms = 0;
-
-    animation.animationStart = &raindrops_animation_start;
-    animation.animationStop = &raindrops_animation_stop;
-    animation.animationLoop = &raindrops_animation_loop;
-    animation.animation_typematrix_row = 0;
-}
-
 void raindrops_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
-}
-
-void raindrops_animation_start()
-{
-    animation_prepare(false);
-    // TODO: Initialize with random colors?
-}
-
-void raindrops_animation_stop()
-{
-    animation_postpare();
 }
 
 void raindrops_animation_loop()
@@ -48,12 +24,12 @@ void raindrops_animation_loop()
     uint8_t row;
     uint8_t col;
     uint8_t device_number;
-    IS31FL3733_RGB *device;
-
-    HSV hsv;
 
     if (!getLedPosByMatrixKey(row_to_change, col_to_change, &device_number, &row, &col))
     	return;
+
+    IS31FL3733_RGB *device;
+    HSV hsv;
 
     device = DEVICE_BY_NUMBER(issi, device_number);
 
@@ -85,4 +61,17 @@ void raindrops_animation_loop()
 
     // TODO: optimize: write rgb values directly to device by ignoring the buffer
     is31fl3733_91tkl_update_led_pwm(&issi);
+}
+
+void set_animation_raindrops()
+{
+	dprintf("raindrops\n");
+
+    animation.delay_in_ms = FPS_TO_DELAY(10);    // = 20 fps
+    animation.duration_in_ms = 0;
+
+    animation.animationStart = &animation_default_animation_start_clear;
+    animation.animationStop = &animation_default_animation_stop;
+    animation.animationLoop = &raindrops_animation_loop;
+    animation.animation_typematrix_row = 0;
 }

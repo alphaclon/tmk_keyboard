@@ -2,6 +2,7 @@
 #include "type_o_circles.h"
 #include "../key_led_map.h"
 #include "animation_utils.h"
+#include "utils.h"
 #include "config.h"
 #include <stdlib.h>
 
@@ -14,19 +15,41 @@
 #define RADIUS_COUNT 15
 static uint8_t *pressed_keys = 0;
 
-void draw_circle_outline(IS31FL3733_91TKL *device, int16_t key_col, int16_t key_row, int16_t r, RGB color);
-
-void set_animation_type_o_circles()
+// Draw a circle outline
+void draw_circle_outline(IS31FL3733_91TKL *device, int16_t key_row, int16_t key_col, int16_t r, RGB color)
 {
-	dprintf("type_o_circles\n");
+    int16_t f = 1 - r;
+    int16_t ddF_x = 1;
+    int16_t ddF_y = -2 * r;
+    int16_t x = 0;
+    int16_t y = r;
 
-    animation.delay_in_ms = FPS_TO_DELAY(2);
-    animation.duration_in_ms = 0;
+    draw_keymatrix_rgb_pixel(device, key_col, key_row + r, color);
+    draw_keymatrix_rgb_pixel(device, key_col, key_row - r, color);
+    draw_keymatrix_rgb_pixel(device, key_col + r, key_row, color);
+    draw_keymatrix_rgb_pixel(device, key_col - r, key_row, color);
 
-    animation.animationStart = &type_o_circles_animation_start;
-    animation.animationStop = &type_o_circles_animation_stop;
-    animation.animationLoop = &type_o_circles_animation_loop;
-    animation.animation_typematrix_row = &type_o_circles_typematrix_row;
+    while (x < y)
+    {
+        if (f >= 0)
+        {
+            y--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x++;
+        ddF_x += 2;
+        f += ddF_x;
+
+        draw_keymatrix_rgb_pixel(device, key_col + y, key_row + x, color);
+        draw_keymatrix_rgb_pixel(device, key_col - y, key_row + x, color);
+        draw_keymatrix_rgb_pixel(device, key_col + y, key_row - x, color);
+        draw_keymatrix_rgb_pixel(device, key_col - y, key_row - x, color);
+        draw_keymatrix_rgb_pixel(device, key_col + x, key_row + y, color);
+        draw_keymatrix_rgb_pixel(device, key_col - x, key_row + y, color);
+        draw_keymatrix_rgb_pixel(device, key_col + x, key_row - y, color);
+        draw_keymatrix_rgb_pixel(device, key_col - x, key_row - y, color);
+    }
 }
 
 void type_o_circles_typematrix_row(uint8_t row_number, matrix_row_t row)
@@ -38,6 +61,8 @@ void type_o_circles_animation_start()
 {
 	animation_prepare(true);
     pressed_keys = (uint8_t *)calloc(MATRIX_ROWS * MATRIX_COLS, sizeof(uint8_t));
+
+    dprintf("ram: %d\n", freeRam());
 }
 
 void type_o_circles_animation_stop()
@@ -73,39 +98,17 @@ void type_o_circles_animation_loop()
     is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
-// Draw a circle outline
-void draw_circle_outline(IS31FL3733_91TKL *device, int16_t key_row, int16_t key_col, int16_t r, RGB color)
+void set_animation_type_o_circles()
 {
-    int16_t f = 1 - r;
-    int16_t ddF_x = 1;
-    int16_t ddF_y = -2 * r;
-    int16_t x = 0;
-    int16_t y = r;
+	dprintf("type_o_circles\n");
 
-    draw_keymatrix_rgb_pixel(device, key_col, key_row + r, color);
-    draw_keymatrix_rgb_pixel(device, key_col, key_row - r, color);
-    draw_keymatrix_rgb_pixel(device, key_col + r, key_row, color);
-    draw_keymatrix_rgb_pixel(device, key_col - r, key_row, color);
+    animation.delay_in_ms = FPS_TO_DELAY(2);
+    animation.duration_in_ms = 0;
 
-    while (x < y)
-    {
-        if (f >= 0)
-        {
-            y--;
-            ddF_y += 2;
-            f += ddF_y;
-        }
-        x++;
-        ddF_x += 2;
-        f += ddF_x;
-
-        draw_keymatrix_rgb_pixel(device, key_col + x, key_row + y, color);
-        draw_keymatrix_rgb_pixel(device, key_col - x, key_row + y, color);
-        draw_keymatrix_rgb_pixel(device, key_col + x, key_row - y, color);
-        draw_keymatrix_rgb_pixel(device, key_col - x, key_row - y, color);
-        draw_keymatrix_rgb_pixel(device, key_col + y, key_row + x, color);
-        draw_keymatrix_rgb_pixel(device, key_col - y, key_row + x, color);
-        draw_keymatrix_rgb_pixel(device, key_col + y, key_row - x, color);
-        draw_keymatrix_rgb_pixel(device, key_col - y, key_row - x, color);
-    }
+    animation.animationStart = &type_o_circles_animation_start;
+    animation.animationStop = &type_o_circles_animation_stop;
+    animation.animationLoop = &type_o_circles_animation_loop;
+    animation.animation_typematrix_row = &type_o_circles_typematrix_row;
 }
+
+

@@ -45,7 +45,12 @@ uint8_t is31fl3733_read_paged_reg(IS31FL3733 *device, uint16_t reg_addr)
 
 void is31fl3733_init(IS31FL3733 *device)
 {
-#ifdef DEBUG_ISSI
+    is31fl3733_hardware_shutdown(device, true);
+    dprintf("hsd\n");
+
+	device->pfn_iic_reset();
+
+#ifdef DEBUG_ISSI_I2C
     device->pfn_i2c_read_reg = &i2c_read_reg;
     device->pfn_i2c_write_reg = &i2c_write_reg;
     device->pfn_i2c_read_reg8 = &i2c_read_reg8;
@@ -76,10 +81,6 @@ void is31fl3733_init(IS31FL3733 *device)
     memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
 
     device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
-    //device->cr = IS31FL3733_CR_SSD;
-
-    is31fl3733_hardware_shutdown(device, true);
-    dprintf("hsd\n");
 
     // Read reset register to reset device.
     is31fl3733_read_paged_reg(device, IS31FL3733_RESET);

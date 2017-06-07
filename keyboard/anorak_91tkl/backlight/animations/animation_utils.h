@@ -36,6 +36,14 @@ extern animation_interface animation;
 void animation_prepare(bool set_all_to_black);
 void animation_postpare(void);
 
+void animation_default_animation_start();
+void animation_default_animation_start_clear();
+void animation_default_animation_stop();
+
+void animation_default_typematrix_row(uint8_t row_number, matrix_row_t row);
+
+uint8_t key_was_pressed(uint8_t key_row, uint8_t key_col);
+
 void draw_keymatrix_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t row, int16_t col, RGB color);
 void draw_keymatrix_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t row, int16_t col, HSV color);
 

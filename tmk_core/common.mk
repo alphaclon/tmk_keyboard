@@ -50,8 +50,10 @@ endif
 ifeq (yes,$(strip $(CONSOLE_ENABLE)))
     OPT_DEFS += -DCONSOLE_ENABLE
 else
-    OPT_DEFS += -DNO_PRINT
-    OPT_DEFS += -DNO_DEBUG
+	ifneq (yes,$(strip $(VIRTSER_ENABLE)))
+    	OPT_DEFS += -DNO_PRINT
+    	OPT_DEFS += -DNO_DEBUG
+	endif
 endif
 
 ifeq (yes,$(strip $(COMMAND_ENABLE)))

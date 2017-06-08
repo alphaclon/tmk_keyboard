@@ -667,6 +667,9 @@ int8_t sendchar(uint8_t c)
 #ifdef LUFA_DEBUG_UART
     uart_putc(c);
 #endif
+#ifdef VIRTSER_ENABLE
+    virtser_send(c);
+#endif
 
     return 0;
 }
@@ -679,7 +682,6 @@ int8_t sendchar(uint8_t c)
 #ifdef VIRTSER_ENABLE
 void virtser_init(void)
 {
-	println("virtser_init");
     cdc_device.State.ControlLineStates.DeviceToHost = CDC_CONTROL_LINE_IN_DSR;
     CDC_Device_SendControlLineStateChange(&cdc_device);
 }
@@ -687,7 +689,6 @@ void virtser_init(void)
 void virtser_recv(uint8_t c) __attribute__((weak));
 void virtser_recv(uint8_t c)
 {
-	//println("virtser_recv");
     virtser_send(c);
     // Ignore by default
 }
@@ -705,8 +706,6 @@ void virtser_task(void)
 
 void virtser_send(const uint8_t byte)
 {
-	//println("virtser_send");
-
     uint8_t timeout = 255;
     uint8_t ep = Endpoint_GetCurrentEndpoint();
 
@@ -741,23 +740,6 @@ void virtser_send(const uint8_t byte)
 /*******************************************************************************
  * main
  ******************************************************************************/
-
-#ifdef ENABLE_MCUSR
-/*
- * MCUSR stuff
- */
-
-void get_mcusr(void) __attribute__((naked)) __attribute__((section(".init3")));
-
-uint8_t mcusr_mirror __attribute__((section(".noinit")));
-
-void get_mcusr(void)
-{
-    mcusr_mirror = MCUSR;
-    //MCUSR = 0;
-    wdt_disable();
-}
-#endif
 
 static void setup_mcu(void)
 {

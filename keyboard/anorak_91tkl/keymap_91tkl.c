@@ -115,11 +115,11 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      */
     KEYMAP_ISO(\
          TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-  	     TRNS, FN20, FN21, FN22, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-         TRNS, FN23, FN24, FN25, FN26, FN27, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,                            \
-		 TRNS, TRNS, FN30, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,         FN2,  TRNS,  FN3,  \
-		 TRNS, TRNS, TRNS, TRNS,                                     TRNS, TRNS, TRNS, TRNS,  TRNS,  TRNS, TRNS  )
+  	     TRNS, FN20, FN21, FN22, FN29, FN30, TRNS, TRNS, FN14, FN15, FN16, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN17, FN18, FN19, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+         TRNS, FN23, FN24, FN25, FN26, FN27, TRNS, TRNS,  FN8,  FN9, FN10, TRNS, TRNS,                            \
+		  FN7, TRNS, FN31, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN11, FN12, FN13, TRNS,         FN2,  TRNS,  FN3,  \
+		  FN4,  FN5,  FN6, TRNS,                                     TRNS, TRNS, TRNS, TRNS,  TRNS,  TRNS, TRNS  )
 };
 
 /*
@@ -195,11 +195,12 @@ const action_t PROGMEM fn_actions[] =
    [25] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, FunctionKeys),
    [26] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, CursorKeys),
    [27] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, OtherKeys),
+   [28] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ESCKey),
 
-   [28] = ACTION_FUNCTION(FN91_Backlight_Animate_Decrease_Speed),
-   [29] = ACTION_FUNCTION(FN91_Backlight_Animate_Increase_Speed),
+   [29] = ACTION_FUNCTION(FN91_Backlight_Animate_Decrease_Speed),
+   [30] = ACTION_FUNCTION(FN91_Backlight_Animate_Increase_Speed),
 
-   [30] = ACTION_FUNCTION(FN91_Backlight_Dump),
+   [31] = ACTION_FUNCTION(FN91_Backlight_Dump),
 };
 
 /*

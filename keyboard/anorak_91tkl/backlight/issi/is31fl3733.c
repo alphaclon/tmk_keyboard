@@ -33,32 +33,38 @@ void is31fl3733_write_paged_reg(IS31FL3733 *device, uint16_t reg_addr, uint8_t r
 
 uint8_t is31fl3733_read_paged_reg(IS31FL3733 *device, uint16_t reg_addr)
 {
-  uint8_t reg_value;
+    uint8_t reg_value;
 
-  // Select register page.
-  is31fl3733_select_page (device, IS31FL3733_GET_PAGE(reg_addr));
-  // Read value from register.
-  device->pfn_i2c_read_reg (device->address, IS31FL3733_GET_ADDR(reg_addr), &reg_value, sizeof(uint8_t));
-  // Return register value.
-  return reg_value;
+    // Select register page.
+    is31fl3733_select_page(device, IS31FL3733_GET_PAGE(reg_addr));
+    // Read value from register.
+    device->pfn_i2c_read_reg(device->address, IS31FL3733_GET_ADDR(reg_addr), &reg_value, sizeof(uint8_t));
+    // Return register value.
+    return reg_value;
 }
 
 void is31fl3733_init(IS31FL3733 *device)
 {
+	dprintf("issi 0x%X\n", device->address);
+
+	dprintf("hsd\n");
     is31fl3733_hardware_shutdown(device, true);
-    dprintf("hsd\n");
 
 	device->pfn_iic_reset();
 
-#ifdef DEBUG_ISSI_I2C
+#ifdef DEBUG_ISSI_SLOW_I2C
     device->pfn_i2c_read_reg = &i2c_read_reg;
-    device->pfn_i2c_write_reg = &i2c_write_reg;
     device->pfn_i2c_read_reg8 = &i2c_read_reg8;
+    device->pfn_i2c_write_reg = &i2c_write_reg;
     device->pfn_i2c_write_reg8 = &i2c_write_reg8;
 #else
-    device->pfn_i2c_read_reg = &i2c_read_reg;
+    device->pfn_i2c_read_reg = &i2c_read_no_errorhandling_reg;
+    device->pfn_i2c_read_reg8 = &i2c_read_no_errorhandling_reg8;
+
+    //device->pfn_i2c_write_reg = &i2c_write_no_errorhandling_reg;
+    //device->pfn_i2c_write_reg8 = &i2c_write_no_errorhandling_reg8;
+
     device->pfn_i2c_write_reg = &i2c_queued_write_reg;
-    device->pfn_i2c_read_reg8 = &i2c_read_reg8;
     device->pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
 #endif
 
@@ -83,22 +89,29 @@ void is31fl3733_init(IS31FL3733 *device)
     device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
 
     // Read reset register to reset device.
-    is31fl3733_read_paged_reg(device, IS31FL3733_RESET);
     dprintf("reset\n");
+    is31fl3733_read_paged_reg(device, IS31FL3733_RESET);
+
+    _delay_ms(20);
+
+    // Set global current control register.
+    dprintf("gcc\n");
+    is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
+
+    dprintf("res\n");
+    is31fl3733_set_resistor_values(device, IS31FL3733_RESISTOR_32K, IS31FL3733_RESISTOR_32K);
 
     is31fl3733_update(device);
 
-    // Set global current control register.
-    is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
-    dprintf("gcc\n");
-
     // Clear software reset in configuration register.
     // Set master/slave bit
-    is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr);
     dprintf("ssd\n");
+    is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr);
 
-    is31fl3733_hardware_shutdown(device, false);
     dprintf("hsd\n");
+    is31fl3733_hardware_shutdown(device, false);
+
+    dprintf("issi 0x%X done\n", device->address);
 }
 
 void is31fl3733_update_global_current_control(IS31FL3733 *device)
@@ -192,23 +205,35 @@ void is31fl3733_update_led_pwm(IS31FL3733 *device)
 #if 0
     // Write PWM values.
     device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDPWM), device->pwm,
-                              sizeof(device->pwm));
+    			IS31FL3733_LED_PWM_USED_SIZE);
 #else
     // Write PWM values.
-    /*
-    for (uint8_t sw = 0; sw < IS31FL3733_SW; ++sw)
-    {
-        device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDPWM) + (sw * IS31FL3733_CS),
-                                  device->pwm + (sw * IS31FL3733_CS), IS31FL3733_CS);
-    }
-    */
-    for (uint8_t offset = 0; offset < IS31FL3733_LED_PWM_SIZE; offset += IS31FL3733_CS)
+    for (uint8_t offset = 0; offset < IS31FL3733_LED_PWM_USED_SIZE; offset += IS31FL3733_CS)
     {
         device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDPWM) + offset,
                                   device->pwm + offset, IS31FL3733_CS);
     }
 #endif
 }
+
+#ifdef DEBUG_ISSI
+void is31fl3733_update_led_pwm_fast(IS31FL3733 *device)
+{
+    dprintf("issi: up pwm fast %X\n", device->address);
+
+    // Unlock Command Register.
+    queued_twi_write_byte_to_register(device->address, IS31FL3733_PSWL, IS31FL3733_PSWL_ENABLE);
+    // Select requested page in Command Register.
+    queued_twi_write_byte_to_register(device->address, IS31FL3733_PSR, IS31FL3733_GET_PAGE(IS31FL3733_LEDPWM));
+
+    // Write PWM values.
+    for (uint8_t offset = 0; offset < IS31FL3733_LED_PWM_USED_SIZE; offset += IS31FL3733_CS)
+    {
+        queued_twi_write_data_to_register(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDPWM) + offset,
+                                          device->pwm + offset, IS31FL3733_CS);
+    }
+}
+#endif
 
 void is31fl3733_update(IS31FL3733 *device)
 {
@@ -298,6 +323,21 @@ void is31fl3733_set_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brig
     offset = sw * IS31FL3733_CS + cs;
     // Set brightness level of selected LED.
     device->pwm[offset] = brightness;
+}
+
+void is31fl3733_direct_set_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness)
+{
+    uint8_t offset;
+
+    // Calculate LED offset in RAM buffer.
+    offset = sw * IS31FL3733_CS + cs;
+    // Set brightness level of selected LED.
+    device->pwm[offset] = brightness;
+
+    // Select IS31FL3733_LEDPWM register page.
+    is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDPWM));
+    // Set brightness level of selected LED.
+    device->pfn_i2c_write_reg8(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDPWM) + offset, brightness);
 }
 
 uint8_t is31fl3733_get_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw)
@@ -453,6 +493,7 @@ void is31fl3733_read_led_short_states(IS31FL3733 *device)
 #endif
 }
 
+#if 0
 void is31fl3733_dump_led_buffer(IS31FL3733 *device)
 {
     dprintf("led buffer\n");
@@ -480,3 +521,4 @@ void is31fl3733_dump_pwm_buffer(IS31FL3733 *device)
         dprintf("\n");
     }
 }
+#endif

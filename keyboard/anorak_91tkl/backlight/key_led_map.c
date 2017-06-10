@@ -55,8 +55,8 @@ const uint8_t PROGMEM keyledmap[MATRIX_ROWS][MATRIX_COLS] =
 	       DL(0,0), DL(0,1),  DL(0,2),  DL(0,3),  DL(0,4),  DL(0,5),  DL(0,6),  DL(0,7),  DL(0,8),  DL(0,9), DL(0,10),  DL(0,11),  DL(0,12),
 			 //K1A,     K1B,     K1C,       K1D,      K1E,      K1F,      K1G,      K1H,       K1I,     K1J,      K1K,       K1L,       K1M,                 K1O,       K1P,       K1Q,
 		   DL(1,0), DL(1,1),  DL(1,2),  DL(1,3),  DL(1,4),  DL(1,5),  DL(1,6),  DL(1,7),  DL(1,8),  DL(1,9), DL(1,10),  DL(1,11),  DL(1,12),            DL(1,13),  DL(1,14),  DL(1,15),
-			 //K0A,     K0B,     K0C,       K0D,                                                                  K0K,       K0L,       K0M,       K0N,      K0O,       K0P,       K0Q,
-		   DL(2,0), DL(2,1),  DL(2,2),  DL(2,3),                                                              DL(2,9),  DL(2,10),  DL(2,11),  DL(2,12), DL(2,13),  DL(2,14),  DL(2,15)
+			 //K0A,     K0B,     K0C,       K0D,                                                        K0J,      K0K,       K0L,       K0M,                 K0O,       K0P,       K0Q,
+		   DL(2,0), DL(2,1),  DL(2,2),  DL(2,3),                                                    DL(2,9),  DL(2,10),  DL(2,11), DL(2,12),            DL(2,13),  DL(2,14),  DL(2,15)
 );
 
 /*

@@ -20,6 +20,7 @@ void sector_set_all_off(void);
 
 void sector_selected_set_hsv_color(HSV color);
 void sector_set_hsv_color(KeyboardSector sector, HSV color);
+HSV sector_get_hsv_color(KeyboardSector sector);
 
 void sector_all_increase_hsv_color(HSVColorName color);
 void sector_selected_increase_hsv_color(HSVColorName color);

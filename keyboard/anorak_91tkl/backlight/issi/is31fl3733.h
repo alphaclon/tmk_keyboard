@@ -14,7 +14,12 @@
   */
 #define IS31FL3733_SW (12)
 
+/** Number of used SW lines.
+  */
+#define IS31FL3733_USED_SW (9)
+
 #define IS31FL3733_LED_PWM_SIZE (IS31FL3733_CS * IS31FL3733_SW)
+#define IS31FL3733_LED_PWM_USED_SIZE (IS31FL3733_CS * IS31FL3733_USED_SW)
 #define IS31FL3733_LED_ENABLE_SIZE (IS31FL3733_LED_PWM_SIZE / 8)
 
 /** IS31FL3733 base address on I2C bus.
@@ -157,7 +162,7 @@ struct IS31FL3733Device
     /// Hardware enable (SDB)
     void (*pfn_hardware_enable)(bool enabled);
     /// Hardware I2C reset (IICRSET)
-    void (*pfn_iic_reset)();
+    void (*pfn_iic_reset)(void);
 };
 
 typedef struct IS31FL3733Device IS31FL3733;
@@ -202,6 +207,8 @@ void is31fl3733_disable_leds_by_mask(IS31FL3733 *device, uint8_t *mask);
 
 /// Set LED brightness level.
 void is31fl3733_set_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness);
+/// Set LED brightness level.
+void is31fl3733_direct_set_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8_t brightness);
 /// Get LED brightness level.
 uint8_t is31fl3733_get_pwm(IS31FL3733 *device, uint8_t cs, uint8_t sw);
 /// Set LED brightness level.
@@ -226,5 +233,10 @@ void is31fl3733_select_page(IS31FL3733 *device, uint8_t page);
 void is31fl3733_write_common_reg(IS31FL3733 *device, uint8_t reg_addr, uint8_t reg_value);
 /// Write to paged register.
 void is31fl3733_write_paged_reg(IS31FL3733 *device, uint16_t reg_addr, uint8_t reg_value);
+
+
+#ifdef DEBUG_ISSI
+void is31fl3733_update_led_pwm_fast(IS31FL3733 *device);
+#endif
 
 #endif /* _IS31FL3733_H_ */

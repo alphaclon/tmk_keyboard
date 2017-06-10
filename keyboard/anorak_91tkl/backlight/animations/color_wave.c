@@ -18,7 +18,7 @@ static int8_t direction;
 int16_t deltaH;
 int16_t deltaS;
 
-void color_wave_colors()
+void color_wave_colors(void)
 {
     int16_t h1 = animation.hsv.h;
     int16_t h2 = animation.hsv2.h;
@@ -50,13 +50,13 @@ void color_wave_colors()
     dprintf("dh: %d, ds: %d\n", deltaH, deltaS);
 }
 
-void color_wave_animation_start()
+void color_wave_animation_start(void)
 {
     animation_prepare(true);
     color_wave_colors();
 }
 
-void color_wave_animation_loop()
+void color_wave_animation_loop(void)
 {
     HSV hsv = {.h = animation.hsv.h, .s = animation.hsv.s, .v = animation.hsv.v};
 
@@ -88,13 +88,11 @@ void color_wave_animation_loop()
 
 
 
-
-    for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
-    {
-    	dprintf("---\n");
-
-        for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
-        {
+	for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
+	{
+		dprintf("---\n");
+		for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
+		{
             draw_keymatrix_hsv_pixel(&issi, key_row, key_col, hsv);
 
             dprintf("c: h: %u, s: %u\n", key_col, hsv.h, hsv.s);

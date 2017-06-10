@@ -24,11 +24,11 @@ void eeconfig_backlight_init(void)
 {
 #ifdef BACKLIGHT_ENABLE
 	eeconfig_backlight_enable();
-	eeprom_update_byte(EECONFIG_BACKLIGHT_SECTORS, 0xFF);
-    for (uint8_t i = 0; i < EECONFIG_BACKLIGHT_SECTOR_PWM_SIZE; i++)
-    	eeprom_update_byte(EECONFIG_BACKLIGHT_SECTOR_PWM + i, EECONFIG_BACKLIGHT_DEFAULT_BRIGHTNESS);
-    eeprom_update_byte(EECONFIG_BACKLIGHT_PWM_ACTIVE_MAP, 0xFF);
-    eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION, 0);
+	eeconfig_write_backlight_sectors_state(0xFF);
+	eeconfig_write_backlight_pwm_active_map(0xFF);
+
+	for (uint8_t i = 0; i < EECONFIG_BACKLIGHT_SECTOR_COUNT; i++)
+    	eeconfig_write_backlight_sector_values(i, 130, 70, 194);
 
     eeconfig_write_animation_current(0);
     eeconfig_write_animation_hsv_values(0, 255, 250, 192);

@@ -52,12 +52,7 @@ void draw_circle_outline(IS31FL3733_91TKL *device, int16_t key_row, int16_t key_
     }
 }
 
-void type_o_circles_typematrix_row(uint8_t row_number, matrix_row_t row)
-{
-    type_o_circles_animation_loop();
-}
-
-void type_o_circles_animation_start()
+void type_o_circles_animation_start(void)
 {
 	animation_prepare(true);
     pressed_keys = (uint8_t *)calloc(MATRIX_ROWS * MATRIX_COLS, sizeof(uint8_t));
@@ -65,13 +60,13 @@ void type_o_circles_animation_start()
     dprintf("ram: %d\n", freeRam());
 }
 
-void type_o_circles_animation_stop()
+void type_o_circles_animation_stop(void)
 {
 	animation_postpare();
     free(pressed_keys);
 }
 
-void type_o_circles_animation_loop()
+void type_o_circles_animation_loop(void)
 {
     is31fl3733_fill(issi.upper->device, 0);
     is31fl3733_fill(issi.lower->device, 0);
@@ -80,22 +75,27 @@ void type_o_circles_animation_loop()
     {
         for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
         {
-            if (pressed_keys[key_row * MATRIX_ROWS + key_col] == 0 && matrix_is_on(key_row, key_col))
-                pressed_keys[key_row * MATRIX_ROWS + key_col] = RADIUS_COUNT;
+            if (pressed_keys[key_row * MATRIX_COLS + key_col] == 0 && matrix_is_on(key_row, key_col))
+                pressed_keys[key_row * MATRIX_COLS + key_col] = RADIUS_COUNT;
 
-            if (pressed_keys[key_row * MATRIX_ROWS + key_col] > 0)
+            if (pressed_keys[key_row * MATRIX_COLS + key_col] > 0)
             {
                 uint8_t r = RADIUS_COUNT - pressed_keys[key_row * MATRIX_ROWS + key_col];
 
                 // TODO: Farbe abhängig vom Radius setzen
 
                 draw_circle_outline(&issi, key_row, key_col, r, animation.rgb);
-                pressed_keys[key_row * MATRIX_ROWS + key_col]--;
+                pressed_keys[key_row * MATRIX_COLS + key_col]--;
             }
         }
     }
 
     is31fl3733_91tkl_update_led_pwm(&issi);
+}
+
+void type_o_circles_typematrix_row(uint8_t row_number, matrix_row_t row)
+{
+    type_o_circles_animation_loop();
 }
 
 void set_animation_type_o_circles()

@@ -6,6 +6,7 @@
 #include "backlight/animations/animation.h"
 #include "backlight/animations/animation_utils.h"
 #include "backlight/key_led_map.h"
+#include "backlight/backlight_91tkl.h"
 #include "twi/avr315/TWI_Master.h"
 #include "keymap.h"
 #include "action_layer.h"
@@ -41,7 +42,7 @@
 #endif
 
 #define VIRTSER_ENABLE_ECHO
-#define VIRT_SER_PRINTF_BUFFER_SIZE 128
+#define VIRT_SER_PRINTF_BUFFER_SIZE 64
 
 #define DATAGRAM_START 0x02
 #define DATAGRAM_STOP 0x03
@@ -67,17 +68,10 @@ int virtser_print_P(const char *s);
 #define vserprintfln(fmt, ...) xfprintf(&virtser_send, fmt "\n", ##__VA_ARGS__)
 #define vserprintln(s) xfprintf(&virtser_send, s "\n")
 #else
-#if 1
 #define vserprint(s) virtser_print_P(PSTR(s))
 #define vserprintf(fmt, ...) virtser_printf_P(PSTR(fmt), ##__VA_ARGS__)
 #define vserprintfln(fmt, ...) virtser_printf_P(PSTR(fmt "\n"), ##__VA_ARGS__)
 #define vserprintln(s) virtser_print_P(PSTR(s "\n"))
-#else
-#define vserprint(s) dprintf(s)
-#define vserprintf(fmt, ...) dprintf(fmt, ##__VA_ARGS__)
-#define vserprintfln(fmt, ...) dprintf(fmt "\n", ##__VA_ARGS__)
-#define vserprintln(s) dprintf(s "\n")
-#endif
 #endif
 
 #undef print
@@ -115,11 +109,11 @@ bool cmd_user_help(uint8_t argc, char **argv);
 bool cmd_user_info(uint8_t argc, char **argv);
 bool cmd_user_ram(uint8_t argc, char **argv);
 bool cmd_user_dump_eeprom(uint8_t argc, char **argv);
-bool cmd_user_init_issi(uint8_t argc, char **argv);
 bool cmd_user_led(uint8_t argc, char **argv);
 bool cmd_user_pwm(uint8_t argc, char **argv);
 bool cmd_user_rgb(uint8_t argc, char **argv);
 bool cmd_user_hsv(uint8_t argc, char **argv);
+bool cmd_user_key_hsv(uint8_t argc, char **argv);
 bool cmd_user_sector(uint8_t argc, char **argv);
 bool cmd_user_animation(uint8_t argc, char **argv);
 bool cmd_user_debug_config(uint8_t argc, char **argv);
@@ -136,25 +130,29 @@ const user_command user_command_table[] PROGMEM = {
     {"?", &cmd_user_help, 0, "show help"},
     {"info", &cmd_user_info, 0, "show info"},
     {"ram", &cmd_user_ram, 0, "show free ram"},
-    {"eeprom", &cmd_user_dump_eeprom, 0, "dump eeprom"},
-    {"dfeeprom", &cmd_user_eeprom_clear, 0, "clear eeprom"},
-    {"bleeprom", &cmd_user_backlight_eeprom_clear, 0, "clear backlight eeprom"},
+    {"ee", &cmd_user_dump_eeprom, 0, "dump eeprom"},
+    {"fee", &cmd_user_eeprom_clear, 0, "clear eeprom"},
+    {"bee", &cmd_user_backlight_eeprom_clear, 0, "clear backlight eeprom"},
     {"sector", &cmd_user_sector, "save | map # | # 0|1 | # h s v", "set sector"},
     {"animation", &cmd_user_animation, "save | delay ms | # 0|1 | c h s v", "set animation"},
     {"debug", &cmd_user_debug_config, 0, "debug configuration"},
-    {"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
-    {"keymap_json", &cmd_user_keymap_json, 0, "keymap json"},
-	{"ledmap", &cmd_user_keymap_led_map, 0, "row/col to led pos map"},
     {"layer", &cmd_user_default_layer, 0, "default layer"},
-    {"bootloader", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
+    {"bl", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
+
+    {"hsv", &cmd_user_key_hsv, "row col h s v", "set hsv"},
+
+#ifdef DEBUG_ISSI
+    //{"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
+    //{"keymap_json", &cmd_user_keymap_json, 0, "keymap json"},
+    //{"ledmap", &cmd_user_keymap_led_map, 0, "row/col to led pos map"},
     {"issi", &cmd_user_test_issi, 0, "test issi"},
-    {"led", &cmd_user_led, "dev cs sw on", "enable/disable led"},
-    {"pwm", &cmd_user_pwm, "dev cs sw bri", "set pwm"},
-    {"rgb", &cmd_user_rgb, "dev row col r g b", "set rgb"},
-    {"hsv", &cmd_user_hsv, "dev row col h s v", "set hsv"},
+    {"tpwm", &cmd_user_pwm, "dev cs sw bri", "set pwm"},
+    {"trgb", &cmd_user_rgb, "dev row col r g b", "set rgb"},
+    {"thsv", &cmd_user_hsv, "dev row col h s v", "set hsv"},
+    {"tled", &cmd_user_led, "dev cs sw on", "enable/disable led"},
+#endif
+
     {0, 0, 0, 0}};
-
-
 
 void dump_led_buffer(IS31FL3733 *device)
 {
@@ -180,8 +178,8 @@ void dump_led_buffer_inverted(IS31FL3733 *device)
         vserprintf("%02u: ", sw);
         for (uint8_t cs = 0; cs < (IS31FL3733_CS / 8); ++cs)
         {
-            vserprintf("0x%02X ", (uint8_t)~(led[sw * (IS31FL3733_CS / 8) + cs]));
-            dprintf("b%b ", (uint8_t)~(led[sw * (IS31FL3733_CS / 8) + cs]));
+            vserprintf("0x%02X ", (uint8_t) ~(led[sw * (IS31FL3733_CS / 8) + cs]));
+            dprintf("b%b ", (uint8_t) ~(led[sw * (IS31FL3733_CS / 8) + cs]));
         }
         vserprintf("\n");
         dprintf("\n");
@@ -205,9 +203,9 @@ void dump_pwm_buffer(IS31FL3733 *device)
 
 void dump_args(uint8_t argc, char **argv)
 {
-	dprintf("args: ");
+    dprintf("args: ");
     for (uint8_t i = 0; i < argc; i++)
-    	dprintf("%s ", argv[i]);
+        dprintf("%s ", argv[i]);
     dprintf("\n");
 }
 
@@ -216,27 +214,25 @@ bool cmd_user_help(uint8_t argc, char **argv)
     uint8_t pos = 0;
     user_command cmd;
 
-    vserprintf("\n  - Anorak 91tkl - virtual console - help -\n");
     memcpy_P(&cmd, (const void *)&user_command_table[pos++], sizeof(struct user_command_t));
 
     while (cmd.pfn_command)
     {
-    	if (cmd.help_args)
-    		vserprintfln("%s [%s]: %s", cmd.cmd, cmd.help_args, cmd.help_msg);
-    	else
-    		vserprintfln("%s: %s", cmd.cmd, cmd.help_msg);
+        if (cmd.help_args)
+            vserprintfln("%s [%s]: %s", cmd.cmd, cmd.help_args, cmd.help_msg);
+        else
+            vserprintfln("%s: %s", cmd.cmd, cmd.help_msg);
 
         memcpy_P(&cmd, (const void *)&user_command_table[pos++], sizeof(struct user_command_t));
     }
 
-    vserprintf("\nAll commmands must start with a '!'");
-    vserprintf("\n\n");
+    vserprintf("\n");
     return true;
 }
 
 bool cmd_user_test_issi(uint8_t argc, char **argv)
 {
-	bool found = false;
+    bool found = false;
 
     if (argc == 1 && strcmp_P(argv[0], PSTR("detect")) == 0)
     {
@@ -258,13 +254,13 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         /*
         for (uint8_t i = 0; i <= 3; i++)
         {
-        	for (uint8_t j = 0; j <= 3; j++)
-        	{
-        		slave_address = IS31FL3733_I2C_ADDR(i, j);
-				vserprintf("issi: lower device at 0x%X (%u/%u): ", slave_address, i, j);
-				device_present = TWI_detect(slave_address);
-				vserprintfln("%u", device_present ? 0 : 1);
-        	}
+                for (uint8_t j = 0; j <= 3; j++)
+                {
+                        slave_address = IS31FL3733_I2C_ADDR(i, j);
+                                vserprintf("issi: lower device at 0x%X (%u/%u): ", slave_address, i, j);
+                                device_present = TWI_detect(slave_address);
+                                vserprintfln("%u", device_present ? 0 : 1);
+                }
         }
         */
 
@@ -272,12 +268,16 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
     }
     else if (argc == 1 && strcmp_P(argv[0], PSTR("init")) == 0)
     {
-		vserprintfln("init is31fl3733_91tkl");
+        vserprintfln("init is31fl3733_91tkl");
 
-		is31fl3733_91tkl_init(&issi);
-		is31fl3733_91tkl_dump(&issi);
+        is31fl3733_91tkl_init(&issi);
+        is31fl3733_91tkl_power_target(&issi, 450);
 
-		found = true;
+        sector_control_init();
+        fix_backlight_level();
+        initialize_animation();
+
+        found = true;
     }
     else if (argc == 2 && strcmp_P(argv[0], PSTR("pwm")) == 0)
     {
@@ -308,11 +308,11 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
 
         if (on)
         {
-        	is31fl3733_led_enable_all(device);
+            is31fl3733_led_enable_all(device);
         }
         else
         {
-        	is31fl3733_led_disable_all(device);
+            is31fl3733_led_disable_all(device);
         }
 
         is31fl3733_update_led_enable(device);
@@ -398,7 +398,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         uint8_t row;
         uint8_t col;
 
-    	HSV hsv = {.h = 0, .s = 255, .v = 128};
+        HSV hsv = {.h = 0, .s = 255, .v = 128};
 
         is31fl3733_fill(issi.upper->device, 0);
         is31fl3733_fill(issi.lower->device, 0);
@@ -410,31 +410,36 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
         {
             for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
             {
-            	if (getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
-				{
-					device = (device_number ? issi.upper : issi.lower);
-					is31fl3733_hsv_set_pwm(device, col, row, hsv);
+                if (getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
+                {
+                    device = (device_number ? issi.upper : issi.lower);
+                    is31fl3733_hsv_set_pwm(device, col, row, hsv);
 
-					is31fl3733_91tkl_update_led_pwm(&issi);
+                    is31fl3733_91tkl_update_led_pwm(&issi);
 
-					_delay_ms(500);
-					hsv.h += 3;
-				}
+                    _delay_ms(500);
+                    hsv.h += 3;
+                }
             }
         }
 
         found = true;
     }
+    else if (argc == 1 && strcmp_P(argv[0], PSTR("fast")) == 0)
+    {
+        is31fl3733_update_led_pwm_fast(issi.upper->device);
+        found = true;
+    }
+    else if (argc == 1 && strcmp_P(argv[0], PSTR("que")) == 0)
+    {
+        queued_twi_stats();
+#ifdef DEBUG_TX_QUEUE
+        tx_queue_print_status();
+#endif
+        found = true;
+    }
 
     return found;
-}
-
-bool cmd_user_init_issi(uint8_t argc, char **argv)
-{
-    vserprintfln("init is31fl3733_91tkl");
-    is31fl3733_91tkl_init(&issi);
-    is31fl3733_91tkl_dump(&issi);
-    return true;
 }
 
 bool cmd_user_led(uint8_t argc, char **argv)
@@ -521,29 +526,58 @@ bool cmd_user_hsv(uint8_t argc, char **argv)
     return true;
 }
 
+bool cmd_user_key_hsv(uint8_t argc, char **argv)
+{
+    if (argc != 5)
+        return false;
+
+    HSV hsv;
+    uint8_t row;
+    uint8_t col;
+    uint8_t device_number;
+
+    uint8_t col_to_change = atoi(argv[0]);
+    uint8_t row_to_change = atoi(argv[1]);
+    hsv.h = atoi(argv[2]);
+    hsv.s = atoi(argv[3]);
+    hsv.v = atoi(argv[4]);
+
+    if (!getLedPosByMatrixKey(row_to_change, col_to_change, &device_number, &row, &col))
+        return false;
+
+    IS31FL3733_RGB *device = (device_number == 0 ? issi.lower : issi.upper);
+
+    // vserprintfln("HSV: d:%u, r:%u, c:%u, h:%u, s:%u, v:%u", device_number, row, col, hsv.h, hsv.s, hsv.v);
+
+    is31fl3733_hsv_direct_set_pwm(device, col, row, hsv);
+
+    return true;
+}
+
 bool cmd_user_animation(uint8_t argc, char **argv)
 {
     // "save | delay ms | # 0|1 | 0|1 h s v"
 
-    vserprintfln("animation: %u, running:%u", animation_current(), animation_is_running());
-
     if (argc == 0)
     {
-        vserprintfln("  delay:%u, duration:%u", animation.delay_in_ms, animation.duration_in_ms);
-        vserprintfln("  hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
-        vserprintfln("  hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
-        vserprintfln("   rgb: r:%u, g:%u, b:%u", animation.rgb.r, animation.rgb.g, animation.rgb.b);
+        vserprintfln("animation:%u", animation_current());
+        vserprintfln(".running:%u", animation_is_running());
+        vserprintfln(".delay:%u", animation.delay_in_ms);
+        vserprintfln(".duration:%u", animation.duration_in_ms);
+        vserprintfln(".hsv1:%X %X %X", animation.hsv.h, animation.hsv.s, animation.hsv.v);
+        vserprintfln(".hsv2:%X %X %X", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
+        vserprintfln(".rgb:%X %X %X", animation.rgb.r, animation.rgb.g, animation.rgb.b);
         return true;
     }
 
     if (argc == 1 && strcmp_P(argv[0], PSTR("save")) == 0)
     {
-        vserprintfln("    save state");
+        vserprintfln("save");
         animation_save_state();
         return true;
     }
 
-    if (argc == 1)
+    if (argc == 1 && strcmp_P(argv[0], PSTR("fps")) == 0)
     {
         uint16_t delay_in_ms = atoi(argv[0]);
         animation_set_speed(delay_in_ms);
@@ -553,15 +587,14 @@ bool cmd_user_animation(uint8_t argc, char **argv)
     if (argc == 2)
     {
         uint8_t selected_animation = atoi(argv[0]);
-        set_animation(selected_animation);
-
         bool run_animation = atoi(argv[1]);
+
         if (run_animation)
-            start_animation();
+            set_and_start_animation(selected_animation);
         else
             stop_animation();
 
-        vserprintfln("animation: set:%u, running:%u", animation_current(), animation_is_running());
+        vserprintfln("set:%u, running:%u", animation_current(), animation_is_running());
         return true;
     }
 
@@ -584,8 +617,8 @@ bool cmd_user_animation(uint8_t argc, char **argv)
             animation.hsv2.v = atoi(argv[3]);
         }
 
-        vserprintfln("   hsv1: h:%u, s:%u, v:%u", animation.hsv.h, animation.hsv.s, animation.hsv.v);
-        vserprintfln("   hsv2: h:%u, s:%u, v:%u", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
+        vserprintfln("%X %X %X", animation.hsv.h, animation.hsv.s, animation.hsv.v);
+        vserprintfln("%X %X %X", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
         return true;
     }
 
@@ -596,14 +629,13 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 {
     // save | map # | # 0|1 | # h s v
 
-    vserprintf("sector ");
-
     if (argc == 0)
     {
-        vserprintfln(" ");
         for (uint8_t s = 0; s < SECTOR_MAX; ++s)
-            vserprintf("%u:%u ", s, sector_is_enabled(s));
-        vserprintfln("");
+        {
+            HSV hsv = sector_get_hsv_color(s);
+            vserprintfln("%u %u %X %X %X", s, sector_is_enabled(s), hsv.h, hsv.s, hsv.v);
+        }
         return true;
     }
 
@@ -614,61 +646,81 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         return true;
     }
 
+    if (argc == 1)
+    {
+    	uint8_t s = atoi(argv[1]);
+        HSV hsv = sector_get_hsv_color(s);
+        vserprintfln("%u %u %X %X %X", s, sector_is_enabled(s), hsv.h, hsv.s, hsv.v);
+        return true;
+    }
+
     if (argc == 2 && strcmp_P(argv[0], PSTR("map")) == 0)
     {
-    	uint8_t custom_map = atoi(argv[1]);
-        vserprintfln("map:%u", custom_map);
+        uint8_t custom_map = atoi(argv[1]);
+        vserprintfln(".map:%u", custom_map);
         sector_set_custom_map(custom_map);
         return true;
     }
 
-    uint8_t selected_sector = atoi(argv[0]);
-    bool selected_sector_enabled = 0;
-
-    if (argc >= 1)
+    if (argc == 2 && strcmp_P(argv[0], PSTR("inc")) == 0)
     {
-        vserprintfln("%u:%u", selected_sector, sector_is_enabled(selected_sector));
+        uint8_t inc = atoi(argv[1]);
+        vserprintfln(".inc:%u", inc);
+        sector_selected_increase_hsv_color(inc);
+        return true;
     }
-    if (argc >= 2)
+
+    if (argc == 2 && strcmp_P(argv[0], PSTR("dec")) == 0)
     {
-        selected_sector_enabled = atoi(argv[1]);
+        uint8_t inc = atoi(argv[1]);
+        vserprintfln(".dec:%u", inc);
+        sector_selected_decrease_hsv_color(inc);
+        return true;
+    }
+
+    if (argc == 2)
+    {
+    	uint8_t selected_sector = atoi(argv[0]);
+		bool selected_sector_enabled = atoi(argv[1]);
         sector_select(selected_sector);
         sector_set_selected(selected_sector_enabled);
 
-        vserprintfln(" -> %u", sector_is_enabled(selected_sector));
+        vserprintfln("%u %u", selected_sector, sector_is_enabled(selected_sector));
+        return true;
     }
-    if (argc >= 5)
+
+    if (argc == 4)
     {
         HSV hsv;
+        hsv.h = atoi(argv[1]);
+        hsv.s = atoi(argv[2]);
+        hsv.v = atoi(argv[3]);
 
-        hsv.h = atoi(argv[2]);
-        hsv.s = atoi(argv[3]);
-        hsv.v = atoi(argv[4]);
+        uint8_t s = atoi(argv[0]);
 
-        sector_selected_set_hsv_color(hsv);
+        sector_set_hsv_color(s, hsv);
         is31fl3733_91tkl_update_led_pwm(&issi);
 
-        vserprintfln(" h:%u, s:%u, v:%u", hsv.h, hsv.s, hsv.v);
+        vserprintfln("%u %X %X %X", s, hsv.h, hsv.s, hsv.v);
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 bool cmd_user_info(uint8_t argc, char **argv)
 {
-    vserprintf("\n  - Anorak 91tkl - version -\n");
     vserprintf("DESC: " STR(DESCRIPTION) "\n");
-    vserprintf("VID: " STR(VENDOR_ID) "(" STR(MANUFACTURER) ") "
-                                                            "PID: " STR(PRODUCT_ID) "(" STR(
-                                                                PRODUCT) ") "
-                                                                         "VER: " STR(DEVICE_VER) "\n");
+    vserprintf("VID: " STR(VENDOR_ID) "(" STR(MANUFACTURER) ")\n");
+    vserprintf("PID: " STR(PRODUCT_ID) "(" STR(PRODUCT) ")");
+    vserprintf("VER: " STR(DEVICE_VER) "\n");
     vserprintf("BUILD: " STR(VERSION) " (" __TIME__ " " __DATE__ ")\n");
     return true;
 }
 
 bool cmd_user_ram(uint8_t argc, char **argv)
 {
-    vserprintf("free ram: %d\n", freeRam());
+    vserprintf("%d\n", freeRam());
     return true;
 }
 
@@ -680,14 +732,14 @@ bool cmd_user_bootloader_jump(uint8_t argc, char **argv)
 
 bool cmd_user_eeprom_clear(uint8_t argc, char **argv)
 {
-    vserprintfln("eeconfig clear");
+    vserprintfln("clear");
     eeconfig_init();
     return true;
 }
 
 bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv)
 {
-    vserprintfln("backlight eeconfig clear");
+    vserprintfln("clear");
     eeconfig_backlight_init();
     return true;
 }
@@ -970,10 +1022,9 @@ bool cmd_user_keymap_led_map(uint8_t argc, char **argv)
     return true;
 }
 
-
 bool cmd_user_keymap_json(uint8_t argc, char **argv)
 {
-	virtser_print_P(keyboard_layout_json);
+    virtser_print_P(keyboard_layout_json);
     return true;
 }
 
@@ -982,15 +1033,14 @@ void virtser_send_data(uint8_t const *data, uint8_t length)
     // dprintf("send ");
     // dump_buffer(data, length);
 
+	LedInfo1_On();
     for (uint8_t i = 0; i < length; ++i)
     {
-    	LedInfo1_On();
         virtser_send(*data++);
-        LedInfo1_Off();
     }
+    LedInfo1_Off();
 }
 
-#if 1
 /*
         %%       - print '%'
         %c       - character
@@ -999,7 +1049,7 @@ void virtser_send_data(uint8_t const *data, uint8_t length)
         %x, %X   - hex integer
 */
 
-/*
+#if 0
 int virtser_printf(const char *fmt, ...)
 {
     static char buffer[VIRT_SER_PRINTF_BUFFER_SIZE];
@@ -1014,7 +1064,7 @@ int virtser_printf(const char *fmt, ...)
 
     return ret;
 }
-*/
+#endif
 
 int virtser_printf_P(const char *fmt, ...)
 {
@@ -1034,20 +1084,20 @@ int virtser_printf_P(const char *fmt, ...)
     return ret;
 }
 
-/*
+#if 0
 int virtser_print(const char *s)
 {
     int ret = 0;
 
     while (*s)
     {
-    	virtser_send(*s++);
+        virtser_send(*s++);
         ret++;
     }
 
     return ret;
 }
-*/
+#endif
 
 int virtser_print_P(const char *progmem_s)
 {
@@ -1062,7 +1112,6 @@ int virtser_print_P(const char *progmem_s)
 
     return ret;
 }
-#endif
 
 void interpret_user_command(uint8_t *buffer, uint8_t length)
 {
@@ -1074,24 +1123,24 @@ void interpret_user_command(uint8_t *buffer, uint8_t length)
     char *argv[10];
     struct user_command_t user_command;
 
-    //dprintf("buffer: <%s> l:%u\n", buffer, length);
+    // dprintf("buffer: <%s> l:%u\n", buffer, length);
     command = strsep(&str, " ");
 
-	while ((token = strsep(&str, " ")))
-	{
-		argv[argc] = token;
-		argc++;
-	}
+    while ((token = strsep(&str, " ")))
+    {
+        argv[argc] = token;
+        argc++;
+    }
 
     memcpy_P(&user_command, &user_command_table[pos++], sizeof(struct user_command_t));
 
-    //dprintf("uc: [%s] [%s]\n", user_command.cmd, user_command.help_msg);
+    // dprintf("uc: [%s] [%s]\n", user_command.cmd, user_command.help_msg);
 
     while (user_command.pfn_command)
     {
         if (strcmp(user_command.cmd, command) == 0)
         {
-        	dprintf("exec: %s\n", command);
+            dprintf("exec: %s\n", command);
             dump_args(argc, argv);
 
             bool success = user_command.pfn_command(argc, argv);
@@ -1101,7 +1150,7 @@ void interpret_user_command(uint8_t *buffer, uint8_t length)
             }
             else
             {
-                vserprintfln("cmd failed!");
+                vserprintfln("ERR");
             }
 
             break;
@@ -1109,7 +1158,12 @@ void interpret_user_command(uint8_t *buffer, uint8_t length)
 
         memcpy_P(&user_command, &user_command_table[pos++], sizeof(struct user_command_t));
 
-        //dprintf("uc: [%s] [%s]\n", user_command.cmd, user_command.help_msg);
+        // dprintf("uc: [%s] [%s]\n", user_command.cmd, user_command.help_msg);
+    }
+
+    if (!user_command.pfn_command)
+    {
+    	vserprintfln("NC");
     }
 }
 
@@ -1136,7 +1190,7 @@ void command_set_pwm_row(uint8_t const *buffer, uint8_t length)
 
     IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
     uint8_t *pwm_buffer = is31fl3733_pwm_buffer(device);
-    memcpy(pwm_buffer+(cmd->row * IS31FL3733_CS), cmd->pwm, IS31FL3733_CS);
+    memcpy(pwm_buffer + (cmd->row * IS31FL3733_CS), cmd->pwm, IS31FL3733_CS);
 }
 
 void command_update_pwm_row(uint8_t const *buffer, uint8_t length)
@@ -1231,7 +1285,7 @@ void command_get_pwm_row(uint8_t const *buffer, uint8_t length)
 
     IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
     uint8_t *pwm_buffer = is31fl3733_pwm_buffer(device);
-    memcpy(cmd->pwm, pwm_buffer+(cmd->row * IS31FL3733_CS), IS31FL3733_CS);
+    memcpy(cmd->pwm, pwm_buffer + (cmd->row * IS31FL3733_CS), IS31FL3733_CS);
 
     uint8_t payload_length = sizeof(struct cmd_get_pwm_row) - 4;
 
@@ -1246,12 +1300,12 @@ void command_get_pwm_row(uint8_t const *buffer, uint8_t length)
 
 void command_save_pwm(uint8_t const *buffer, uint8_t length)
 {
-	sector_save_custom_pwm_map();
+    sector_save_custom_pwm_map();
 }
 
 void command_update_pwm(uint8_t const *buffer, uint8_t length)
 {
-	//sector_save_custom_pwm_map();
+    // sector_save_custom_pwm_map();
 }
 
 uint8_t get_datagram_cmd(uint8_t const *buffer)
@@ -1296,7 +1350,7 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     }
     else
     {
-    	dprintf("recv unknown cmd: %u\n", cmd);
+        dprintf("recv unknown cmd: %u\n", cmd);
     }
 }
 
@@ -1351,7 +1405,7 @@ void virtser_recv(uint8_t ucData)
     virtser_send(ucData);
 #endif
 
-    //dprintf("recv: [%02X] <%c> s:%u\n", ucData, (char)ucData, recv_status);
+    // dprintf("recv: [%02X] <%c> s:%u\n", ucData, (char)ucData, recv_status);
 
     if (datagram_is_data_start(ucData))
     {
@@ -1366,7 +1420,7 @@ void virtser_recv(uint8_t ucData)
     }
     else if (datagram_is_userdata_start(ucData))
     {
-        //dprintf("recv: user start\n");
+        // dprintf("recv: user start\n");
 
         buffer_pos = 0;
 
@@ -1407,15 +1461,15 @@ void virtser_recv(uint8_t ucData)
             print("recv: payload too long\n");
         }
 
-    	if (ucData != DATAGRAM_USER_STOP)
-		{
-			recv_buffer[buffer_pos] = ucData;
-			buffer_pos++;
-		}
-    	else
-    	{
-        	//dprintf("recv: user stop\n");
-        	recv_buffer[buffer_pos] = '\0';
+        if (ucData != DATAGRAM_USER_STOP)
+        {
+            recv_buffer[buffer_pos] = ucData;
+            buffer_pos++;
+        }
+        else
+        {
+            // dprintf("recv: user stop\n");
+            recv_buffer[buffer_pos] = '\0';
             interpret_user_command(recv_buffer, buffer_pos);
 
             buffer_pos = 0;
@@ -1436,7 +1490,7 @@ void virtser_recv(uint8_t ucData)
 
     else if (recv_status == recvStatusFindStop && ucData == DATAGRAM_STOP)
     {
-        //dprintf("recv: stop %u\n", buffer_pos);
+        // dprintf("recv: stop %u\n", buffer_pos);
 
         if (datagram_is_valid(buffer_pos, expected_length))
         {

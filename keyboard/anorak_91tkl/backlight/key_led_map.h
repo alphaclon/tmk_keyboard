@@ -34,22 +34,22 @@
  * `-----------------------------------------------------------'  `-----------'
  */
 
-//    0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
-//    A    B    C    D    E    F    G    H    I    J    K    L    M    N    O    P    Q
+//    0      1     2     3     4     5     6     7     8     9    10    11    12    13    14    15    16
+//    A      B     C     D     E     F     G     H     I     J     K     L     M     N     O     P     Q
 #define KEY_TO_LED_MAP_91TKL( \
-	K5A, K5B, K5C, K5D, K5E, K5F, K5G, K5H, K5I, K5J, K5K, K5L, K5M, K5N, K5O, K5P, K5Q,  \
-	K4A, K4B, K4C, K4D, K4E, K4F, K4G, K4H, K4I, K4J, K4K, K4L, K4M, K4N, K4O, K4P, K4Q,  \
-	K3A, K3B, K3C, K3D, K3E, K3F, K3G, K3H, K3I, K3J, K3K, K3L, K3M, K2N, K3O, K3P, K3Q,  \
-	K2A, K2B, K2C, K2D, K2E, K2F, K2G, K2H, K2I, K2J, K2K, K2L, K2M,                      \
-	K1A, K1B, K1C, K1D, K1E, K1F, K1G, K1H, K1I, K1J, K1K, K1L, K1M,      K1O, K1P, K1Q,  \
-	K0A, K0B, K0C, K0D,                               K0K, K0L, K0M, K0N, K0O, K0P, K0Q   \
+     K5A,  K5B,  K5C,  K5D,  K5E,  K5F,  K5G,  K5H,  K5I,  K5J,  K5K,  K5L,  K5M,  K5N,  K5O,  K5P,  K5Q,  \
+     K4A,  K4B,  K4C,  K4D,  K4E,  K4F,  K4G,  K4H,  K4I,  K4J,  K4K,  K4L,  K4M,  K4N,  K4O,  K4P,  K4Q,  \
+     K3A,  K3B,  K3C,  K3D,  K3E,  K3F,  K3G,  K3H,  K3I,  K3J,  K3K,  K3L,  K3M,  K2N,  K3O,  K3P,  K3Q,  \
+     K2A,  K2B,  K2C,  K2D,  K2E,  K2F,  K2G,  K2H,  K2I,  K2J,  K2K,  K2L,  K2M,                          \
+     K1A,  K1B,  K1C,  K1D,  K1E,  K1F,  K1G,  K1H,  K1I,  K1J,  K1K,  K1L,  K1M,        K1O,  K1P,  K1Q,  \
+     K0A,  K0B,  K0C,  K0D,                                K0J,  K0K,  K0L,  K0M,        K0O,  K0P,  K0Q   \
 ) { \
   {  K5A,  K5B,  K5C,  K5D,  K5E,  K5F,  K5G,  K5H,  K5I,  K5J,  K5K,  K5L,  K5M,  K5N,  K5O,  K5P,  K5Q }, \
   {  K4A,  K4B,  K4C,  K4D,  K4E,  K4F,  K4G,  K4H,  K4I,  K4J,  K4K,  K4L,  K4M,  K4N,  K4O,  K4P,  K4Q }, \
   {  K3A,  K3B,  K3C,  K3D,  K3E,  K3F,  K3G,  K3H,  K3I,  K3J,  K3K,  K3L,  K3M,  K2N,  K3O,  K3P,  K3Q }, \
   {  K2A,  K2B,  K2C,  K2D,  K2E,  K2F,  K2G,  K2H,  K2I,  K2J,  K2K,  K2L,  K2M, NLED, NLED, NLED, NLED }, \
   {  K1A,  K1B,  K1C,  K1D,  K1E,  K1F,  K1G,  K1H,  K1I,  K1J,  K1K,  K1L,  K1M, NLED,  K1O,  K1P,  K1Q }, \
-  {  K0A,  K0B,  K0C,  K0D, NLED, NLED, NLED, NLED, NLED, NLED,  K0K,  K0L,  K0M,  K0N,  K0O,  K0P,  K0Q }  \
+  {  K0A,  K0B,  K0C,  K0D, NLED, NLED, NLED, NLED, NLED,  K0J,  K0K,  K0L,  K0M, NLED,  K0O,  K0P,  K0Q }  \
 }
 
 bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col);

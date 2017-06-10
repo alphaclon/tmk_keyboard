@@ -12,19 +12,19 @@
 #include "nodebug.h"
 #endif
 
-#define SWEEP_ROWS (MATRIX_ROWS*3)
-
 // The lookup table to make the brightness changes be more visible
 uint8_t const sweep[] PROGMEM = {1, 3, 6, 10, 20, 30, 40, 50, 60, 70, 80, 100, 100, 80, 70, 60, 50, 40, 30, 20, 10, 6, 3, 1};
 static uint8_t incr = 0;
 
-void sweep_animation_loop()
+void sweep_animation_loop(void)
 {
     // animate over all the pixels, and set the brightness from the sweep table
 
 	incr++;
 	if (incr >= 24)
 		incr = 0;
+
+	/*
 
 	for (uint8_t x = 0; x < MATRIX_COLS; x++)
 	{
@@ -36,6 +36,8 @@ void sweep_animation_loop()
 	}
 
 	is31fl3733_91tkl_update_led_pwm(&issi);
+
+	*/
 }
 
 void set_animation_sweep()

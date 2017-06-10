@@ -10,10 +10,10 @@
 #include "backlight/animations/animation.h"
 #include "backlight/backlight_91tkl.h"
 #include "backlight/issi/is31fl3733_91tkl.h"
+#include "utils.h"
 
 #if defined(LUFA_DEBUG_UART) || defined(DEBUG_ISSI_PERFORMANCE) || defined(DEBUG_OUTPUT_ENABLE)
 #include "uart/uart.h"
-#include "utils.h"
 #endif
 
 #ifdef DEBUG_HOOKS

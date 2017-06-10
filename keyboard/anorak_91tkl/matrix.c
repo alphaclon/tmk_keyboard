@@ -129,9 +129,7 @@ uint8_t matrix_scan(void)
 				matrix[row] = matrix_debouncing[row];
 				debouncing[row] = false;
 
-//#ifdef BACKLIGHT_ENABLE
 				animation_typematrix_row(row, matrix[row]);
-//#endif
 			}
 		}
 		else
@@ -140,9 +138,7 @@ uint8_t matrix_scan(void)
 		}
 	}
 
-//#ifdef BACKLIGHT_ENABLE
 	animate();
-//#endif
 
 	return 1;
 }

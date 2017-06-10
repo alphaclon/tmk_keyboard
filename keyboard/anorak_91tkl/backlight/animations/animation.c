@@ -26,8 +26,17 @@
 
 #define HSV_COLOR_STEP 8
 #define MINIMAL_DELAY_TIME_MS 5
+#define ANIMATION_SUSPEND_TIMEOUT (10L * 60L * 1000L)
 
 static animation_names current_animation = animation_cycle_all;
+static uint32_t last_key_pressed_timestamp = 0;
+static bool suspend_animation_on_idle = true;
+
+#ifdef DEBUG_ANIMATION
+static uint32_t duration_ms = 0;
+static uint32_t elapsed_ms = 0;
+static uint8_t loop_count = 255;
+#endif
 
 void initialize_animation(void)
 {
@@ -35,7 +44,6 @@ void initialize_animation(void)
 
 #ifdef BACKLIGHT_ENABLE
     current_animation = eeconfig_read_animation_current();
-    set_animation(current_animation);
 
     eeconfig_read_animation_hsv_values(0, &animation.hsv.h, &animation.hsv.s, &animation.hsv.v);
     eeconfig_read_animation_hsv_values(1, &animation.hsv2.h, &animation.hsv2.s, &animation.hsv2.v);
@@ -106,13 +114,10 @@ void set_animation(animation_names animation_by_name)
 
 void animation_next()
 {
+    stop_animation();
+
     current_animation = increment(current_animation, 1, 0, animation_LAST);
     dprintf("animation_next: %u\n", current_animation);
-
-    if (!animation_is_running())
-        return;
-
-    stop_animation();
 
     set_animation(current_animation);
     start_animation();
@@ -120,13 +125,10 @@ void animation_next()
 
 void animation_previous()
 {
+    stop_animation();
+
     current_animation = decrement(current_animation, 1, 0, animation_LAST);
     dprintf("animation_previous: %u\n", current_animation);
-
-    if (!animation_is_running())
-        return;
-
-    stop_animation();
 
     set_animation(current_animation);
     start_animation();
@@ -178,6 +180,16 @@ void start_animation()
     animation.is_running = true;
     animation.loop_timer = timer_read();
     animation.duration_timer = timer_read32();
+    last_key_pressed_timestamp = timer_read32();
+}
+
+void set_and_start_animation(animation_names animation_by_name)
+{
+    if (animation_is_running())
+        stop_animation();
+
+    set_animation(animation_by_name);
+    start_animation();
 }
 
 void stop_animation()
@@ -230,11 +242,33 @@ void animate()
     if (timer_elapsed(animation.loop_timer) < animation.delay_in_ms)
         return;
 
+    if (suspend_animation_on_idle && timer_elapsed32(last_key_pressed_timestamp) > ANIMATION_SUSPEND_TIMEOUT)
+    	return;
+
+    /*
     if (animation.duration_in_ms > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_in_ms)
     {
         stop_animation();
         return;
     }
+    */
+
+#ifdef DEBUG_ANIMATION
+    if (loop_count < 10)
+    {
+    	loop_count++;
+    	duration_ms += timer_elapsed32(elapsed_ms);
+    	elapsed_ms = timer_read32();
+    }
+    else
+    {
+    	loop_count = 0;
+    	duration_ms /= 10;
+    	dprintf("avg: %lu", duration_ms);
+    	duration_ms = 0;
+    	elapsed_ms = timer_read32();
+    }
+#endif
 
     animation.loop_timer = timer_read();
     animation.animationLoop();
@@ -242,6 +276,11 @@ void animate()
 
 void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+	last_key_pressed_timestamp = timer_read32();
+
+	if (!animation.is_running)
+		return;
+
 	animation_default_typematrix_row(row_number, row);
 
     if (animation.animation_typematrix_row)

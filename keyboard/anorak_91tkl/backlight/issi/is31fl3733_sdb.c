@@ -8,9 +8,9 @@
 #include "nodebug.h"
 #endif
 
-void sdb_hardware_enable_upper(bool enabled)
+void sdb_hardware_shutdown_enable_upper(bool enabled)
 {
-    dprintf("sdb_hardware_enable_upper: %u\n", enabled);
+    dprintf("sdb (upper): %u\n", enabled);
 
     if (enabled)
     {
@@ -26,9 +26,9 @@ void sdb_hardware_enable_upper(bool enabled)
     }
 }
 
-void sdb_hardware_enable_lower(bool enabled)
+void sdb_hardware_shutdown_enable_lower(bool enabled)
 {
-    dprintf("sdb_hardware_enable_lower: %u\n", enabled);
+    dprintf("sdb (lower): %u\n", enabled);
 
     if (enabled)
     {
@@ -38,7 +38,7 @@ void sdb_hardware_enable_lower(bool enabled)
     }
     else
     {
-        // set SDB pin to HIGH (PE4)
+        // set SDB pin to HIGH (PD4)
         DDRD |= (1 << 7);
         PORTD |= (1 << 7);
     }

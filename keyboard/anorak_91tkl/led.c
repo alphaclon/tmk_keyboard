@@ -24,29 +24,27 @@ void led_set(uint8_t usb_led)
 	//   CapsLock: PB5
 	// ScrollLock: PB6
 
-    if (usb_led & (1 << USB_LED_CAPS_LOCK))
+    if (usb_led & (1 << USB_LED_SCROLL_LOCK))
     {
-    	// output high
+        DDRB |= (1 << 5);
+        PORTB &= ~(1 << 5);
+    }
+    else
+    {
         DDRB |= (1 << 5);
         PORTB |= (1 << 5);
     }
-    else
-    {
-        // Hi-Z
-        DDRB &= ~(1 << 5);
-        PORTB &= ~(1 << 5);
-    }
 
-    if (usb_led & (1 << USB_LED_SCROLL_LOCK))
+    if (usb_led & (1 << USB_LED_CAPS_LOCK))
     {
     	// output high
         DDRB |= (1 << 6);
-        PORTB |= (1 << 6);
+        PORTB &= ~(1 << 6);
     }
     else
     {
         // Hi-Z
-        DDRB &= ~(1 << 6);
-        PORTB &= ~(1 << 6);
+        DDRB |= (1 << 6);
+        PORTB |= (1 << 6);
     }
 }

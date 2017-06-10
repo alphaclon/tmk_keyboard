@@ -15,7 +15,7 @@
 static uint8_t offset;
 static uint8_t offset2;
 
-void color_cycle_left_right_animation_loop()
+void color_cycle_left_right_animation_loop(void)
 {
 	HSV hsv = {.h = 0, .s = animation.hsv.s, .v = animation.hsv.v};
 

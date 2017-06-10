@@ -40,10 +40,11 @@ typedef enum animation_hsv_names_t animation_hsv_names;
 void initialize_animation(void);
 void animation_save_state(void);
 
+void set_animation(animation_names animation_by_name);
+void set_and_start_animation(animation_names animation_by_name);
 void start_animation(void);
 void stop_animation(void);
 void toggle_animation(void);
-void set_animation(animation_names animation_by_name);
 
 void animation_next(void);
 void animation_previous(void);

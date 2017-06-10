@@ -13,11 +13,11 @@
 
 IS31FL3733_91TKL issi;
 
-IS31FL3733_RGB device_rgb_upper;
-IS31FL3733_RGB device_rgb_lower;
+static IS31FL3733_RGB device_rgb_upper;
+static IS31FL3733_RGB device_rgb_lower;
 
-IS31FL3733 device_upper;
-IS31FL3733 device_lower;
+static IS31FL3733 device_upper;
+static IS31FL3733 device_lower;
 
 static bool is_initialized = false;
 
@@ -29,7 +29,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_upper.gcc = 128;
     device_upper.is_master = true;
     device_upper.address = IS31FL3733_I2C_ADDR(ADDR_GND, ADDR_GND);
-    device_upper.pfn_hardware_enable = &sdb_hardware_enable_upper;
+    device_upper.pfn_hardware_enable = &sdb_hardware_shutdown_enable_upper;
     device_upper.pfn_iic_reset = &iic_reset_upper;
 
     is31fl3733_rgb_init(device->upper);
@@ -40,7 +40,7 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
     device_lower.gcc = 128;
     device_upper.is_master = false;
     device_lower.address = IS31FL3733_I2C_ADDR(ADDR_VCC, ADDR_GND);
-    device_lower.pfn_hardware_enable = &sdb_hardware_enable_lower;
+    device_lower.pfn_hardware_enable = &sdb_hardware_shutdown_enable_lower;
     device_lower.pfn_iic_reset = &iic_reset_lower;
 
     is31fl3733_rgb_init(device->lower);
@@ -50,13 +50,11 @@ void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
 
 void is31fl3733_91tkl_hardware_shutdown(IS31FL3733_91TKL *device, bool enabled)
 {
+	if (!is31fl3733_91tkl_initialized())
+		return;
+
 	is31fl3733_hardware_shutdown(device->upper->device, enabled);
 	is31fl3733_hardware_shutdown(device->lower->device, enabled);
-}
-
-void is31fl3733_91tkl_dump(IS31FL3733_91TKL *device)
-{
-
 }
 
 void is31fl3733_91tkl_fill_rgb_masked(IS31FL3733_91TKL *device, RGB color)

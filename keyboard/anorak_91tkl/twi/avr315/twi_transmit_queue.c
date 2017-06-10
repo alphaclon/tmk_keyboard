@@ -24,9 +24,12 @@
 static struct _queue_t
 {
     tx_queue_data_t data[TX_QUEUE_SIZE];
-    volatile uint8_t read;  // Start, zeigt auf das Feld mit dem ältesten Inhalt
-    volatile uint8_t write; // Ende, zeigt immer auf leeres Feld
-    volatile uint8_t size;
+    uint8_t read;  // Start, zeigt auf das Feld mit dem ältesten Inhalt
+    uint8_t write; // Ende, zeigt immer auf leeres Feld
+    uint8_t size;
+#ifdef DEBUG_TX_QUEUE
+    uint8_t max_size;
+#endif
 } tx_queue = {{}, 0, 0, 0};
 
 /*
@@ -81,7 +84,7 @@ bool tx_queue_is_full()
 
 bool tx_queue_get_empty_tail(tx_queue_data_t **data)
 {
-    // LS_("tx_queue_get_empty_tail");
+    //LS_("tx_queue_get_empty_tail");
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         uint8_t next = ((tx_queue.write + 1) & QUEUE_MASK);
@@ -104,6 +107,11 @@ bool tx_queue_push_tail()
 
         tx_queue.write = next;
         tx_queue.size++;
+
+#ifdef DEBUG_TX_QUEUE
+        if (tx_queue.size > tx_queue.max_size)
+        	tx_queue.max_size = tx_queue.size;
+#endif
     }
     return true;
 }
@@ -127,6 +135,11 @@ bool tx_queue_push(uint8_t const *data, uint8_t data_length)
 
         tx_queue.write = next;
         tx_queue.size++;
+
+#ifdef DEBUG_TX_QUEUE
+        if (tx_queue.size > tx_queue.max_size)
+        	tx_queue.max_size = tx_queue.size;
+#endif
     }
     return true;
 }
@@ -177,18 +190,23 @@ bool tx_queue_pop()
     return true;
 }
 
+#ifdef DEBUG_TX_QUEUE
 void tx_queue_print_status(void)
 {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        xprintf("read: %u", tx_queue.read);
-        xprintf("write: %u", tx_queue.write);
-        xprintf("empty: %u", tx_queue_is_empty());
-        xprintf("full: %u", tx_queue_is_full());
-        xprintf("size: %u", tx_queue_size());
+    	xprintf("queue\n");
+        xprintf("read: %u\n", tx_queue.read);
+        xprintf("write: %u\n", tx_queue.write);
+        xprintf("empty: %u\n", tx_queue_is_empty());
+        xprintf("full: %u\n", tx_queue_is_full());
+        xprintf("size: %u\n", tx_queue.size);
+        xprintf("max: %u\n", tx_queue.max_size);
     }
 }
+#endif
 
+#ifdef DEBUG_TX_QUEUE_TEST
 void tx_queue_test()
 {
     uint8_t buffer[16];
@@ -315,3 +333,5 @@ void tx_queue_test()
         tx_queue_print_status();
     }
 }
+#endif
+

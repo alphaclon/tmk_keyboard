@@ -18,26 +18,25 @@ void type_o_matic_typematrix_row(uint8_t row_number, matrix_row_t row_columns)
     uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    uint8_t key_row = row_number;
-
-	for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
-	{
-		if (getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
-		{
-			if ((row & ((matrix_row_t) 1 << key_col)))
-			{
-				device = DEVICE_BY_NUMBER(issi, device_number);
-				is31fl3733_rgb_set_pwm(device, col, row, animation.rgb);
-			}
-		}
-	}
+    for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
+    {
+        //if (matrix_is_on(row_number, key_col))
+    	if (row_columns & ((matrix_row_t)1 << key_col))
+        {
+            if (getLedPosByMatrixKey(row_number, key_col, &device_number, &row, &col))
+            {
+                device = DEVICE_BY_NUMBER(issi, device_number);
+                is31fl3733_rgb_set_pwm(device, col, row, animation.rgb);
+            }
+        }
+    }
 
     is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
-void type_o_matic_animation_loop()
+void type_o_matic_animation_loop(void)
 {
-	//HSV hsv;
+    // HSV hsv;
     uint8_t row;
     uint8_t col;
     uint8_t device_number;
@@ -48,16 +47,16 @@ void type_o_matic_animation_loop()
         for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
         {
             if (!getLedPosByMatrixKey(key_row, key_col, &device_number, &row, &col))
-            	continue;
+                continue;
 
             device = DEVICE_BY_NUMBER(issi, device_number);
 
             if (matrix_is_on(key_row, key_col))
             {
-            	RGB rgb = is31fl3733_rgb_get_pwm(device, col, row);
+                RGB rgb = is31fl3733_rgb_get_pwm(device, col, row);
 
-				if (rgb.r && rgb.g && rgb.b)
-					continue;
+                if (rgb.r && rgb.g && rgb.b)
+                    continue;
 
                 is31fl3733_rgb_set_pwm(device, col, row, animation.rgb);
             }
@@ -85,9 +84,9 @@ void type_o_matic_animation_loop()
 
 void set_animation_type_o_matic(void)
 {
-	dprintf("type_o_matic\n");
+    dprintf("type_o_matic\n");
 
-    animation.delay_in_ms = FPS_TO_DELAY(2);
+    animation.delay_in_ms = FPS_TO_DELAY(6);
     animation.duration_in_ms = 0;
 
     animation.animationStart = &animation_default_animation_start_clear;

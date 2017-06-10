@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 
-void iic_reset_upper();
-void iic_reset_lower();
+void iic_reset_upper(void);
+void iic_reset_lower(void);
 
 #endif /* _IS31FL3733_IICRESET_H_ */

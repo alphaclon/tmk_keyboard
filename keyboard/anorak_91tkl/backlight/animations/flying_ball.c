@@ -15,24 +15,20 @@ static int16_t fb_x;
 static int8_t fb_x_dir;
 static int16_t fb_y;
 static int8_t fb_y_dir;
-static uint8_t offset;
 static HSV hsv;
 static RGB rgb;
 
 void flying_ball_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
 	hsv.h = rand() % 255;
+
+    fb_x_dir = rand() % 2 ? 1 : - 1;
+    fb_y_dir = rand() % 2 ? 1 : - 1;
 }
 
-void flying_ball_animation_start()
+void flying_ball_animation_start(void)
 {
 	animation_prepare(true);
-
-	offset = 0;
-
-	rgb.r = animation.rgb.r;
-	rgb.g = animation.rgb.g;
-	rgb.b = animation.rgb.b;
 
 	hsv.h = animation.hsv.h;
 	hsv.s = animation.hsv.s;
@@ -44,7 +40,7 @@ void flying_ball_animation_start()
     fb_x_dir = rand() % 2 ? 1 : - 1;
     fb_y_dir = rand() % 2 ? 1 : - 1;
 
-    dprintf("x:%d/%d y:%d/%d  ", fb_x, fb_x_dir, fb_y, fb_y_dir);
+    //dprintf("x:%d/%d y:%d/%d  ", fb_x, fb_x_dir, fb_y, fb_y_dir);
 
 	uint8_t row;
 	uint8_t col;
@@ -58,14 +54,14 @@ void flying_ball_animation_start()
 	}
 }
 
-void flying_ball_animation_loop()
+void flying_ball_animation_loop(void)
 {
 	uint8_t row;
 	uint8_t col;
 	uint8_t device_number;
     IS31FL3733_RGB *device;
 
-    draw_keymatrix_rgb_pixel(&issi, fb_y, fb_x, rgb);
+    draw_direct_keymatrix_rgb_pixel(&issi, fb_y, fb_x, rgb);
 
     fb_x += fb_x_dir;
     fb_y += fb_y_dir;
@@ -92,19 +88,17 @@ void flying_ball_animation_loop()
     	fb_y = 0;
     }
 
-    dprintf("x:%d/%d y:%d/%d  ", fb_x, fb_x_dir, fb_y, fb_y_dir);
+    //dprintf("x:%d/%d y:%d/%d  ", fb_x, fb_x_dir, fb_y, fb_y_dir);
 
     if (getLedPosByMatrixKey(fb_y, fb_x, &device_number, &row, &col))
     {
 		device = DEVICE_BY_NUMBER(issi, device_number);
 		rgb = is31fl3733_rgb_get_pwm(device, col, row);
 
-		draw_keymatrix_hsv_pixel(&issi, fb_y, fb_x, hsv);
+		draw_direct_keymatrix_hsv_pixel(&issi, fb_y, fb_x, hsv);
     }
 
-	is31fl3733_91tkl_update_led_pwm(&issi);
-
-    offset++;
+	//is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
 void set_animation_flying_ball()
@@ -115,7 +109,7 @@ void set_animation_flying_ball()
     animation.duration_in_ms = 0;
 
     animation.animationStart = &flying_ball_animation_start;
-    animation.animationStop = &animation_default_animation_stop();
+    animation.animationStop = &animation_default_animation_stop;
     animation.animationLoop = &flying_ball_animation_loop;
     animation.animation_typematrix_row = &flying_ball_typematrix_row;
 }

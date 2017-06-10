@@ -11,7 +11,7 @@
 #include "nodebug.h"
 #endif
 
-void jellybean_raindrops_animation_loop()
+void jellybean_raindrops_animation_loop(void)
 {
     // Change one LED every tick
     uint8_t row_to_change = rand() % MATRIX_ROWS;
@@ -23,11 +23,12 @@ void jellybean_raindrops_animation_loop()
     // Override brightness with global brightness control
     hsv.v = animation.hsv.v;
 
-    draw_keymatrix_hsv_pixel(&issi, row_to_change, col_to_change, hsv);
+    draw_direct_keymatrix_hsv_pixel(&issi, row_to_change, col_to_change, hsv);
 
+    /*
     // TODO: optimize: write rgb values directly to device by ignoring the buffer
-
     is31fl3733_91tkl_update_led_pwm(&issi);
+    */
 }
 
 void set_animation_jellybean_raindrops()

@@ -41,6 +41,4 @@ void is31fl3733_91tkl_update_led_enable(IS31FL3733_91TKL *device);
 /// Update LED matrix LED brightness values with internal buffer values.
 void is31fl3733_91tkl_update_led_pwm(IS31FL3733_91TKL *device);
 
-void is31fl3733_91tkl_dump(IS31FL3733_91TKL *device);
-
 #endif /* _is31fl3733_91tkl_H_ */

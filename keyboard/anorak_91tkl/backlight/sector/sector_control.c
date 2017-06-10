@@ -43,7 +43,7 @@ uint8_t mask[IS31FL3733_LED_ENABLE_SIZE];
 
 void sector_disable_leds_by_mask(KeyboardSector sector)
 {
-    dprintf("sector_disable_leds_by_mask %u:\n", sector);
+    dprintf("sector_disable_leds_by_mask %u\n", sector);
 
     memcpy_P(mask, LedMasksTop[sector], IS31FL3733_LED_ENABLE_SIZE);
     is31fl3733_disable_leds_by_mask(issi.upper->device, mask);
@@ -54,7 +54,7 @@ void sector_disable_leds_by_mask(KeyboardSector sector)
 
 void sector_enable_leds_by_mask(KeyboardSector sector)
 {
-    dprintf("sector_enable_leds_by_mask %u:\n", sector);
+    dprintf("sector_enable_leds_by_mask %u\n", sector);
 
     memcpy_P(mask, LedMasksTop[sector], IS31FL3733_LED_ENABLE_SIZE);
     is31fl3733_enable_leds_by_mask(issi.upper->device, mask);
@@ -76,7 +76,7 @@ void sector_enable_all_leds(void)
 
 void sector_set_mask(KeyboardSector sector)
 {
-    dprintf("sector_set_mask %u:\n", sector);
+    dprintf("sector_set_mask %u\n", sector);
 
     memcpy_P(mask, LedMasksTop[sector], IS31FL3733_LED_ENABLE_SIZE);
     is31fl3733_set_mask(issi.upper->device, mask);
@@ -87,7 +87,7 @@ void sector_set_mask(KeyboardSector sector)
 
 void sector_nand_mask(KeyboardSector sector)
 {
-    dprintf("sector_nand_mask %u:\n", sector);
+    dprintf("sector_nand_mask %u\n", sector);
 
     memcpy_P(mask, LedMasksTop[sector], IS31FL3733_LED_ENABLE_SIZE);
     is31fl3733_nand_mask(issi.upper->device, mask);
@@ -98,7 +98,7 @@ void sector_nand_mask(KeyboardSector sector)
 
 void sector_or_mask(KeyboardSector sector)
 {
-    dprintf("sector_or_mask %u:\n", sector);
+    dprintf("sector_or_mask %u\n", sector);
 
     memcpy_P(mask, LedMasksTop[sector], IS31FL3733_LED_ENABLE_SIZE);
     is31fl3733_or_mask(issi.upper->device, mask);
@@ -191,7 +191,11 @@ void sector_set_all_off(void)
 
 void sector_selected_set_hsv_color(HSV color)
 {
-    dprintf("sector_set_hsv_color_by_levels: %u, %X%X%X\n", selected_sector, color.h, color.s, color.v);
+    dprintf("sector_selected_set_hsv_color: %u, %X %X %X\n", selected_sector, color.h, color.s, color.v);
+
+    sector_levels[selected_sector].h = color.h;
+    sector_levels[selected_sector].s = color.s;
+    sector_levels[selected_sector].v = color.v;
 
     sector_set_mask(selected_sector);
     is31fl3733_91tkl_fill_hsv_masked(&issi, color);
@@ -199,15 +203,31 @@ void sector_selected_set_hsv_color(HSV color)
 
 void sector_set_hsv_color(KeyboardSector sector, HSV color)
 {
-    dprintf("sector_set_hsv_color_by_levels: %u, %X%X%X\n", sector, color.h, color.s, color.v);
+    dprintf("sector_set_hsv_color: %u, %X %X %X\n", sector, color.h, color.s, color.v);
+
+    sector_levels[sector].h = color.h;
+    sector_levels[sector].s = color.s;
+    sector_levels[sector].v = color.v;
 
     sector_set_mask(sector);
     is31fl3733_91tkl_fill_hsv_masked(&issi, color);
 }
 
+HSV sector_get_hsv_color(KeyboardSector sector)
+{
+	HSV color;
+
+	color.h = sector_levels[sector].h;
+	color.s = sector_levels[sector].s;
+	color.v = sector_levels[sector].v;
+
+	return color;
+}
+
 void sector_set_hsv_color_by_levels(KeyboardSector sector, Levels *levels)
 {
     HSV color;
+
     color.h = levels->h;
     color.s = levels->s;
     color.v = levels->v;
@@ -217,8 +237,8 @@ void sector_set_hsv_color_by_levels(KeyboardSector sector, Levels *levels)
 
 void sector_increase_hsv_by_name(KeyboardSector sector, HSVColorName color_name)
 {
-    dprintf("sector_increase_sector_hsv_by_name: %u %u\n", sector, color_name);
-    sector_levels[sector].lvl[color_name] = increment(sector_levels[sector].lvl[color_name], HSV_COLOR_STEP, 0, 255);
+    dprintf("sector_increase_hsv_by_name: %u %u\n", sector, color_name);
+    sector_levels[sector].lvl[color_name] = increment(sector_levels[sector].lvl[color_name], HSV_COLOR_STEP, HSV_COLOR_STEP, 255);
     sector_set_hsv_color_by_levels(sector, &sector_levels[selected_sector]);
 }
 
@@ -238,7 +258,7 @@ void sector_all_increase_hsv_color(HSVColorName color)
 void sector_decrease_sector_hsv_by_name(KeyboardSector sector, HSVColorName color_name)
 {
     dprintf("sector_decrease_sector_hsv_by_name: %u %u\n", sector, color_name);
-    sector_levels[sector].lvl[color_name] = decrement(sector_levels[sector].lvl[color_name], HSV_COLOR_STEP, 0, 255);
+    sector_levels[sector].lvl[color_name] = decrement(sector_levels[sector].lvl[color_name], HSV_COLOR_STEP, HSV_COLOR_STEP, 255);
     sector_set_hsv_color_by_levels(sector, &sector_levels[sector]);
 }
 
@@ -332,12 +352,9 @@ void sector_restore_sector(uint8_t sector)
     }
 }
 
-void sector_restore_state(void)
+void sector_load_map_or_restore_sectors(void)
 {
-    dprintf("sector_restore_state\n");
-
-    sector_set_all_off();
-    sector_load_state();
+    dprintf("sector_load_map_or_restore_sectors: %u %u\n", custom_pwm_map, has_custom_pwm_map);
 
     if (has_custom_pwm_map)
     {
@@ -356,6 +373,16 @@ void sector_restore_state(void)
     }
 }
 
+void sector_restore_state(void)
+{
+    sector_set_all_off();
+    sector_load_state();
+
+    dprintf("sector_restore_state: %u %u\n", custom_pwm_map, has_custom_pwm_map);
+
+    sector_load_map_or_restore_sectors();
+}
+
 void sector_set_sector_mode()
 {
     sector_set_custom_map(0xff);
@@ -365,7 +392,8 @@ void sector_set_custom_map(uint8_t custom_map)
 {
     custom_pwm_map = custom_map;
     has_custom_pwm_map = (custom_pwm_map < EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
-    sector_restore_state();
+    dprintf("sector_set_custom_map: %u %u\n", custom_pwm_map, has_custom_pwm_map);
+    sector_load_map_or_restore_sectors();
 }
 
 uint8_t sector_get_custom_map(void)
@@ -375,9 +403,19 @@ uint8_t sector_get_custom_map(void)
 
 void sector_next_custom_map()
 {
-    custom_pwm_map = increment(custom_pwm_map, 1, 0, EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
-    if (custom_pwm_map >= EECONFIG_BACKLIGHT_PWM_MAP_COUNT)
-        custom_pwm_map = 0xff;
+	dprintf("sector_next_custom_map: %u %u\n", custom_pwm_map, has_custom_pwm_map);
+
+	if (custom_pwm_map >= EECONFIG_BACKLIGHT_PWM_MAP_COUNT)
+	{
+		custom_pwm_map = 0;
+	}
+	else
+	{
+		custom_pwm_map++;
+
+	    if (custom_pwm_map >= EECONFIG_BACKLIGHT_PWM_MAP_COUNT)
+	        custom_pwm_map = 0xff;
+	}
 
     sector_set_custom_map(custom_pwm_map);
 }

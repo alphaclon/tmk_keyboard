@@ -50,6 +50,7 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <util/delay.h>
+#include <util/atomic.h>
 #include <compat/twi.h>
 
 #if defined(DEBUG_I2C)
@@ -123,7 +124,7 @@ unsigned char TWI_detect(unsigned char slave_address)
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return 1;
 
-    dprintf("TWI_detect 0x%X\n", slave_address);
+    dprintf("TWI_detect at 0x%X\n", slave_address);
 
     // send START condition
     TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
@@ -136,8 +137,6 @@ unsigned char TWI_detect(unsigned char slave_address)
     twst = TW_STATUS & 0xF8;
     if ((twst != TW_START) && (twst != TW_REP_START))
         return 1;
-
-    dprintf("TWI_detect start\n");
 
     // send device address
     TWDR = slave_address;
@@ -152,7 +151,7 @@ unsigned char TWI_detect(unsigned char slave_address)
     if ((twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK))
         return 1;
 
-    dprintf("TWI_detect ack\n");
+    dprintf("TWI_detect found\n");
 
     return 0;
 
@@ -242,7 +241,8 @@ void TWI_write_data_to_register(unsigned char slave_address, unsigned char regis
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-    dprintf("TWI_write_data_to_register slv:%X reg:%X l:%u d:%02X\n", slave_address, register_address, data_length, data[0]);
+    dprintf("TWI_write_data_to_register slv:%X reg:%X l:%u d:%02X\n", slave_address, register_address, data_length,
+            data[0]);
 
     while (!tx_queue_is_empty())
         ; // Wait until tx queue is empty
@@ -408,8 +408,11 @@ void queued_twi_start_transceiver(void)
 
     if (!tx_queue_front(&head))
     {
-        // dprintf("no queue front\n");
-        // tx_queue_print_status();
+#ifdef DEBUG_I2C
+        dprintf("no queue front\n");
+        queued_twi_stats();
+        tx_queue_print_status();
+#endif
         return;
     }
 
@@ -428,8 +431,8 @@ void queued_twi_start_transceiver(void)
 
 void queued_twi_write_byte(unsigned char slave_address, unsigned char data_byte)
 {
-    // dprintf("queued_twi_write_byte 0x%u\n", data_byte);
-    dprintf("qtwb 0x%u\n", data_byte);
+    // dprintf("queued_twi_write_byte 0x%X\n", data_byte);
+    dprintf("qtwb s:%u %X\n", slave_address, data_byte);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
@@ -456,10 +459,17 @@ void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned cha
                                        unsigned char data_byte)
 {
     // dprintf("queued_twi_write_byte_to_register %u %u\n", register_address, data_byte);
-    dprintf("qtwbtr %u %u\n", register_address, data_byte);
+    dprintf("qtwbtr s:%X r:%X d:%X\n", slave_address, register_address, data_byte);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
+
+#ifdef DEBUG_I2C
+    if (tx_queue_is_full())
+    {
+        dprintf("qtwbtr wait\n");
+    }
+#endif
 
     while (tx_queue_is_full())
         ; // Wait until there is a free buffer in the queue
@@ -474,7 +484,7 @@ void queued_twi_write_byte_to_register(unsigned char slave_address, unsigned cha
 
     bool queue_was_empty = tx_queue_is_empty();
 
-    // dprintf("qtwbtr qe:%u\n", queue_was_empty);
+    dprintf("qtwbtr qe:%u\n", queue_was_empty);
 
     tx_queue_push_tail();
 
@@ -486,22 +496,20 @@ void queued_twi_write_data_to_register(unsigned char slave_address, unsigned cha
                                        const unsigned char *data, unsigned char data_length)
 {
     // dprintf("queued_twi_write_data_to_register l:%u\n", data_length);
-    dprintf("qtwdtr l:%u\n", data_length);
+    dprintf("qtwdtr s:%X r:%X l:%X\n", slave_address, register_address, data_length);
 
     if ((slave_address & (TRUE << TWI_READ_BIT))) // If it is a read operation, then do nothing
         return;
 
-#ifndef DEBUG_TX_QUEUE
-    while (tx_queue_is_full())
-        ; // Wait until there is a free buffer in the queue
-#else
+#ifdef DEBUG_I2C
     if (tx_queue_is_full())
     {
-        print("qtwdtr full, wait\n");
-        while (tx_queue_is_full())
-            ; // Wait until there is a free buffer in the queue
+        dprintf("qtwdtr wait\n");
     }
 #endif
+
+    while (tx_queue_is_full())
+        ; // Wait until there is a free buffer in the queue
 
     if (!tx_queue_get_empty_tail(&tail))
     {
@@ -520,7 +528,8 @@ void queued_twi_write_data_to_register(unsigned char slave_address, unsigned cha
     // tx_queue_print_status();
 
     bool queue_was_empty = tx_queue_is_empty();
-    // dprintf("qtwdtr l:%u, qe:%u\n", data_length, queue_was_empty);
+
+    dprintf("qtwbtr qe:%u\n", queue_was_empty);
 
     if (!tx_queue_push_tail())
     {
@@ -541,10 +550,13 @@ void queued_twi_write_data_to_register(unsigned char slave_address, unsigned cha
 
 void queued_twi_stats(void)
 {
-    xprintf("qs %u\n", tx_queue_size());
-    xprintf("state 0x%X\n", TWI_state);
-    xprintf("adr: %u %u\n", mtx_adr_nack_total, mtx_adr_nack_lost);
-    xprintf("data: %u %u\n", mtx_data_nack_total, mtx_data_nack_lost);
+	xprintf("qs %u\n", tx_queue_size());
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        xprintf("state 0x%X\n", TWI_state);
+        xprintf("adr: %u %u\n", mtx_adr_nack_total, mtx_adr_nack_lost);
+        xprintf("data: %u %u\n", mtx_data_nack_total, mtx_data_nack_lost);
+    }
 }
 
 // ********** Interrupt Handlers ********** //
@@ -588,7 +600,7 @@ ISR(TWI_vect)
         }
         else // Send STOP after last byte
         {
-            LedInfo2_On();
+            //LedInfo2_On();
 
             TWCR = (1 << TWEN) |                               // TWI Interface enabled
                    (0 << TWIE) | (1 << TWINT) |                // Disable TWI Interrupt and clear the flag
@@ -615,7 +627,7 @@ ISR(TWI_vect)
                        (0 << TWWC);                                //
             }
 
-            LedInfo2_Off();
+            //LedInfo2_Off();
         }
         break;
 
@@ -624,9 +636,9 @@ ISR(TWI_vect)
         mtx_adr_nack_total++;
         mtx_adr_nack_count++;
 
-        if (mtx_data_nack_count <= MAX_MTX_NACK_COUNT && tx_queue_front(&head))
+        if (mtx_adr_nack_count <= MAX_MTX_NACK_COUNT && tx_queue_front(&head))
         {
-            _delay_us(4);
+            _delay_us(50);
 
             TWI_buf_ptr = head->data;
             TWI_data_length = head->data_length;
@@ -699,7 +711,7 @@ ISR(TWI_vect)
 
             if (tx_queue_front(&head))
             {
-                _delay_us(4);
+                _delay_us(50);
 
                 TWI_buf_ptr = head->data;
                 TWI_data_length = head->data_length;

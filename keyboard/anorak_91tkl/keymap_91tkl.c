@@ -76,7 +76,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             K3A, K3B, K3C, K3D, K3E, K3F, K3G, K3H, K3I, K3J, K3K, K3L, K3M, K2N, K3O, K3P, K3Q,  \
                             K2A, K2B, K2C, K2D, K2E, K2F, K2G, K2H, K2I, K2J, K2K, K2L, K2M,                      \
                             K1A, K1B, K1C, K1D, K1E, K1F, K1G, K1H, K1I, K1J, K1K, K1L, K1M,      K1O, K1P, K1Q,  \
-                            K0A, K0B, K0C, K0D,                               K0K, K0L, K0M, K0N, K0O, K0P, K0Q ) \
+                            K0A, K0B, K0C, K0D,                          K0J, K0K, K0L, K0M,      K0O, K0P, K0Q ) \
                                                                                                                   \
      KEYMAP_91TKL(  \
                             K5A, K5B, K5C, K5D, K5E, K5F, K5G, K5H, K5I, K5J, K5K, K5L, K5M, K5N, K5O, K5P, K5Q,  \
@@ -84,7 +84,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             K3A, K3B, K3C, K3D, K3E, K3F, K3G, K3H, K3I, K3J, K3K, K3L, K3M, K2N, K3O, K3P, K3Q,  \
                             K2A, K2B, K2C, K2D, K2E, K2F, K2G, K2H, K2I, K2J, K2K, K2L, K2M,  NO,  NO,  NO,  NO,  \
                             K1A, K1B, K1C, K1D, K1E, K1F, K1G, K1H, K1I, K1J, K1K, K1L, K1M,  NO, K1O, K1P, K1Q,  \
-                            K0A, K0B, K0C, K0D,  NO,  NO,  NO,  NO,  NO,  NO, K0K, K0L, K0M, K0N, K0O, K0P, K0Q  )
+                            K0A, K0B, K0C, K0D,  NO,  NO,  NO,  NO,  NO, K0J, K0K, K0L, K0M,  NO, K0O, K0P, K0Q  )
 
 const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
 {
@@ -105,7 +105,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
          TAB,    Q,    W,    E,    R,    T,    Y,    U,    I,    O,    P, LBRC, RBRC,  ENT,   DEL,  END, PGDN,  \
         CAPS,    A,    S,    D,    F,    G,    H,    J,    K,    L, SCLN, QUOT, NUHS,                           \
         LSFT, NUBS,    Z,    X,    C,    V,    B,    N,    M, COMM,  DOT, SLSH, RSFT,         FN2,   UP,  FN3,  \
-        LCTL, LGUI, LALT,  SPC,                                     RALT,  FN0,  APP, RCTL,  LEFT, DOWN, RGHT  ),
+        LCTL, LGUI, LALT,  SPC,                               RALT,  FN0,  APP, RCTL,        LEFT, DOWN, RGHT  ),
 
 
     /*
@@ -115,11 +115,11 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      */
     KEYMAP_ISO(\
          TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-  	     TRNS, FN20, FN21, FN22, FN29, FN30, TRNS, TRNS, FN14, FN15, FN16, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+  	     FN29, FN20, FN21, FN22, TRNS, TRNS, TRNS, TRNS, FN14, FN15, FN16, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
 	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN17, FN18, FN19, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-         TRNS, FN23, FN24, FN25, FN26, FN27, TRNS, TRNS,  FN8,  FN9, FN10, TRNS, TRNS,                            \
+         TRNS, FN23, FN24, FN25, FN26, FN27, FN28, TRNS,  FN8,  FN9, FN10, TRNS, TRNS,                            \
 		  FN7, TRNS, FN31, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN11, FN12, FN13, TRNS,         FN2,  TRNS,  FN3,  \
-		  FN4,  FN5,  FN6, TRNS,                                     TRNS, TRNS, TRNS, TRNS,  TRNS,  TRNS, TRNS  )
+		  FN4,  FN5,  FN6, TRNS,                               TRNS, TRNS, TRNS, TRNS,        TRNS,  TRNS, TRNS  )
 };
 
 /*
@@ -141,11 +141,10 @@ enum function_id {
 	FN91_Backlight_Color_Decrease_Selected,
 	FN91_Backlight_Save_State,
 	FN91_Backlight_Animate_Toggle,
-	FN91_Backlight_Animate_Increase_Speed,
-	FN91_Backlight_Animate_Decrease_Speed,
 	FN91_Backlight_Animate_Next,
 	FN91_Backlight_Animate_Prev,
-	FN91_Backlight_Dump
+	FN91_Backlight_Animate_Save_State,
+	FN91_Backlight_Reset_Restore
 };
 
 enum macro_id
@@ -197,10 +196,9 @@ const action_t PROGMEM fn_actions[] =
    [27] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, OtherKeys),
    [28] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ESCKey),
 
-   [29] = ACTION_FUNCTION(FN91_Backlight_Animate_Decrease_Speed),
-   [30] = ACTION_FUNCTION(FN91_Backlight_Animate_Increase_Speed),
+   [29] = ACTION_FUNCTION(FN91_Backlight_Animate_Save_State),
 
-   [31] = ACTION_FUNCTION(FN91_Backlight_Dump),
+   [30] = ACTION_FUNCTION(FN91_Backlight_Reset_Restore)
 };
 
 /*
@@ -232,7 +230,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         {
         case FN91_Backlight_Sector_Select:
         	stop_animation();
-            sector_select(SECTOR_BV(opt));
+            sector_select(opt);
             break;
         case FN91_Backlight_Sector_Toggle:
         	stop_animation();
@@ -273,21 +271,20 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         case FN91_Backlight_Animate_Toggle:
             toggle_animation();
             break;
-        case FN91_Backlight_Animate_Increase_Speed:
-            animation_increase_speed();
-            break;
-        case FN91_Backlight_Animate_Decrease_Speed:
-            animation_decrease_speed();
-            break;
         case FN91_Backlight_Animate_Next:
             animation_next();
             break;
         case FN91_Backlight_Animate_Prev:
             animation_previous();
             break;
-        case FN91_Backlight_Dump:
-        	sector_dump_state();
+        case FN91_Backlight_Animate_Save_State:
+        	animation_save_state();
             break;
+        case FN91_Backlight_Reset_Restore:
+            sector_control_init();
+            fix_backlight_level();
+            initialize_animation();
+        	break;
         }
     }
 }

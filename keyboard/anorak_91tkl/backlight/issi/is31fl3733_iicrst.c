@@ -11,37 +11,37 @@
 
 void iic_reset_enable_upper(bool enabled)
 {
-    dprintf("iic_reset_enable_upper: %u\n", enabled);
+    dprintf("iicrst (upper): %u\n", enabled);
 
     if (enabled)
     {
-        // set SDB pin to LOW (PD6)
-        DDRD |= (1 << 6);
-        PORTD &= ~(1 << 6);
+        // set IICRST pin to HIGH (PD4)
+        DDRD |= (1 << 4);
+        PORTD |= (1 << 4);
     }
     else
     {
-        // set SDB pin to HIGH (PD6)
-        DDRD |= (1 << 6);
-        PORTD |= (1 << 6);
+        // set IICRST pin to LOW (PD4)
+        DDRD |= (1 << 4);
+        PORTD &= ~(1 << 4);
     }
 }
 
 void iic_reset_enable_lower(bool enabled)
 {
-    dprintf("iic_reset_enable_lower: %u\n", enabled);
+    dprintf("iicrst (lower): %u\n", enabled);
 
     if (enabled)
     {
-        // set SDB pin to LOW (PD7)
-        DDRD |= (1 << 7);
-        PORTD &= ~(1 << 7);
+        // set IICRST pin to HIGH (PD5)
+        DDRD |= (1 << 5);
+        PORTD |= (1 << 5);
     }
     else
     {
-        // set SDB pin to HIGH (PE4)
-        DDRD |= (1 << 7);
-        PORTD |= (1 << 7);
+        // set IICRST pin to LOW (PD5)
+        DDRD |= (1 << 5);
+        PORTD &= ~(1 << 5);
     }
 }
 

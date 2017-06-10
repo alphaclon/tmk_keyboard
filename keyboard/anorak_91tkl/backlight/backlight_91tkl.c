@@ -47,7 +47,7 @@ void backlight_set(uint8_t level)
     }
 }
 
-void fix_backlight_level(void)
+void fix_backlight_level()
 {
 #ifdef BACKLIGHT_ENABLE
     if (!eeconfig_backlight_is_enabled())
@@ -58,11 +58,11 @@ void fix_backlight_level(void)
     backlight_config_t backlight_config;
     backlight_config.raw = eeconfig_read_backlight();
 
-    dprintf("backlight_setup on:%u, level:%u\r\n", backlight_config.enable, backlight_config.level);
+    dprintf("backlight_setup on:%u, level:%u\n", backlight_config.enable, backlight_config.level);
 
     if (backlight_config.level == 0)
     {
-        dprintf("fix level\r\n");
+        dprintf("fix level\n");
         backlight_config.level = BACKLIGHT_LEVELS - 1;
         eeconfig_write_backlight(backlight_config.raw);
     }
@@ -71,7 +71,7 @@ void fix_backlight_level(void)
 
 void backlight_setup()
 {
-    dprintf("backlight_setup\r\n");
+    dprintf("backlight_setup\n");
 
 #ifdef BACKLIGHT_ENABLE
     is31fl3733_91tkl_init(&issi);
@@ -85,5 +85,5 @@ void backlight_setup()
 
 void backlight_setup_finish()
 {
-    dprintf("backlight_setup_finish\r\n");
+    dprintf("backlight_setup_finish\n");
 }

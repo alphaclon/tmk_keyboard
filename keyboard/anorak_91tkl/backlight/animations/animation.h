@@ -45,6 +45,9 @@ void set_and_start_animation(animation_names animation_by_name);
 void start_animation(void);
 void stop_animation(void);
 void toggle_animation(void);
+void suspend_animation(void);
+void resume_animation(void);
+void resume_animation_in_idle_state(void);
 
 void animation_next(void);
 void animation_previous(void);

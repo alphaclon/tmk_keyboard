@@ -10,7 +10,7 @@
 
 void sdb_hardware_shutdown_enable_upper(bool enabled)
 {
-    dprintf("sdb (upper): %u\n", enabled);
+    //dprintf("sdb (upper): %u\n", enabled);
 
     if (enabled)
     {
@@ -28,7 +28,7 @@ void sdb_hardware_shutdown_enable_upper(bool enabled)
 
 void sdb_hardware_shutdown_enable_lower(bool enabled)
 {
-    dprintf("sdb (lower): %u\n", enabled);
+    //dprintf("sdb (lower): %u\n", enabled);
 
     if (enabled)
     {

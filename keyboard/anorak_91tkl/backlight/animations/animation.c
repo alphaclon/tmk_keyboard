@@ -32,10 +32,10 @@ static animation_names current_animation = animation_cycle_all;
 static uint32_t last_key_pressed_timestamp = 0;
 static bool suspend_animation_on_idle = true;
 
-#ifdef DEBUG_ANIMATION
+#ifdef DEBUG_ANIMATION_SPEED
 static uint32_t duration_ms = 0;
 static uint32_t elapsed_ms = 0;
-static uint8_t loop_count = 255;
+static uint8_t loop_count = 10;
 #endif
 
 void initialize_animation(void)
@@ -172,12 +172,16 @@ bool animation_is_running()
 
 void start_animation()
 {
-    dprintf("start_animation\n");
+	dprintf("start_animation\n");
+
+	if (animation.is_running || animation.is_suspended)
+		return;
 
     if (animation.animationStart)
         animation.animationStart();
 
     animation.is_running = true;
+    animation.is_suspended = false;
     animation.loop_timer = timer_read();
     animation.duration_timer = timer_read32();
     last_key_pressed_timestamp = timer_read32();
@@ -185,9 +189,7 @@ void start_animation()
 
 void set_and_start_animation(animation_names animation_by_name)
 {
-    if (animation_is_running())
-        stop_animation();
-
+	stop_animation();
     set_animation(animation_by_name);
     start_animation();
 }
@@ -196,14 +198,55 @@ void stop_animation()
 {
     dprintf("stop_animation\n");
 
+    if (!animation.is_running && !animation.is_suspended)
+    	return;
+
     if (animation.animationStop)
         animation.animationStop();
 
     animation.is_running = false;
+    animation.is_suspended = false;
     animation.animationStart = 0;
     animation.animationStop = 0;
     animation.animationLoop = 0;
     animation.animation_typematrix_row = 0;
+}
+
+void suspend_animation()
+{
+    //dprintf("suspend_animation\n");
+
+    if (!animation.is_running)
+    	return;
+
+    animation.is_running = false;
+    animation.is_suspended = true;
+}
+
+void resume_animation()
+{
+    //dprintf("resume_animation\n");
+
+    if (!animation.is_suspended)
+    	return;
+
+    animation.is_running = true;
+    animation.is_suspended = false;
+
+    last_key_pressed_timestamp = timer_read32();
+}
+
+void resume_animation_in_idle_state()
+{
+    //dprintf("resume_animation\n");
+
+    if (!animation.is_suspended)
+    	return;
+
+    animation.is_running = true;
+    animation.is_suspended = false;
+
+    last_key_pressed_timestamp -= ANIMATION_SUSPEND_TIMEOUT;
 }
 
 void animation_decrease_hsv_color(animation_hsv_names hsv_name, HSVColorName color_name)
@@ -254,15 +297,14 @@ void animate()
     */
 
 #ifdef DEBUG_ANIMATION
-    if (loop_count < 10)
+    if (loop_count)
     {
-    	loop_count++;
-    	duration_ms += timer_elapsed32(elapsed_ms);
+    	loop_count--;
     	elapsed_ms = timer_read32();
     }
     else
     {
-    	loop_count = 0;
+    	loop_count = 10;
     	duration_ms /= 10;
     	dprintf("avg: %lu", duration_ms);
     	duration_ms = 0;
@@ -272,6 +314,10 @@ void animate()
 
     animation.loop_timer = timer_read();
     animation.animationLoop();
+
+#ifdef DEBUG_ANIMATION
+    duration_ms += timer_elapsed32(elapsed_ms);
+#endif
 }
 
 void animation_typematrix_row(uint8_t row_number, matrix_row_t row)

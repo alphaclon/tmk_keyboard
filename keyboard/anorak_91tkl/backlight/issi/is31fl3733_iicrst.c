@@ -48,13 +48,13 @@ void iic_reset_enable_lower(bool enabled)
 void iic_reset_upper()
 {
 	iic_reset_enable_upper(true);
-	_delay_ms(1);
+	_delay_us(500);
 	iic_reset_enable_upper(false);
 }
 
 void iic_reset_lower()
 {
 	iic_reset_enable_lower(true);
-	_delay_ms(1);
+	_delay_us(500);
 	iic_reset_enable_lower(false);
 }

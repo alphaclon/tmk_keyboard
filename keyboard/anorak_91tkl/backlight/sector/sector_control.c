@@ -251,7 +251,8 @@ void sector_selected_increase_hsv_color(HSVColorName color)
 void sector_all_increase_hsv_color(HSVColorName color)
 {
     for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
-        sector_increase_hsv_by_name(sector, color);
+    	if (sector_is_enabled(sector))
+    		sector_increase_hsv_by_name(sector, color);
     is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
@@ -271,7 +272,8 @@ void sector_selected_decrease_hsv_color(HSVColorName color)
 void sector_all_decrease_hsv_color(HSVColorName color)
 {
     for (uint8_t sector = 0; sector < SECTOR_MAX; ++sector)
-        sector_decrease_sector_hsv_by_name(sector, color);
+    	if (sector_is_enabled(sector))
+    		sector_decrease_sector_hsv_by_name(sector, color);
     is31fl3733_91tkl_update_led_pwm(&issi);
 }
 

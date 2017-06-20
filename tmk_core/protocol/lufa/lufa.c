@@ -825,7 +825,7 @@ int main(void)
         while (USB_DeviceState == DEVICE_STATE_Suspended && !is_other_side_connected_to_usb())
         {
 #ifdef LUFA_DEBUG
-            print("[s]");
+            //print("[s]");
 #endif
             hook_usb_suspend_loop();
             splitbrain_communication_task();

@@ -47,10 +47,12 @@ void is31fl3733_init(IS31FL3733 *device)
 {
 	dprintf("issi 0x%X\n", device->address);
 
-	dprintf("hsd\n");
+	//dprintf("hsd\n");
     is31fl3733_hardware_shutdown(device, true);
 
 	device->pfn_iic_reset();
+
+	_delay_ms(10);
 
 #ifdef DEBUG_ISSI_SLOW_I2C
     device->pfn_i2c_read_reg = &i2c_read_reg;
@@ -87,28 +89,30 @@ void is31fl3733_init(IS31FL3733 *device)
     memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
 
     device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
+    //device->cr = IS31FL3733_CR_SSD;
 
     // Read reset register to reset device.
-    dprintf("reset\n");
+    //dprintf("reset\n");
     is31fl3733_read_paged_reg(device, IS31FL3733_RESET);
 
-    _delay_ms(20);
+    _delay_us(500);
 
     // Set global current control register.
-    dprintf("gcc\n");
+    //dprintf("gcc\n");
     is31fl3733_write_paged_reg(device, IS31FL3733_GCC, device->gcc);
 
-    dprintf("res\n");
+    //dprintf("res\n");
     is31fl3733_set_resistor_values(device, IS31FL3733_RESISTOR_32K, IS31FL3733_RESISTOR_32K);
 
+    // do we need this here?
     is31fl3733_update(device);
 
     // Clear software reset in configuration register.
     // Set master/slave bit
-    dprintf("ssd\n");
+    //dprintf("ssd\n");
     is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr);
 
-    dprintf("hsd\n");
+    //dprintf("hsd\n");
     is31fl3733_hardware_shutdown(device, false);
 
     dprintf("issi 0x%X done\n", device->address);
@@ -446,13 +450,13 @@ void is31fl3733_detect_led_open_short_states(IS31FL3733 *device)
 	is31fl3733_write_paged_reg(device, IS31FL3733_GCC, 0x01);
 
 	is31fl3733_led_enable_all(device);
-	is31fl3733_fill(device, 0x7f);
+	is31fl3733_fill(device, 0xff);
 	is31fl3733_update(device);
 
 	is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr & ~IS31FL3733_CR_OSD);
     is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr | IS31FL3733_CR_OSD);
 
-    _delay_ms(5);
+    _delay_ms(50);
 }
 
 void is31fl3733_read_led_open_states(IS31FL3733 *device)

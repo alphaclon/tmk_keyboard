@@ -22,7 +22,7 @@
 #include "nodebug.h"
 #endif
 
-#define BAUD 38400 // 9600 14400 19200 38400 57600 115200
+#define BAUD 115200 // 9600 14400 19200 38400 57600 115200
 
 void hook_early_init(void)
 {
@@ -34,7 +34,7 @@ void hook_early_init(void)
 
 void hook_late_init(void)
 {
-#ifdef DEBUG_OUTPUT_ENABLE
+#ifdef LUFA_DEBUG_UART
     debug_config.enable = 1;
     debug_config.matrix = 1;
     debug_config.keyboard = 1;
@@ -53,7 +53,7 @@ void hook_late_start(void)
 	dprintf("late_start\n");
 	dprintf("free ram: %d\n", freeRam());
 
-#ifdef DEBUG_OUTPUT_ENABLE
+#ifdef LUFA_DEBUG_UART
     debug_config.enable = 1;
     debug_config.matrix = 0;
     debug_config.keyboard = 0;
@@ -74,6 +74,7 @@ static uint8_t _led_stats = 0;
 
 void hook_usb_suspend_entry(void)
 {
+	dprintf("huse\n");
     // Turn LED off to save power
     // Set 0 with putting aside status before suspend and restore
     // it after wakeup, then LED is updated at keyboard_task() in main loop
@@ -85,7 +86,7 @@ void hook_usb_suspend_entry(void)
     clear_keyboard();
 
 #ifdef BACKLIGHT_ENABLE
-    stop_animation();
+    suspend_animation();
     is31fl3733_91tkl_hardware_shutdown(&issi, true);
 #endif
 
@@ -96,17 +97,26 @@ void hook_usb_suspend_entry(void)
 
 void hook_usb_wakeup(void)
 {
-    //This replaces the call of suspend_wakeup_init()
+	dprintf("huwu\n");
+
+	//
+    // ---> This replaces the call of suspend_wakeup_init() <--
+	//
 	// suspend_wakeup_init();
 
     // clear keyboard state
     matrix_clear();
     clear_keyboard();
 
-    #ifdef BACKLIGHT_ENABLE
-    //backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
-    stop_animation();
+#ifdef BACKLIGHT_ENABLE
+    //
+    // --> do not call this! I2C IRQ will destroy USB communication! <--
+    //
+    //backlight_init();
+
     is31fl3733_91tkl_hardware_shutdown(&issi, false);
+    //resume_animation();
+    resume_animation_in_idle_state();
 #endif
 
 #ifdef SLEEP_LED_ENABLE

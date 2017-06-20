@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VENDOR_ID       0x1209
 #define PRODUCT_ID      0xAA91
-#define DEVICE_VER      0x0101
+#define DEVICE_VER      0x0201
 #define MANUFACTURER    Anorak
 #define PRODUCT         91tkl
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak 91tkl
@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BACKLIGHT_LEVELS 8
 
 /* key combination for command */
-#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LGUI) | MOD_BIT(KC_LCTRL)) || keyboard_report->mods == (MOD_BIT(KC_RGUI) | MOD_BIT(KC_RCTRL)))
+#define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LGUI) | MOD_BIT(KC_LCTRL)))
 
 /* period of tapping(ms) */
 #define TAPPING_TERM    300

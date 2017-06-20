@@ -119,6 +119,7 @@ bool cmd_user_animation(uint8_t argc, char **argv);
 bool cmd_user_debug_config(uint8_t argc, char **argv);
 bool cmd_user_keymap_config(uint8_t argc, char **argv);
 bool cmd_user_bootloader_jump(uint8_t argc, char **argv);
+bool cmd_user_backlight(uint8_t argc, char **argv);
 bool cmd_user_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_default_layer(uint8_t argc, char **argv);
@@ -133,16 +134,16 @@ const user_command user_command_table[] PROGMEM = {
     {"ee", &cmd_user_dump_eeprom, 0, "dump eeprom"},
     {"fee", &cmd_user_eeprom_clear, 0, "clear eeprom"},
     {"bee", &cmd_user_backlight_eeprom_clear, 0, "clear backlight eeprom"},
+	{"bl", &cmd_user_backlight, 0, "backlight"},
     {"sector", &cmd_user_sector, "save | map # | # 0|1 | # h s v", "set sector"},
     {"animation", &cmd_user_animation, "save | delay ms | # 0|1 | c h s v", "set animation"},
+	{"hsv", &cmd_user_key_hsv, "row col h s v", "set hsv"},
     {"debug", &cmd_user_debug_config, 0, "debug configuration"},
+	{"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
     {"layer", &cmd_user_default_layer, 0, "default layer"},
-    {"bl", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
-
-    {"hsv", &cmd_user_key_hsv, "row col h s v", "set hsv"},
+    {"boot", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
 
 #ifdef DEBUG_ISSI
-    //{"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
     //{"keymap_json", &cmd_user_keymap_json, 0, "keymap json"},
     //{"ledmap", &cmd_user_keymap_led_map, 0, "row/col to led pos map"},
     {"issi", &cmd_user_test_issi, 0, "test issi"},
@@ -319,25 +320,19 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
 
         found = true;
     }
-    else if (argc == 2 && strcmp_P(argv[0], PSTR("open")) == 0)
+    else if (argc == 2 && (strcmp_P(argv[0], PSTR("open")) == 0 || strcmp_P(argv[0], PSTR("short")) == 0))
     {
         IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
 
         is31fl3733_detect_led_open_short_states(device);
+
+        vserprintfln("open states:");
         is31fl3733_read_led_open_states(device);
-
         dump_led_buffer(device);
-        dump_led_buffer_inverted(device);
+        //dump_led_buffer_inverted(device);
 
-        found = true;
-    }
-    else if (argc == 2 && strcmp_P(argv[0], PSTR("short")) == 0)
-    {
-        IS31FL3733 *device = ((atoi(argv[1]) == 0) ? issi.lower->device : issi.upper->device);
-
-        is31fl3733_detect_led_open_short_states(device);
+        vserprintfln("short states:");
         is31fl3733_read_led_short_states(device);
-
         dump_led_buffer(device);
 
         found = true;
@@ -526,6 +521,30 @@ bool cmd_user_hsv(uint8_t argc, char **argv)
     return true;
 }
 
+bool cmd_user_backlight(uint8_t argc, char **argv)
+{
+	if (argc == 0)
+	{
+	    backlight_config_t bc;
+	    bc.raw = eeconfig_read_backlight();
+	    print("backlight_config.raw: ");
+	    print_hex8(bc.raw);
+	    print("\n");
+	    print(".enable: ");
+	    print_dec(bc.enable);
+	    print("\n");
+	    print(".level: ");
+	    print_dec(bc.level);
+	    print("\n");
+		return true;
+	}
+
+	uint8_t level = atoi(argv[0]);
+	backlight_level(level);
+
+	return true;
+}
+
 bool cmd_user_key_hsv(uint8_t argc, char **argv)
 {
     if (argc != 5)
@@ -556,7 +575,7 @@ bool cmd_user_key_hsv(uint8_t argc, char **argv)
 
 bool cmd_user_animation(uint8_t argc, char **argv)
 {
-    // "save | delay ms | # 0|1 | 0|1 h s v"
+    // "save | fps ms | # 0|1 | 0|1 h s v"
 
     if (argc == 0)
     {
@@ -570,17 +589,18 @@ bool cmd_user_animation(uint8_t argc, char **argv)
         return true;
     }
 
-    if (argc == 1 && strcmp_P(argv[0], PSTR("save")) == 0)
-    {
-        vserprintfln("save");
-        animation_save_state();
-        return true;
-    }
+    if (argc == 1)
+	{
+		uint8_t selected_animation = atoi(argv[0]);
+		vserprintfln("%u %u", selected_animation, animation_is_running());
+		return true;
+	}
 
-    if (argc == 1 && strcmp_P(argv[0], PSTR("fps")) == 0)
+    if (argc == 2 && strcmp_P(argv[1], PSTR("save")) == 0)
     {
-        uint16_t delay_in_ms = atoi(argv[0]);
-        animation_set_speed(delay_in_ms);
+    	uint8_t selected_animation = atoi(argv[0]);
+        vserprintfln("%u save", selected_animation);
+        animation_save_state();
         return true;
     }
 
@@ -594,31 +614,59 @@ bool cmd_user_animation(uint8_t argc, char **argv)
         else
             stop_animation();
 
-        vserprintfln("set:%u, running:%u", animation_current(), animation_is_running());
+        vserprintfln("%u %u", animation_current(), animation_is_running());
         return true;
     }
 
-    if (argc >= 4)
+    if (argc == 3 && strcmp_P(argv[1], PSTR("fps")) == 0)
     {
-        uint8_t pos = atoi(argv[0]);
+    	//uint8_t selected_animation = atoi(argv[0]);
+        uint16_t delay_in_ms = atoi(argv[2]);
+        animation_set_speed(delay_in_ms);
+        return true;
+    }
 
-        if (pos == 0)
+    if (argc == 3 && strcmp_P(argv[1], PSTR("c")) == 0)
+    {
+    	uint8_t selected_animation = atoi(argv[0]);
+    	uint8_t colorid = atoi(argv[2]);
+
+    	if (colorid == 0)
+    	{
+    		vserprintfln("%u %u %X %X %X", selected_animation, colorid, animation.hsv.h, animation.hsv.s, animation.hsv.v);
+    	}
+    	else
+    	{
+    		vserprintfln("%u %u %X %X %X", selected_animation, colorid, animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
+    	}
+
+        return true;
+    }
+
+    if (argc >= 5)
+    {
+    	uint8_t selected_animation = atoi(argv[0]);
+        uint8_t colorid = atoi(argv[1]);
+
+        if (colorid == 0)
         {
             animation.hsv.h = atoi(argv[1]);
             animation.hsv.s = atoi(argv[2]);
             animation.hsv.v = atoi(argv[3]);
 
             animation.rgb = hsv_to_rgb(animation.hsv);
+
+            vserprintfln("%u %u %X %X %X", selected_animation, colorid, animation.hsv.h, animation.hsv.s, animation.hsv.v);
         }
         else
         {
             animation.hsv2.h = atoi(argv[1]);
             animation.hsv2.s = atoi(argv[2]);
             animation.hsv2.v = atoi(argv[3]);
+
+            vserprintfln("%u %u %X %X %X", selected_animation, colorid, animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
         }
 
-        vserprintfln("%X %X %X", animation.hsv.h, animation.hsv.s, animation.hsv.v);
-        vserprintfln("%X %X %X", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
         return true;
     }
 
@@ -648,7 +696,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 
     if (argc == 1)
     {
-    	uint8_t s = atoi(argv[1]);
+    	uint8_t s = atoi(argv[0]);
         HSV hsv = sector_get_hsv_color(s);
         vserprintfln("%u %u %X %X %X", s, sector_is_enabled(s), hsv.h, hsv.s, hsv.v);
         return true;
@@ -662,7 +710,7 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         return true;
     }
 
-    if (argc == 2 && strcmp_P(argv[0], PSTR("inc")) == 0)
+    if (argc == 2 && strcmp_P(argv[0], PSTR("+")) == 0)
     {
         uint8_t inc = atoi(argv[1]);
         vserprintfln(".inc:%u", inc);
@@ -670,11 +718,27 @@ bool cmd_user_sector(uint8_t argc, char **argv)
         return true;
     }
 
-    if (argc == 2 && strcmp_P(argv[0], PSTR("dec")) == 0)
+    if (argc == 2 && strcmp_P(argv[0], PSTR("-")) == 0)
     {
         uint8_t inc = atoi(argv[1]);
         vserprintfln(".dec:%u", inc);
         sector_selected_decrease_hsv_color(inc);
+        return true;
+    }
+
+    if (argc == 2 && strcmp_P(argv[0], PSTR("++")) == 0)
+    {
+        uint8_t inc = atoi(argv[1]);
+        vserprintfln(".ainc:%u", inc);
+        sector_all_increase_hsv_color(inc);
+        return true;
+    }
+
+    if (argc == 2 && strcmp_P(argv[0], PSTR("--")) == 0)
+    {
+        uint8_t inc = atoi(argv[1]);
+        vserprintfln(".adec:%u", inc);
+        sector_all_decrease_hsv_color(inc);
         return true;
     }
 
@@ -710,11 +774,14 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 
 bool cmd_user_info(uint8_t argc, char **argv)
 {
-    vserprintf("DESC: " STR(DESCRIPTION) "\n");
-    vserprintf("VID: " STR(VENDOR_ID) "(" STR(MANUFACTURER) ")\n");
-    vserprintf("PID: " STR(PRODUCT_ID) "(" STR(PRODUCT) ")");
-    vserprintf("VER: " STR(DEVICE_VER) "\n");
-    vserprintf("BUILD: " STR(VERSION) " (" __TIME__ " " __DATE__ ")\n");
+	vserprintf("device\n");
+    vserprintf(".desc: " STR(DESCRIPTION) "\n");
+    vserprintf(".vid: " STR(VENDOR_ID) "\n");
+    vserprintf(".manufacturer: "  STR(MANUFACTURER) "\n");
+    vserprintf(".pid: " STR(PRODUCT_ID) "\n");
+    vserprintf(".product: " STR(PRODUCT) "\n");
+    vserprintf(".version: " STR(DEVICE_VER) "\n");
+    vserprintf(".build: " STR(VERSION) " (" __TIME__ " " __DATE__ ")\n");
     return true;
 }
 
@@ -920,58 +987,8 @@ bool cmd_user_keymap_config(uint8_t argc, char **argv)
 
 bool cmd_user_dump_eeprom(uint8_t argc, char **argv)
 {
-#ifdef BOOTMAGIC_ENABLE
-    print("default_layer: ");
-    print_dec(eeconfig_read_default_layer());
-    print("\n");
-
-    debug_config_t dc;
-    dc.raw = eeconfig_read_debug();
-    print("debug_config.raw: ");
-    print_hex8(dc.raw);
-    print("\n");
-    print(".enable: ");
-    print_dec(dc.enable);
-    print("\n");
-    print(".matrix: ");
-    print_dec(dc.matrix);
-    print("\n");
-    print(".keyboard: ");
-    print_dec(dc.keyboard);
-    print("\n");
-    print(".mouse: ");
-    print_dec(dc.mouse);
-    print("\n");
-
-    keymap_config_t kc;
-    kc.raw = eeconfig_read_keymap();
-    print("keymap_config.raw: ");
-    print_hex8(kc.raw);
-    print("\n");
-    print(".swap_control_capslock: ");
-    print_dec(kc.swap_control_capslock);
-    print("\n");
-    print(".capslock_to_control: ");
-    print_dec(kc.capslock_to_control);
-    print("\n");
-    print(".swap_lalt_lgui: ");
-    print_dec(kc.swap_lalt_lgui);
-    print("\n");
-    print(".swap_ralt_rgui: ");
-    print_dec(kc.swap_ralt_rgui);
-    print("\n");
-    print(".no_gui: ");
-    print_dec(kc.no_gui);
-    print("\n");
-    print(".swap_grave_esc: ");
-    print_dec(kc.swap_grave_esc);
-    print("\n");
-    print(".swap_backslash_backspace: ");
-    print_dec(kc.swap_backslash_backspace);
-    print("\n");
-    print(".nkro: ");
-    print_dec(kc.nkro);
-    print("\n");
+	cmd_user_keymap_config(0, 0);
+	cmd_user_debug_config(0, 0);
 
 #ifdef BACKLIGHT_ENABLE
     backlight_config_t bc;
@@ -985,7 +1002,6 @@ bool cmd_user_dump_eeprom(uint8_t argc, char **argv)
     print(".level: ");
     print_dec(bc.level);
     print("\n");
-#endif
 #endif
     return true;
 }

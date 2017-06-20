@@ -179,6 +179,8 @@ uint8_t is31fl3733_read_interrupt_status_register(IS31FL3733 *device);
 void is31fl3733_software_shutdown(IS31FL3733 *device, bool enable);
 void is31fl3733_hardware_shutdown(IS31FL3733 *device, bool enable);
 
+void is31fl3733_auto_breath_mode(IS31FL3733 *device, bool enable);
+
 /// Update LED matrix with internal buffer values.
 void is31fl3733_update(IS31FL3733 *device);
 /// Update LED matrix LED enable/disable states with internal buffer values.

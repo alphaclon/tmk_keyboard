@@ -22,6 +22,7 @@ struct _animation_interface
     uint32_t duration_timer;
 
     bool is_running;
+    bool is_suspended;
 
     void (*animationStart)(void);
     void (*animationStop)(void);

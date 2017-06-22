@@ -3,6 +3,7 @@
 #include "matrix.h"
 #include "led.h"
 #include "action.h"
+#include "pwm.h"
 #ifdef SLEEP_LED_ENABLE
 #include "sleep_led.h"
 #endif
@@ -30,6 +31,12 @@ void hook_early_init(void)
 	uart_init(UART_BAUD_SELECT(BAUD, F_CPU));
 #endif
 	TWI_Master_Initialise();
+
+#ifdef STATUS_LED_PWM_ENABLED
+	pwm_init();
+	pwm_caps_lock_led_enabled(false);
+	pwm_scroll_lock_led_enabled(false);
+#endif
 }
 
 void hook_late_init(void)

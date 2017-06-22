@@ -75,7 +75,7 @@ void backlight_setup()
 
 #ifdef BACKLIGHT_ENABLE
     is31fl3733_91tkl_init(&issi);
-    is31fl3733_91tkl_power_target(&issi, 450);
+    is31fl3733_91tkl_power_target(&issi, 500);
 
     sector_control_init();
     fix_backlight_level();

@@ -88,14 +88,16 @@ void is31fl3733_init(IS31FL3733 *device)
     memset(device->mask, 0, IS31FL3733_LED_ENABLE_SIZE);
     memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
 
-    device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
-    //device->cr = IS31FL3733_CR_SSD;
+    //device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
+    device->cr = IS31FL3733_CR_SSD;
 
     // Read reset register to reset device.
     //dprintf("reset\n");
     is31fl3733_read_paged_reg(device, IS31FL3733_RESET);
 
     _delay_us(500);
+
+    is31fl3733_auto_breath_mode(device, false);
 
     // Set global current control register.
     //dprintf("gcc\n");

@@ -72,6 +72,7 @@ PROGRAM_CMD = avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B 0.1 -U flash
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
 	led.c \
+	pwm.c \
 	crc8.c \
 	hooks.c \
 	utils.c \
@@ -199,9 +200,9 @@ debug-on: EXTRAFLAGS += -DDEBUG_ISSI
 debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
+#debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 #debug-on: EXTRAFLAGS += -DDEBUG_VIRTSER
-debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all

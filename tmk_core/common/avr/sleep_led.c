@@ -21,6 +21,7 @@
 void sleep_led_init(void)  __attribute__ ((weak));
 void sleep_led_init(void)
 {
+#ifdef SLEEP_LED_TIMER_1
     /* Timer1 setup */
     /* CTC mode */
     TCCR1B |= _BV(WGM12);
@@ -32,20 +33,43 @@ void sleep_led_init(void)
     OCR1AH = (SLEEP_LED_TIMER_TOP>>8)&0xff;
     OCR1AL = SLEEP_LED_TIMER_TOP&0xff;
     SREG = sreg;
+#else
+    /* Timer3 setup */
+    /* CTC mode */
+    TCCR3B |= _BV(WGM32);
+    /* Clock selelct: clk/1 */
+    TCCR3B |= _BV(CS30);
+    /* Set TOP value */
+    uint8_t sreg = SREG;
+    cli();
+    OCR3AH = (SLEEP_LED_TIMER_TOP>>8)&0xff;
+    OCR3AL = SLEEP_LED_TIMER_TOP&0xff;
+    SREG = sreg;
+#endif
 }
 
 void sleep_led_enable(void)  __attribute__ ((weak));
 void sleep_led_enable(void)
 {
+#ifdef SLEEP_LED_TIMER_1
     /* Enable Compare Match Interrupt */
     TIMSK1 |= _BV(OCIE1A);
+#else
+    /* Enable Compare Match Interrupt */
+    TIMSK3 |= _BV(OCIE3A);
+#endif
 }
 
 void sleep_led_disable(void)  __attribute__ ((weak));
 void sleep_led_disable(void)
 {
+#ifdef SLEEP_LED_TIMER_1
     /* Disable Compare Match Interrupt */
     TIMSK1 &= ~_BV(OCIE1A);
+#else
+    /* Disable Compare Match Interrupt */
+    TIMSK3 &= ~_BV(OCIE3A);
+#endif
 }
 
 __attribute__ ((weak))
@@ -74,7 +98,11 @@ static const uint8_t breathing_table[64] PROGMEM = {
 15, 10, 6, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+#ifdef SLEEP_LED_TIMER_1
 ISR(TIMER1_COMPA_vect)
+#else
+ISR(TIMER3_COMPA_vect)
+#endif
 {
     /* Software PWM
      * timer:1111 1111 1111 1111

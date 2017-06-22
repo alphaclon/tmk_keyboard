@@ -24,7 +24,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MANUFACTURER    Anorak
 #define PRODUCT         91tkl
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak 91tkl
+#define SERIALNUMBER    1234
 
+// 55438313133351211180
 
 /* matrix size */
 #define MATRIX_ROWS 6

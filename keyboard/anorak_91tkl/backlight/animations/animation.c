@@ -28,7 +28,7 @@
 #define MINIMAL_DELAY_TIME_MS 5
 #define ANIMATION_SUSPEND_TIMEOUT (10L * 60L * 1000L)
 
-static animation_names current_animation = animation_cycle_all;
+static animation_names current_animation = animation_type_o_matic;
 static uint32_t last_key_pressed_timestamp = 0;
 static bool suspend_animation_on_idle = true;
 
@@ -110,6 +110,8 @@ void set_animation(animation_names animation_by_name)
     case animation_LAST:
     	break;
     }
+
+    current_animation = animation_by_name;
 }
 
 void animation_next()
@@ -296,7 +298,7 @@ void animate()
     }
     */
 
-#ifdef DEBUG_ANIMATION
+#ifdef DEBUG_ANIMATION_SPEED
     if (loop_count)
     {
     	loop_count--;
@@ -315,7 +317,7 @@ void animate()
     animation.loop_timer = timer_read();
     animation.animationLoop();
 
-#ifdef DEBUG_ANIMATION
+#ifdef DEBUG_ANIMATION_SPEED
     duration_ms += timer_elapsed32(elapsed_ms);
 #endif
 }

@@ -25,11 +25,11 @@
 #include "keycode.h"
 #include "keymap.h"
 #include "backlight.h"
-#include "pwm.h"
 #include "keyboard_layout_json.h"
 #include "backlight/eeconfig_backlight.h"
 #include "../../tmk_core/common/avr/xprintf.h"
 #include "mini-snprintf.h"
+#include "statusled_pwm.h"
 #ifdef SLEEP_LED_ENABLE
 #include "sleep_led.h"
 #include "led.h"
@@ -89,6 +89,8 @@ int virtser_print_P(const char *s);
 uint16_t last_receive_ts = 0;
 uint8_t recv_buffer[MAX_MSG_LENGTH];
 
+extern backlight_config_t backlight_config;
+
 enum recvStatus
 {
     recvStatusIdle = 0,
@@ -126,6 +128,7 @@ bool cmd_user_keymap_config(uint8_t argc, char **argv);
 bool cmd_user_bootloader_jump(uint8_t argc, char **argv);
 bool cmd_user_backlight(uint8_t argc, char **argv);
 bool cmd_user_eeprom_clear(uint8_t argc, char **argv);
+bool cmd_user_statusled_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_default_layer(uint8_t argc, char **argv);
 bool cmd_user_keymap_json(uint8_t argc, char **argv);
@@ -141,7 +144,7 @@ const user_command user_command_table[] PROGMEM = {
     {"ee", &cmd_user_dump_eeprom, 0, "dump eeprom"},
     {"fee", &cmd_user_eeprom_clear, 0, "clear eeprom"},
     {"bee", &cmd_user_backlight_eeprom_clear, 0, "clear backlight eeprom"},
-	{"bl", &cmd_user_backlight, 0, "backlight"},
+	{"bl", &cmd_user_backlight, 0, "enable backlight"},
     {"sector", &cmd_user_sector, "save | map # | # 0|1 | # h s v", "set sector"},
     {"animation", &cmd_user_animation, "save | delay ms | # 0|1 | c h s v", "set animation"},
 	{"hsv", &cmd_user_key_hsv, "row col h s v", "set hsv"},
@@ -149,7 +152,11 @@ const user_command user_command_table[] PROGMEM = {
 	{"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
     {"layer", &cmd_user_default_layer, 0, "default layer"},
     {"boot", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
-	{"pwm", &cmd_user_status_leds_pwm, 0, "set pwm for status leds"},
+
+#ifdef STATUS_LED_PWM_ENABLED
+	{"stabri", &cmd_user_status_leds_pwm, 0, "brightness for status leds"},
+	{"see", &cmd_user_statusled_eeprom_clear, 0, "clear statusled eeprom"},
+#endif
 
 #ifdef SLEEP_LED_ENABLE
 	{"sleepled", &cmd_user_test_sleep_led, 0, "test sleepled"},
@@ -267,29 +274,36 @@ bool cmd_user_test_sleep_led(uint8_t argc, char **argv)
 }
 #endif
 
+#ifdef STATUS_LED_PWM_ENABLED
 bool cmd_user_status_leds_pwm(uint8_t argc, char **argv)
 {
     if (argc == 1 && strcmp_P(argv[0], PSTR("init")) == 0)
     {
-    	pwm_init();
+    	statusled_pwm_init();
     	return true;
+    }
+
+    if (argc == 1 && strcmp_P(argv[0], PSTR("save")) == 0)
+    {
+        save_status_led_values();
+        return true;
     }
 
     if (argc == 1)
     {
     	uint8_t led = atoi(argv[0]);
-    	uint8_t pwm;
+    	uint8_t brightness;
 
     	if (led == 0)
     	{
-    		pwm = get_pwm_caps_lock_led();
+    		brightness = get_capslock_led_brightness();
     	}
     	else
     	{
-    		pwm = get_pwm_scroll_lock_led();
+    		brightness = get_scrolllock_led_brightness();
     	}
 
-    	vserprintfln(".pwm %u %u", led, pwm);
+    	vserprintfln(".brightness %u %u", led, brightness);
 
     	return true;
     }
@@ -301,14 +315,12 @@ bool cmd_user_status_leds_pwm(uint8_t argc, char **argv)
 
     	if (led == 0)
     	{
-    		pwm_caps_lock_led_enabled(on);
+    		set_capslock_led_enabled(on);
     	}
     	else
     	{
-    		pwm_scroll_lock_led_enabled(on);
+    		set_scrolllock_led_enabled(on);
     	}
-
-    	vserprintfln(".pwm %u %s", led, argv[1]);
 
     	return true;
     }
@@ -316,24 +328,25 @@ bool cmd_user_status_leds_pwm(uint8_t argc, char **argv)
     if (argc == 2)
     {
     	uint8_t led = atoi(argv[0]);
-    	uint8_t pwm = atoi(argv[1]);
+    	uint8_t brightness = atoi(argv[1]);
 
     	if (led == 0)
     	{
-    		pwm_caps_lock_led(pwm);
+    		set_capslock_led_brightness(brightness);
     	}
     	else
     	{
-    		pwm_scroll_lock_led(pwm);
+    		set_scrolllock_led_brightness(brightness);
     	}
 
-    	vserprintfln(".pwm %u %u", led, pwm);
+    	vserprintfln(".brightness %u %u", led, brightness);
 
     	return true;
     }
 
     return false;
 }
+#endif
 
 bool cmd_user_test_issi(uint8_t argc, char **argv)
 {
@@ -628,10 +641,47 @@ bool cmd_user_hsv(uint8_t argc, char **argv)
 bool cmd_user_backlight(uint8_t argc, char **argv)
 {
 #ifdef BACKLIGHT_ENABLE
-	if (argc == 0)
+    if (argc == 1 && strcmp_P(argv[0], PSTR("save")) == 0)
+    {
+    	if (backlight_config.raw != eeconfig_read_backlight())
+    		eeconfig_write_backlight(backlight_config.raw);
+    	return true;
+    }
+    else if (argc == 2)
+    {
+        if (strcmp_P(argv[0], PSTR("enable")) == 0)
+        {
+        	bool enable = atoi(argv[1]);
+        	uint8_t level = enable ? backlight_config.level : 0;
+        	backlight_level(level);
+        	return true;
+        }
+        else if (strcmp_P(argv[0], PSTR("level")) == 0)
+        {
+        	uint8_t level = atoi(argv[0]);
+        	backlight_level(level);
+        	return true;
+        }
+        else if (strcmp_P(argv[0], PSTR("ee")) == 0)
+    	{
+        	backlight_config_t bc;
+    	    bc.raw = eeconfig_read_backlight();
+    	    print(".backlight_config.raw: ");
+    	    print_hex8(bc.raw);
+    	    print("\n");
+    	    print(".enable: ");
+    	    print_dec(bc.enable);
+    	    print("\n");
+    	    print(".level: ");
+    	    print_dec(bc.level);
+    	    print("\n");
+    		return true;
+    	}
+    }
+    else if (argc == 0)
 	{
-	    backlight_config_t bc;
-	    bc.raw = eeconfig_read_backlight();
+    	backlight_config_t bc;
+	    bc.raw = backlight_config.raw;
 	    print(".backlight_config.raw: ");
 	    print_hex8(bc.raw);
 	    print("\n");
@@ -643,11 +693,8 @@ bool cmd_user_backlight(uint8_t argc, char **argv)
 	    print("\n");
 		return true;
 	}
-
-	uint8_t level = atoi(argv[0]);
-	backlight_level(level);
 #endif
-	return true;
+	return false;
 }
 
 bool cmd_user_key_hsv(uint8_t argc, char **argv)
@@ -925,6 +972,15 @@ bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv)
     eeconfig_backlight_init();
     return true;
 }
+
+#ifdef STATUS_LED_PWM_ENABLED
+bool cmd_user_statusled_eeprom_clear(uint8_t argc, char **argv)
+{
+    vserprintfln(".cleared");
+    eeconfig_statusled_brightness_init();
+    return true;
+}
+#endif
 
 bool cmd_user_default_layer(uint8_t argc, char **argv)
 {

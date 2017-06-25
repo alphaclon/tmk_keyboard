@@ -18,13 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <avr/io.h>
 #include <stdint.h>
 #include "led.h"
-#include "pwm.h"
+
+#include "statusled_pwm.h"
 
 void led_set(uint8_t usb_led)
 {
 #ifdef STATUS_LED_PWM_ENABLED
-	pwm_scroll_lock_led_enabled((usb_led & (1 << USB_LED_SCROLL_LOCK)));
-	pwm_caps_lock_led_enabled((usb_led & (1 << USB_LED_CAPS_LOCK)));
+	set_scrolllock_led_enabled((usb_led & (1 << USB_LED_SCROLL_LOCK)));
+	set_capslock_led_enabled((usb_led & (1 << USB_LED_CAPS_LOCK)));
 #else
     //   CapsLock: PB5
     // ScrollLock: PB6

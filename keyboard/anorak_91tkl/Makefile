@@ -72,7 +72,6 @@ PROGRAM_CMD = avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B 0.1 -U flash
 # List C source files here. (C dependencies are automatically generated.)
 SRC += \
 	led.c \
-	pwm.c \
 	crc8.c \
 	hooks.c \
 	utils.c \
@@ -81,6 +80,8 @@ SRC += \
 	keymap_common.c \
 	keymap_91tkl.c \
 	virt_ser_rpc.c \
+	statusled_pwm.c \
+	eeconfig_statusled_pwm.c \
 	uart/uart.c \
 	mini-snprintf.c \
 	twi/avr315/TWI_Master.c \

@@ -3,7 +3,7 @@
 #include "matrix.h"
 #include "led.h"
 #include "action.h"
-#include "pwm.h"
+#include "statusled_pwm.h"
 #ifdef SLEEP_LED_ENABLE
 #include "sleep_led.h"
 #endif
@@ -33,9 +33,9 @@ void hook_early_init(void)
 	TWI_Master_Initialise();
 
 #ifdef STATUS_LED_PWM_ENABLED
-	pwm_init();
-	pwm_caps_lock_led_enabled(false);
-	pwm_scroll_lock_led_enabled(false);
+	statusled_pwm_init();
+	set_capslock_led_enabled(false);
+	set_scrolllock_led_enabled(false);
 #endif
 }
 

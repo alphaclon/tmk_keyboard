@@ -20,6 +20,9 @@ static RGB rgb;
 
 void flying_ball_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+	if (!row)
+		return;
+
 	hsv.h = rand() % 255;
 
     fb_x_dir = rand() % 2 ? 1 : - 1;

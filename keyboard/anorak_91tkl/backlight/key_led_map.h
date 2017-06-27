@@ -52,6 +52,8 @@
   {  K0A,  K0B,  K0C,  K0D, NLED, NLED, NLED, NLED, NLED,  K0J,  K0K,  K0L,  K0M, NLED,  K0O,  K0P,  K0Q }  \
 }
 
+void initLedPosByMatrix(void);
 bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col);
+
 
 #endif /* KEYBOARD_ANORAK_KIIBOHD_LED_BACKLIGHT_KEY_LED_MAP_H_ */

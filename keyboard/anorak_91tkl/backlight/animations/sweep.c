@@ -5,6 +5,7 @@
 #include "../issi/is31fl3733_91tkl.h"
 #include "animation_utils.h"
 #include <avr/pgmspace.h>
+#include <stdlib.h>
 
 #ifdef DEBUG_ANIMATION
 #include "debug.h"
@@ -12,43 +13,58 @@
 #include "nodebug.h"
 #endif
 
-// The lookup table to make the brightness changes be more visible
-uint8_t const sweep[] PROGMEM = {1, 3, 6, 10, 20, 30, 40, 50, 60, 70, 80, 100, 100, 80, 70, 60, 50, 40, 30, 20, 10, 6, 3, 1};
-static uint8_t incr = 0;
+static uint8_t offset = 0;
+static int8_t direction = 1;
+static bool updown = true;
 
 void sweep_animation_loop(void)
 {
-    // animate over all the pixels, and set the brightness from the sweep table
+    uint8_t deltaV = (animation.hsv.v * 2) / MATRIX_COLS;
+    HSV hsv = { .h = animation.hsv.h, .s = animation.hsv.s, .v = animation.hsv.v };
+    //HSV hsv = { animation.hsv.h, animation.hsv.s, animation.hsv.v };
 
-	incr++;
-	if (incr >= 24)
-		incr = 0;
+    for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
+    {
+        uint8_t c = 0;
+        int8_t d = 1;
 
-	/*
+        for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
+        {
+            uint8_t col = (key_col + offset) % MATRIX_COLS;
 
-	for (uint8_t x = 0; x < MATRIX_COLS; x++)
-	{
-		for (uint8_t y = 0; y < SWEEP_ROWS; y++)
-		{
-			is31fl3733_set_pwm(issi.upper->device, x, y, pgm_read_byte(&sweep[(x + y + incr) % 24]));
-			is31fl3733_set_pwm(issi.lower->device, x, y, pgm_read_byte(&sweep[(x + y + incr) % 24]));
-		}
-	}
+            hsv.v = (deltaV * c);
+            draw_keymatrix_hsv_pixel(&issi, key_row, col, hsv);
 
-	is31fl3733_91tkl_update_led_pwm(&issi);
+            c += d;
+            if (c >= MATRIX_COLS / 2)
+                d = -1;
+        }
+    }
 
-	*/
+    is31fl3733_91tkl_update_led_pwm(&issi);
+
+    offset += direction;
+}
+
+void sweep_typematrix_row(uint8_t row_number, matrix_row_t row)
+{
+	if (!row)
+		return;
+
+    uint8_t speed = (rand() & 0x01) + 1;
+    direction = speed * ((rand() & 0x01) ? -1 : 1);
+    updown = (rand() & 0x01);
 }
 
 void set_animation_sweep()
 {
 	dprintf("sweep\n");
 
-    animation.delay_in_ms = FPS_TO_DELAY(20);
+    animation.delay_in_ms = FPS_TO_DELAY(10);
     animation.duration_in_ms = 0;
 
     animation.animationStart = &animation_default_animation_start_clear;
     animation.animationStop = &animation_default_animation_stop;
     animation.animationLoop = &sweep_animation_loop;
-    animation.animation_typematrix_row = 0;
+    animation.animation_typematrix_row = &sweep_typematrix_row;
 }

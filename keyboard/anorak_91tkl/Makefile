@@ -111,7 +111,12 @@ SRC += \
 	backlight/animations/color_wave.c \
 	backlight/animations/raindrops.c \
 	backlight/animations/jellybean_raindrops.c \
-	backlight/animations/flying_ball.c
+	backlight/animations/flying_ball.c \
+	backlight/animations/gradient_up_down.c \
+	backlight/animations/gradient_left_right.c \
+	backlight/animations/gradient_full_flicker.c
+	
+	
 	
 
 

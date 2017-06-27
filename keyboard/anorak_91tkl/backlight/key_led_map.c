@@ -2,6 +2,9 @@
 #include "key_led_map.h"
 #include "config.h"
 #include <avr/pgmspace.h>
+#include <stdlib.h>
+
+#define USE_INMEMORY_MAP
 
 /*
  * Tenkeyless keyboard default layout, ISO & ANSI (ISO is between Left Shift
@@ -59,13 +62,21 @@ const uint8_t PROGMEM keyledmap[MATRIX_ROWS][MATRIX_COLS] =
 		   DL(2,0), DL(2,1),  DL(2,2),  DL(2,3),                                                    DL(2,9),  DL(2,10),  DL(2,11), DL(2,12),            DL(2,13),  DL(2,14),  DL(2,15)
 );
 
+#ifdef USE_INMEMORY_MAP
+static uint8_t *_keyledmap;
+#endif
+
 /*
  * maps keyboard key map row and column to LED matrix row and column
  *
  */
 bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col)
 {
+#ifdef USE_INMEMORY_MAP
+	uint8_t pos = _keyledmap[key_row * MATRIX_COLS + key_col];
+#else
     uint8_t pos = pgm_read_byte(&keyledmap[key_row][key_col]);
+#endif
 
     if (pos == NLED)
     	return false;
@@ -75,4 +86,15 @@ bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_numb
     *col = (pos & 0x0F);
 
     return true;
+}
+
+void initLedPosByMatrix()
+{
+#ifdef USE_INMEMORY_MAP
+	_keyledmap = (uint8_t*)malloc(MATRIX_ROWS * MATRIX_COLS * sizeof(uint8_t));
+
+	for (uint8_t r = 0; r < MATRIX_ROWS; r++)
+		for (uint8_t c = 0; c < MATRIX_COLS; c++)
+			_keyledmap[r * MATRIX_COLS + c] = pgm_read_byte(&keyledmap[r][c]);
+#endif
 }

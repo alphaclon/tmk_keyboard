@@ -4,6 +4,7 @@
 #include "timer.h"
 #include "../../utils.h"
 #include "../eeconfig_backlight.h"
+#include "../key_led_map.h"
 #include "breathing.h"
 #include "sweep.h"
 #include "type_o_circles.h"
@@ -16,6 +17,9 @@
 #include "color_cycle_up_down.h"
 #include "color_wave.h"
 #include "flying_ball.h"
+#include "gradient_up_down.h"
+#include "gradient_left_right.h"
+#include "gradient_full_flicker.h"
 #include <string.h>
 
 #ifdef DEBUG_ANIMATION
@@ -32,6 +36,10 @@ static animation_names current_animation = animation_type_o_matic;
 static uint32_t last_key_pressed_timestamp = 0;
 static bool suspend_animation_on_idle = true;
 
+#ifdef DEBUG_ANIMATION
+//#define DEBUG_ANIMATION_SPEED
+#endif
+
 #ifdef DEBUG_ANIMATION_SPEED
 static uint32_t duration_ms = 0;
 static uint32_t elapsed_ms = 0;
@@ -40,10 +48,18 @@ static uint8_t loop_count = 10;
 
 void initialize_animation(void)
 {
+	initLedPosByMatrix();
+
     memset(&animation, 0, sizeof(struct _animation_interface));
 
 #ifdef BACKLIGHT_ENABLE
     current_animation = eeconfig_read_animation_current();
+
+    if (current_animation >= animation_LAST)
+    {
+    	current_animation = 0;
+    	eeconfig_write_animation_current(current_animation);
+    }
 
     eeconfig_read_animation_hsv_values(0, &animation.hsv.h, &animation.hsv.s, &animation.hsv.v);
     eeconfig_read_animation_hsv_values(1, &animation.hsv2.h, &animation.hsv2.s, &animation.hsv2.v);
@@ -68,7 +84,14 @@ animation_names animation_current(void)
 
 void set_animation(animation_names animation_by_name)
 {
-    switch (animation_by_name)
+	current_animation = animation_by_name;
+
+	if (current_animation >= animation_LAST)
+	{
+		current_animation = 0;
+	}
+
+    switch (current_animation)
     {
     case animation_sweep:
         set_animation_sweep();
@@ -106,12 +129,19 @@ void set_animation(animation_names animation_by_name)
     case animation_wave:
         set_animation_color_wave();
         break;
+    case animation_gradient_up_down:
+        set_animation_gradient_up_down();
+        break;
+    case animation_gradient_left_right:
+        set_animation_gradient_left_right();
+        break;
+    case animation_gradient_full_flicker:
+        set_animation_gradient_full_flicker();
+        break;
 
     case animation_LAST:
     	break;
     }
-
-    current_animation = animation_by_name;
 }
 
 void animation_next()
@@ -308,7 +338,7 @@ void animate()
     {
     	loop_count = 10;
     	duration_ms /= 10;
-    	dprintf("avg: %lu", duration_ms);
+    	dprintf("avg: %lu\n", duration_ms);
     	duration_ms = 0;
     	elapsed_ms = timer_read32();
     }
@@ -319,6 +349,7 @@ void animate()
 
 #ifdef DEBUG_ANIMATION_SPEED
     duration_ms += timer_elapsed32(elapsed_ms);
+    //dprintf("el: %u\n", duration_ms);
 #endif
 }
 

@@ -100,11 +100,11 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *     A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P     Q
      */
     KEYMAP_ISO(\
-         ESC,  FN1,   F1,   F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9,  F10,  F11,  F12,  PSCR, SLCK,  BRK,  \
+         ESC, MUTE,   F1,   F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9,  F10,  F11,  F12,  PSCR, SLCK,  BRK,  \
          GRV,    1,    2,    3,    4,    5,    6,    7,    8,    9,    0, MINS,  EQL, BSPC,   INS, HOME, PGUP,  \
          TAB,    Q,    W,    E,    R,    T,    Y,    U,    I,    O,    P, LBRC, RBRC,  ENT,   DEL,  END, PGDN,  \
         CAPS,    A,    S,    D,    F,    G,    H,    J,    K,    L, SCLN, QUOT, NUHS,                           \
-        LSFT, NUBS,    Z,    X,    C,    V,    B,    N,    M, COMM,  DOT, SLSH, RSFT,         FN2,   UP,  FN3,  \
+        LSFT, NUBS,    Z,    X,    C,    V,    B,    N,    M, COMM,  DOT, SLSH, RSFT,         FN1,   UP,  FN2,  \
         LCTL, LGUI, LALT,  SPC,                               RALT,  FN0,  APP, RCTL,        LEFT, DOWN, RGHT  ),
 
 
@@ -114,12 +114,12 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *      A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P     Q
      */
     KEYMAP_ISO(\
-         TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-  	     FN29, FN20, FN21, FN22, TRNS, TRNS, TRNS, TRNS, FN14, FN15, FN16, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN17, FN18, FN19, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
-         TRNS, FN23, FN24, FN25, FN26, FN27, FN28, TRNS,  FN8,  FN9, FN10, TRNS, TRNS,                            \
-		  FN7, TRNS, FN31, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN11, FN12, FN13, TRNS,         FN2,  TRNS,  FN3,  \
-		  FN4,  FN5,  FN6, TRNS,                               TRNS, TRNS, TRNS, TRNS,        TRNS,  TRNS, TRNS  )
+         FN29, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+  	     FN28, FN19, FN20, FN21, TRNS, TRNS, TRNS, TRNS, FN13, FN14, FN15, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN16, FN17, FN18, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+         TRNS, FN22, FN23, FN24, FN25, FN26, FN27, TRNS,  FN7,  FN8,  FN9, TRNS, TRNS,                            \
+		  FN6, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN10, FN11, FN12, TRNS,         FN1,  TRNS,  FN2,  \
+		  FN3,  FN4,  FN5,  FN4,                               TRNS, TRNS, TRNS, TRNS,        TRNS,  TRNS, TRNS  )
 };
 
 /*
@@ -159,46 +159,45 @@ enum macro_id
 const action_t PROGMEM fn_actions[] =
 {
 	[0] = ACTION_LAYER_MOMENTARY(LAYER_FN0_MEDIA),
-	[1] = ACTION_LAYER_MOMENTARY(LAYER_FN0_MEDIA),
 
-	[2] = ACTION_MACRO(FN91_Macro_Cursor_Extra_Left),
-	[3] = ACTION_MACRO(FN91_Macro_Cursor_Extra_Right),
+	[1] = ACTION_MACRO(FN91_Macro_Cursor_Extra_Left),
+	[2] = ACTION_MACRO(FN91_Macro_Cursor_Extra_Right),
 
-    [4] = ACTION_BACKLIGHT_TOGGLE(),
-	[5] = ACTION_FUNCTION(FN91_Backlight_Sector_Toggle),
-    [6] = ACTION_FUNCTION(FN91_Backlight_Sector_Next_Custom_Map),
-	[7] = ACTION_FUNCTION(FN91_Backlight_Save_State),
+    [3] = ACTION_BACKLIGHT_TOGGLE(),
+	[4] = ACTION_FUNCTION(FN91_Backlight_Sector_Toggle),
+    [5] = ACTION_FUNCTION(FN91_Backlight_Sector_Next_Custom_Map),
+	[6] = ACTION_FUNCTION(FN91_Backlight_Save_State),
 
-	[8] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, hue),
-	[9] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, saturation),
-   [10] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, value),
+	[7] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, hue),
+	[8] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, saturation),
+    [9] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_All, value),
 
-   [11] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, hue),
-   [12] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, saturation),
-   [13] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, value),
+   [10] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, hue),
+   [11] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, saturation),
+   [12] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_All, value),
 
-   [14] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, hue),
-   [15] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, saturation),
-   [16] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, value),
+   [13] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, hue),
+   [14] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, saturation),
+   [15] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Increase_Selected, value),
 
-   [17] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, hue),
-   [18] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, saturation),
-   [19] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, value),
+   [16] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, hue),
+   [17] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, saturation),
+   [18] = ACTION_FUNCTION_OPT(FN91_Backlight_Color_Decrease_Selected, value),
 
-   [20] = ACTION_FUNCTION(FN91_Backlight_Animate_Toggle),
-   [21] = ACTION_FUNCTION(FN91_Backlight_Animate_Prev),
-   [22] = ACTION_FUNCTION(FN91_Backlight_Animate_Next),
+   [19] = ACTION_FUNCTION(FN91_Backlight_Animate_Toggle),
+   [20] = ACTION_FUNCTION(FN91_Backlight_Animate_Prev),
+   [21] = ACTION_FUNCTION(FN91_Backlight_Animate_Next),
 
-   [23] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, WASDKeys),
-   [24] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ControlKeys),
-   [25] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, FunctionKeys),
-   [26] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, CursorKeys),
-   [27] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, OtherKeys),
-   [28] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ESCKey),
+   [22] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, WASDKeys),
+   [23] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ControlKeys),
+   [24] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, FunctionKeys),
+   [25] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, CursorKeys),
+   [26] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, OtherKeys),
+   [27] = ACTION_FUNCTION_OPT(FN91_Backlight_Sector_Select, ESCKey),
 
-   [29] = ACTION_FUNCTION(FN91_Backlight_Animate_Save_State),
+   [28] = ACTION_FUNCTION(FN91_Backlight_Animate_Save_State),
 
-   [30] = ACTION_FUNCTION(FN91_Backlight_Reset_Restore)
+   [29] = ACTION_FUNCTION(FN91_Backlight_Reset_Restore)
 };
 
 /*

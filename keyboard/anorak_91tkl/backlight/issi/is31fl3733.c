@@ -50,8 +50,12 @@ void is31fl3733_init(IS31FL3733 *device)
 	//dprintf("hsd\n");
     is31fl3733_hardware_shutdown(device, true);
 
-	device->pfn_iic_reset();
+    memset(device->leds, 0, IS31FL3733_LED_ENABLE_SIZE);
+    memset(device->mask, 0, IS31FL3733_LED_ENABLE_SIZE);
+    memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
 
+    /// Hardware I2C reset (IICRSET)
+	device->pfn_iic_reset();
 	_delay_ms(10);
 
 #ifdef DEBUG_ISSI_SLOW_I2C
@@ -70,7 +74,6 @@ void is31fl3733_init(IS31FL3733 *device)
     device->pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
 #endif
 
-    // TWI_detect: 0 = device accessible, 1= failed to access device
     bool device_present = i2c_detect(device->address);
     dprintf("issi: device at 0x%X: %u\n", device->address, device_present);
 
@@ -84,17 +87,18 @@ void is31fl3733_init(IS31FL3733 *device)
         device->pfn_i2c_write_reg8 = &i2c_dummy_write_reg8;
     }
 
-    memset(device->leds, 0, IS31FL3733_LED_ENABLE_SIZE);
-    memset(device->mask, 0, IS31FL3733_LED_ENABLE_SIZE);
-    memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
-
-    //device->cr = IS31FL3733_CR_SSD | (device->is_master ? IS31FL3733_CR_SYNC_MASTER : IS31FL3733_CR_SYNC_SLAVE);
+    // clear software reset in configuration register.
     device->cr = IS31FL3733_CR_SSD;
+
+    // Set master/slave bit
+    if (device->devicetype == IS31FL3733_MASTER)
+    	device->cr |= IS31FL3733_CR_SYNC_MASTER;
+    else if (device->devicetype == IS31FL3733_SLAVE)
+    	device->cr |= IS31FL3733_CR_SYNC_SLAVE;
 
     // Read reset register to reset device.
     //dprintf("reset\n");
     is31fl3733_read_paged_reg(device, IS31FL3733_RESET);
-
     _delay_us(500);
 
     is31fl3733_auto_breath_mode(device, false);
@@ -107,7 +111,8 @@ void is31fl3733_init(IS31FL3733 *device)
     is31fl3733_set_resistor_values(device, IS31FL3733_RESISTOR_32K, IS31FL3733_RESISTOR_32K);
 
     // do we need this here?
-    is31fl3733_update(device);
+    // all led/pwm registers should be reset by reading the IS31FL3733_RESET register
+    //is31fl3733_update(device);
 
     // Clear software reset in configuration register.
     // Set master/slave bit
@@ -115,7 +120,7 @@ void is31fl3733_init(IS31FL3733 *device)
     is31fl3733_write_paged_reg(device, IS31FL3733_CR, device->cr);
 
     //dprintf("hsd\n");
-    is31fl3733_hardware_shutdown(device, false);
+    //is31fl3733_hardware_shutdown(device, false);
 
     dprintf("issi 0x%X done\n", device->address);
 }
@@ -165,7 +170,13 @@ void is31fl3733_software_shutdown(IS31FL3733 *device, bool enable)
 
 void is31fl3733_hardware_shutdown(IS31FL3733 *device, bool enable)
 {
+	device->is_hardware_enabled = !enable;
     device->pfn_hardware_enable(enable);
+}
+
+bool is31fl3733_is_hardware_enabled(IS31FL3733 *device)
+{
+	return device->is_hardware_enabled;
 }
 
 void is31fl3733_write_interrupt_mask_register(IS31FL3733 *device, uint8_t imr)

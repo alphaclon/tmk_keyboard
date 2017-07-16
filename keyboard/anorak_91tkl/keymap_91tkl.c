@@ -114,7 +114,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *      A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P     Q
      */
     KEYMAP_ISO(\
-         FN29, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+    	 TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
   	     FN28, FN19, FN20, FN21, TRNS, TRNS, TRNS, TRNS, FN13, FN14, FN15, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
 	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN16, FN17, FN18, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
          TRNS, FN22, FN23, FN24, FN25, FN26, FN27, TRNS,  FN7,  FN8,  FN9, TRNS, TRNS,                            \

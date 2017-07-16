@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Defined in tmk_core/common/backlight.h
 void backlight_set(uint8_t level)
 {
+#ifdef BACKLIGHT_ENABLE
     dprintf("backlight_set level:%d\n", level);
 
     stop_animation();
@@ -45,6 +46,7 @@ void backlight_set(uint8_t level)
     {
         sector_restore_state();
     }
+#endif
 }
 
 void fix_backlight_level()

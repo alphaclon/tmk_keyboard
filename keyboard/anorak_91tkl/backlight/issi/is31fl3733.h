@@ -132,6 +132,12 @@ typedef enum {
   IS31FL3733_RESISTOR_32K = 0x07  ///< 32 kOhm pull-up resistor.
 } IS31FL3733_RESISTOR;
 
+typedef enum {
+	IS31FL3733_SINGLE,
+	IS31FL3733_MASTER,
+	IS31FL3733_SLAVE
+} IS31FL3733_DEVICE_TYPE;
+
 
 /** IS31FL3733 structure.
   */
@@ -143,8 +149,10 @@ struct IS31FL3733Device
     uint8_t cr;
     /// Global Current Control value. Iout = (840 / Rext) * (GCC / 256). Rext = 20 kOhm, typically.
     uint8_t gcc;
-    // This device is the master
-    bool is_master;
+    /// This device is the master
+    IS31FL3733_DEVICE_TYPE devicetype;
+    /// device is enabled (hardware shutdown disabled)
+    bool is_hardware_enabled;
     /// LED matrix enabled.
     uint8_t leds[IS31FL3733_LED_ENABLE_SIZE];
     /// LED matrix brightness.
@@ -178,6 +186,7 @@ uint8_t is31fl3733_read_interrupt_status_register(IS31FL3733 *device);
 
 void is31fl3733_software_shutdown(IS31FL3733 *device, bool enable);
 void is31fl3733_hardware_shutdown(IS31FL3733 *device, bool enable);
+bool is31fl3733_is_hardware_enabled(IS31FL3733 *device);
 
 void is31fl3733_auto_breath_mode(IS31FL3733 *device, bool enable);
 

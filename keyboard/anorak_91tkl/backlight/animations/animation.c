@@ -29,7 +29,7 @@
 #endif
 
 #define HSV_COLOR_STEP 8
-#define MINIMAL_DELAY_TIME_MS 5
+#define MINIMAL_DELAY_TIME_MS 10
 #define ANIMATION_SUSPEND_TIMEOUT (10L * 60L * 1000L)
 
 static animation_names current_animation = animation_type_o_matic;
@@ -149,6 +149,8 @@ void animation_next()
     stop_animation();
 
     current_animation = increment(current_animation, 1, 0, animation_LAST);
+    if (current_animation == animation_LAST)
+    	current_animation = 0;
     dprintf("animation_next: %u\n", current_animation);
 
     set_animation(current_animation);
@@ -158,7 +160,8 @@ void animation_next()
 void animation_previous()
 {
     stop_animation();
-
+    if (current_animation == 0)
+    	current_animation = animation_LAST;
     current_animation = decrement(current_animation, 1, 0, animation_LAST);
     dprintf("animation_previous: %u\n", current_animation);
 

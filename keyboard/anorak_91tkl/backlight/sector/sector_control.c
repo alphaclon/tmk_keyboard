@@ -178,6 +178,9 @@ void sector_set_selected_off(void)
 
 void sector_set_all_off(void)
 {
+	is31fl3733_91tkl_hardware_shutdown(&issi, true);
+
+	/*
     selected_sector = 0;
 
     is31fl3733_led_disable_all(issi.upper->device);
@@ -187,6 +190,7 @@ void sector_set_all_off(void)
     is31fl3733_clear_mask(issi.lower->device);
 
     is31fl3733_91tkl_update_led_enable(&issi);
+    */
 }
 
 void sector_selected_set_hsv_color(HSV color)
@@ -354,7 +358,7 @@ void sector_restore_sector(uint8_t sector)
     }
 }
 
-void sector_load_map_or_restore_sectors(void)
+void sector_restore_map_or_sectors(void)
 {
     dprintf("sector_load_map_or_restore_sectors: %u %u\n", custom_pwm_map, has_custom_pwm_map);
 
@@ -377,12 +381,19 @@ void sector_load_map_or_restore_sectors(void)
 
 void sector_restore_state(void)
 {
-    sector_set_all_off();
+    is31fl3733_led_disable_all(issi.upper->device);
+    is31fl3733_led_disable_all(issi.lower->device);
+
+    is31fl3733_clear_mask(issi.upper->device);
+    is31fl3733_clear_mask(issi.lower->device);
+
     sector_load_state();
 
     dprintf("sector_restore_state: %u %u\n", custom_pwm_map, has_custom_pwm_map);
 
-    sector_load_map_or_restore_sectors();
+    sector_restore_map_or_sectors();
+
+    is31fl3733_91tkl_hardware_shutdown(&issi, false);
 }
 
 void sector_set_sector_mode()
@@ -395,7 +406,7 @@ void sector_set_custom_map(uint8_t custom_map)
     custom_pwm_map = custom_map;
     has_custom_pwm_map = (custom_pwm_map < EECONFIG_BACKLIGHT_PWM_MAP_COUNT);
     dprintf("sector_set_custom_map: %u %u\n", custom_pwm_map, has_custom_pwm_map);
-    sector_load_map_or_restore_sectors();
+    sector_restore_map_or_sectors();
 }
 
 uint8_t sector_get_custom_map(void)

@@ -12,7 +12,7 @@
 #include "nodebug.h"
 #endif
 
-#define RADIUS_COUNT 15
+#define RADIUS_COUNT (MATRIX_COLS)
 static uint8_t *pressed_keys = 0;
 
 void draw_circle_outline(IS31FL3733_91TKL *device, int16_t x0, int16_t y0, int16_t r, RGB color)
@@ -81,7 +81,7 @@ void type_o_circles_animation_loop(void)
             {
                 uint8_t keyr = pressed_keys[key_row * MATRIX_COLS + key_col];
                 HSV hsv = {.h = animation.hsv.h, .s = animation.hsv.s, .v = animation.hsv.v};
-                //HSV hsv = {animation.hsv.h, animation.hsv.s, animation.hsv.v};
+                // HSV hsv = {animation.hsv.h, animation.hsv.s, animation.hsv.v};
                 uint8_t endr = RADIUS_COUNT - keyr;
 
                 for (uint8_t r = endr; r > 0; r--)
@@ -93,7 +93,7 @@ void type_o_circles_animation_loop(void)
 
                 uint8_t sat = (uint8_t)((animation.hsv2.s / RADIUS_COUNT) * endr);
                 HSV hsv2 = { .h = animation.hsv2.h, .s = sat, .v = animation.hsv2.v};
-                //HSV hsv2 = {animation.hsv2.h, sat, animation.hsv2.v};
+                // HSV hsv2 = {animation.hsv2.h, sat, animation.hsv2.v};
                 draw_keymatrix_hsv_pixel(&issi, key_row, key_col, hsv2);
 
                 pressed_keys[key_row * MATRIX_COLS + key_col]--;
@@ -118,7 +118,7 @@ void set_animation_type_o_circles()
 {
     dprintf("type_o_circles\n");
 
-    animation.delay_in_ms = FPS_TO_DELAY(25);
+    animation.delay_in_ms = FPS_TO_DELAY(20);
     animation.duration_in_ms = 0;
 
     animation.animationStart = &type_o_circles_animation_start;

@@ -22,6 +22,7 @@ extern IS31FL3733_91TKL issi;
 void is31fl3733_91tkl_init(IS31FL3733_91TKL *device);
 
 void is31fl3733_91tkl_hardware_shutdown(IS31FL3733_91TKL *device, bool enabled);
+bool is31fl3733_91tkl_is_hardware_enabled(IS31FL3733_91TKL *device);
 
 /// Set brightness level for all enabled LEDs.
 void is31fl3733_91tkl_fill_rgb_masked(IS31FL3733_91TKL *device, RGB color);

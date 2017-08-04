@@ -93,7 +93,6 @@ void set_scrolllock_led_enabled(bool enabled)
 {
 	if (enabled)
 	{
-		set_scrolllock_led_brightness(scrolllock_led_pwm);
 		TCCR1A |= (1 << COM1A1);
 		DDRB |= (1 << PB5);
 	}
@@ -125,7 +124,6 @@ void set_capslock_led_enabled(bool enabled)
 {
 	if (enabled)
 	{
-		set_capslock_led_brightness(capslock_led_pwm);
 		TCCR1A |= (1 << COM1B1);
 		DDRB |= (1 << PB6);
 	}

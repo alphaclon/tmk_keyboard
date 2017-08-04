@@ -153,7 +153,7 @@ const user_command user_command_table[] PROGMEM = {
     {"layer", &cmd_user_default_layer, 0, "default layer"},
     {"boot", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
 
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 	{"stabri", &cmd_user_status_leds_pwm, 0, "brightness for status leds"},
 	{"see", &cmd_user_statusled_eeprom_clear, 0, "clear statusled eeprom"},
 #endif
@@ -274,7 +274,7 @@ bool cmd_user_test_sleep_led(uint8_t argc, char **argv)
 }
 #endif
 
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 bool cmd_user_status_leds_pwm(uint8_t argc, char **argv)
 {
     if (argc == 1 && strcmp_P(argv[0], PSTR("init")) == 0)
@@ -333,6 +333,7 @@ bool cmd_user_status_leds_pwm(uint8_t argc, char **argv)
     	if (led == 0)
     	{
     		set_capslock_led_brightness(brightness);
+    		sleep_led_init();
     	}
     	else
     	{
@@ -973,7 +974,7 @@ bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv)
     return true;
 }
 
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 bool cmd_user_statusled_eeprom_clear(uint8_t argc, char **argv)
 {
     vserprintfln(".cleared");

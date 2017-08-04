@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "timer.h"
 #include "util.h"
 #include "wait.h"
+#include "led.h"
 
 #ifdef MOUSEKEY_ENABLE
 #include "mousekey.h"
@@ -62,6 +63,7 @@ bool command_extra(uint8_t code)
     case KC_PAUSE:
         clear_keyboard();
         print("\n\nbootloader... ");
+        led_set((1 << USB_LED_SCROLL_LOCK) | (1 << USB_LED_CAPS_LOCK));
         wait_ms(1000);
         bootloader_jump(); // not return
         break;

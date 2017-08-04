@@ -32,7 +32,7 @@ void hook_early_init(void)
 #endif
 	TWI_Master_Initialise();
 
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 	statusled_pwm_init();
 	set_capslock_led_enabled(false);
 	set_scrolllock_led_enabled(false);

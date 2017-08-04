@@ -77,6 +77,7 @@ SRC += \
 	utils.c \
 	matrix.c \
 	command.c \
+	sleep_led.c \
 	keymap_common.c \
 	keymap_91tkl.c \
 	virt_ser_rpc.c \

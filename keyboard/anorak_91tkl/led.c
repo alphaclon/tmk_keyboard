@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void led_set(uint8_t usb_led)
 {
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 	set_scrolllock_led_enabled((usb_led & (1 << USB_LED_SCROLL_LOCK)));
 	set_capslock_led_enabled((usb_led & (1 << USB_LED_CAPS_LOCK)));
 #else

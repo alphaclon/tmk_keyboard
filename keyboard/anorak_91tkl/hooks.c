@@ -81,7 +81,8 @@ static uint8_t _led_stats = 0;
 
 void hook_usb_suspend_entry(void)
 {
-	dprintf("huse\n");
+	//dprintf("huse\n");
+
     // Turn LED off to save power
     // Set 0 with putting aside status before suspend and restore
     // it after wakeup, then LED is updated at keyboard_task() in main loop
@@ -104,7 +105,7 @@ void hook_usb_suspend_entry(void)
 
 void hook_usb_wakeup(void)
 {
-	dprintf("huwu\n");
+	//dprintf("huwu\n");
 
 	//
     // ---> This replaces the call of suspend_wakeup_init() <--

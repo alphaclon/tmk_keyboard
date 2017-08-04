@@ -183,6 +183,8 @@ BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
 VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
 #MOUSEKEY_ENABLE = yes      # Mouse keys(+4700)
+STATUS_LED_PWM_ENABLE = yes
+SLEEP_LED_USE_COMMON = no
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER
@@ -205,7 +207,7 @@ debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
-debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
 #debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 #debug-on: EXTRAFLAGS += -DDEBUG_VIRTSER
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
@@ -216,6 +218,15 @@ debug-on: all
 debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
 debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
 debug-off: all
+
+
+ifeq (yes,$(strip $(STATUS_LED_PWM_ENABLE)))
+    SRC += $(COMMON_DIR)/avr/sleep_led.c
+    OPT_DEFS += -DSTATUS_LED_PWM_ENABLE
+	OPT_DEFS := $(filter-out -DSLEEP_LED_TIMER_1,$(OPT_DEFS))
+	OPT_DEFS += -DSLEEP_LED_TIMER_3    
+endif
+
 
 dfu-hex: $(TARGET).hex
 	@echo -n dfu-programmer: waiting

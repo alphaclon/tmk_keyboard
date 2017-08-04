@@ -17,21 +17,23 @@ void type_o_matic_typematrix_row(uint8_t row_number, matrix_row_t row_columns)
     uint8_t col;
     uint8_t device_number;
     IS31FL3733_RGB *device;
+    bool changed = false;
 
     for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
     {
-        //if (matrix_is_on(row_number, key_col))
     	if (row_columns & ((matrix_row_t)1 << key_col))
         {
             if (getLedPosByMatrixKey(row_number, key_col, &device_number, &row, &col))
             {
                 device = DEVICE_BY_NUMBER(issi, device_number);
                 is31fl3733_rgb_set_pwm(device, col, row, animation.rgb);
+                changed = true;
             }
         }
     }
 
-    is31fl3733_91tkl_update_led_pwm(&issi);
+    if (changed)
+    	is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
 void type_o_matic_animation_loop(void)
@@ -41,6 +43,7 @@ void type_o_matic_animation_loop(void)
     uint8_t col;
     uint8_t device_number;
     IS31FL3733_RGB *device;
+    bool changed = false;
 
     for (uint8_t key_row = 0; key_row < MATRIX_ROWS; ++key_row)
     {
@@ -59,10 +62,14 @@ void type_o_matic_animation_loop(void)
                     continue;
 
                 is31fl3733_rgb_set_pwm(device, col, row, animation.rgb);
+                changed = true;
             }
             else
             {
                 RGB color = is31fl3733_rgb_get_pwm(device, col, row);
+
+                if (color.r == 0 && color.g == 0 && color.b == 0)
+                	continue;
 
                 color.r = decrement(color.r, 3, 0, 255);
                 color.g = decrement(color.g, 3, 0, 255);
@@ -75,11 +82,13 @@ void type_o_matic_animation_loop(void)
                 */
 
                 is31fl3733_rgb_set_pwm(device, col, row, color);
+                changed = true;
             }
         }
     }
 
-    is31fl3733_91tkl_update_led_pwm(&issi);
+    if (changed)
+    	is31fl3733_91tkl_update_led_pwm(&issi);
 }
 
 void set_animation_type_o_matic(void)

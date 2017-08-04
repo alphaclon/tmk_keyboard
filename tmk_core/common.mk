@@ -81,6 +81,20 @@ ifeq (yes,$(strip $(SLEEP_LED_ENABLE)))
     SRC += $(COMMON_DIR)/avr/sleep_led.c
     OPT_DEFS += -DSLEEP_LED_ENABLE
     OPT_DEFS += -DNO_SUSPEND_POWER_DOWN
+    OPT_DEFS += -DSLEEP_LED_TIMER_1
+endif
+
+ifeq (yes,$(strip $(SLEEP_LED_USE_COMMON)))
+	ifeq (yes,$(strip $(SLEEP_LED_ENABLE)))
+    	OPT_DEFS += -DSLEEP_LED_USE_COMMON
+	endif
+endif
+
+ifeq (yes,$(strip $(SLEEP_LED_USE_TIMER_3)))
+	ifeq (yes,$(strip $(SLEEP_LED_ENABLE)))
+		OPT_DEFS := $(filter-out -DSLEEP_LED_TIMER_1,$(OPT_DEFS))
+		OPT_DEFS += -DSLEEP_LED_TIMER_3
+	endif
 endif
 
 ifeq (yes,$(strip $(BACKLIGHT_ENABLE)))

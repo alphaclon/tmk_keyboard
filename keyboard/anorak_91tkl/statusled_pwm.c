@@ -1,7 +1,7 @@
 
 #include "statusled_pwm.h"
 
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,21 +26,25 @@ void statusled_pwm_init()
 	cli();
 
 	// Tutorial:
-	// http://www.societyofrobots.com/member_tutorials/book/export/html/228
 	// https://sites.google.com/site/qeewiki/books/avr-guide/pwm-on-the-atmega328
 	//
-	// PWM wave frequency is f= (16000000/prescaler)/(2*TOP)
-	// prescaler 8, 8bit: (16000000/8)/(2*256) = 3906Hz
-	// CS11 = 8
+	// Fast PWM mode with variable TOP, 8bit
+	//
+	// COM1A1 = 1, COM1A0 = 0: None-inverted mode (HIGH at bottom, LOW on Match)
+	//
+	// PWM_fequency = clock_speed / [Prescaller_value * (1 + TOP_Value) ]
+	//
+	// CS11 = 1: prescaler 8
 	// Fast PWM, 8bit: WGM12 | WGM10
 
 	OCR1A = scrolllock_led_pwm;
 	OCR1B = capslock_led_pwm;
 
 	TCCR1A = (1 << COM1A1) | (1 << COM1B1); // set none-inverting mode
-	TCCR1A |= (1 << WGM10);  // Mode 5: Fast PWM, 8bit
 
+	TCCR1A |= (1 << WGM10);  // Mode 5: Fast PWM, 8bit
 	TCCR1B = (1 << WGM12);
+
 	TCCR1B |= (1 << CS11);   // prescaler 8
 
 	//enable global interrupts
@@ -57,22 +61,27 @@ void save_status_led_values()
 
 void set_scroll_lock_led_pwm_value(uint8_t value)
 {
-	if (value < 255 && value > 0)
-	{
-		OCR1A = value;
-	}
+	OCR1A = value;
+}
+
+uint8_t rescale_pwm_value(uint8_t value)
+{
+	uint8_t led_pwm;
+
+    if (value == 255)
+        led_pwm = 1;
+    else if (value == 0)
+        led_pwm = 254;
+    else
+        led_pwm = 255 - value;
+
+    return led_pwm;
 }
 
 void set_scrolllock_led_brightness(uint8_t value)
 {
-	if (value == 255)
-		scrolllock_led_pwm = 1;
-	else if (value == 0)
-		scrolllock_led_pwm = 254;
-	else
-		scrolllock_led_pwm = 255 - value;
-
-	set_scroll_lock_led_pwm_value(scrolllock_led_pwm);
+	scrolllock_led_pwm = rescale_pwm_value(value);
+    set_scroll_lock_led_pwm_value(scrolllock_led_pwm);
 }
 
 uint8_t get_scrolllock_led_brightness()
@@ -84,13 +93,13 @@ void set_scrolllock_led_enabled(bool enabled)
 {
 	if (enabled)
 	{
-		//OCR1A = pwm_value_scroll_lock_led;
+		set_scrolllock_led_brightness(scrolllock_led_pwm);
 		TCCR1A |= (1 << COM1A1);
 		DDRB |= (1 << PB5);
 	}
 	else
 	{
-		// PWM channel B off!
+		// PWM channel A off!
 		TCCR1A &= ~(1 << COM1A1);
 		DDRB &= ~(1 << PB5);
 	}
@@ -98,21 +107,12 @@ void set_scrolllock_led_enabled(bool enabled)
 
 void set_capslock_led_pwm_value(uint8_t value)
 {
-	if (value < 255 && value > 0)
-	{
-		OCR1B = value;
-	}
+	OCR1B = value;
 }
 
 void set_capslock_led_brightness(uint8_t value)
 {
-	if (value == 255)
-		capslock_led_pwm = 1;
-	else if (value == 0)
-		capslock_led_pwm = 254;
-	else
-		capslock_led_pwm = 255 - value;
-
+	capslock_led_pwm = rescale_pwm_value(value);
 	set_capslock_led_pwm_value(capslock_led_pwm);
 }
 
@@ -125,7 +125,7 @@ void set_capslock_led_enabled(bool enabled)
 {
 	if (enabled)
 	{
-		//OCR1B = pwm_value_caps_lock_led;
+		set_capslock_led_brightness(capslock_led_pwm);
 		TCCR1A |= (1 << COM1B1);
 		DDRB |= (1 << PB6);
 	}

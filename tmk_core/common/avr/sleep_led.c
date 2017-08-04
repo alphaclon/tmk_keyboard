@@ -85,7 +85,9 @@ void sleep_led_off(void)
 }
 
 
-/* Breathing Sleep LED brighness(PWM On period) table
+#ifdef SLEEP_LED_USE_COMMON
+
+/* Breathing Sleep LED brightness (PWM On period) table
  * (64[steps] * 4[duration]) / 64[PWM periods/s] = 4 second breath cycle
  *
  * http://www.wolframalpha.com/input/?i=%28sin%28+x%2F64*pi%29**8+*+255%2C+x%3D0+to+63
@@ -130,3 +132,7 @@ ISR(TIMER3_COMPA_vect)
         sleep_led_off();
     }
 }
+
+#endif
+
+

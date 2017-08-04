@@ -18,9 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef EECONFIG_STATUSLED_H
 #define EECONFIG_STATUSLED_H
 
-#define STATUS_LED_PWM_ENABLED
-
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 #include <stdbool.h>
 #include <stdint.h>
 

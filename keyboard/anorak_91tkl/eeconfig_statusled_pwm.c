@@ -1,6 +1,6 @@
 #include "eeconfig_statusled_pwm.h"
 
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 
 #include <avr/eeprom.h>
 #include <stdbool.h>

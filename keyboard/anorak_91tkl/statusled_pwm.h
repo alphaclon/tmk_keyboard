@@ -4,7 +4,7 @@
 
 #include "eeconfig_statusled_pwm.h"
 
-#ifdef STATUS_LED_PWM_ENABLED
+#ifdef STATUS_LED_PWM_ENABLE
 
 #include <stdbool.h>
 #include <inttypes.h>
@@ -18,8 +18,11 @@ void set_scrolllock_led_brightness(uint8_t value);
 void set_capslock_led_enabled(bool enabled);
 void set_scrolllock_led_enabled(bool enabled);
 
-uint8_t get_scrolllock_led_brightness(void);
 uint8_t get_capslock_led_brightness(void);
+uint8_t get_scrolllock_led_brightness(void);
+
+void set_capslock_led_pwm_value(uint8_t value);
+void set_scroll_lock_led_pwm_value(uint8_t value);
 
 #endif
 

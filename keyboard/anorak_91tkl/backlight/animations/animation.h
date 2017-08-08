@@ -26,6 +26,7 @@ enum animation_names_t
     animation_type_o_circles,
     animation_sweep,
     animation_wave,
+	animation_conway,
     animation_breathing,
     animation_LAST
 };

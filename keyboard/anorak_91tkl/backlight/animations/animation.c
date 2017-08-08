@@ -20,6 +20,7 @@
 #include "gradient_up_down.h"
 #include "gradient_left_right.h"
 #include "gradient_full_flicker.h"
+#include "conway.h"
 #include <string.h>
 
 #ifdef DEBUG_ANIMATION
@@ -138,6 +139,9 @@ void set_animation(animation_names animation_by_name)
     case animation_gradient_full_flicker:
         set_animation_gradient_full_flicker();
         break;
+    case animation_conway:
+    	set_animation_convay();
+    	break;
 
     case animation_LAST:
     	break;
@@ -314,7 +318,7 @@ void animation_increase_hsv_color(animation_hsv_names hsv_name, HSVColorName col
 
 void animate()
 {
-    if (animation.animationLoop == 0 || !animation.is_running)
+    if (!animation.is_running || animation.animationLoop == 0)
         return;
 
     if (timer_elapsed(animation.loop_timer) < animation.delay_in_ms)

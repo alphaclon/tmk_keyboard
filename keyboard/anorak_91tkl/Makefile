@@ -40,7 +40,7 @@
 # To rebuild project do "make clean" then "make all".
 # 
 # Default fuses (factory) : (E:F3, H:9B, L:5E)  -U lfuse:w:0x5e:m -U hfuse:w:0x9b:m -U efuse:w:0xf3:m 
-# Used fuses                  : (E:F0, H:D3, L:ED) -U lfuse:w:0xde:m -U hfuse:w:0xd3:m -U efuse:w:0xf0:m 
+# Used fuses              : (E:F0, H:D3, L:ED)  -U lfuse:w:0xde:m -U hfuse:w:0xd3:m -U efuse:w:0xf0:m 
 #
 # Flashing the fuses: 
 #  avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B100 -U lfuse:w:0xde:m -U hfuse:w:0xd3:m -U efuse:w:0xf0:m
@@ -202,24 +202,26 @@ include $(TMK_DIR)/rules.mk
 
 debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
-#debug-on: EXTRAFLAGS += -DDEBUG_ISSI
+debug-on: EXTRAFLAGS += -DDEBUG_ISSI
 #debug-on: EXTRAFLAGS += -DDEBUG_ISSI_SLOW_I2C
-#debug-on: EXTRAFLAGS += -DDEBUG_I2C
+debug-on: EXTRAFLAGS += -DDEBUG_I2C
 #debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
-#debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
+debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
 #debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-#debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
+debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 #debug-on: EXTRAFLAGS += -DDEBUG_VIRTSER
-#debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
-#debug-on: EXTRAFLAGS += -DLUFA_DEBUG
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all
 
-debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
-debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
-debug-off: all
+release-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
+release-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
+release-off: all
 
+release-on: EXTRAFLAGS += -DDEBUG
+release-on: all
 
 ifeq (yes,$(strip $(STATUS_LED_PWM_ENABLE)))
     SRC += $(COMMON_DIR)/avr/sleep_led.c

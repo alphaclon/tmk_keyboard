@@ -49,20 +49,6 @@ static uint8_t scaled_breathing_table[64];
 
 void sleep_led_init(void)
 {
-	double max_brightness = get_capslock_led_brightness();
-	for (uint8_t i = 0; i < 64; i++)
-	{
-		double brightness = pgm_read_byte(&breathing_table[i]);
-		brightness /= max_brightness;
-		scaled_breathing_table[i] = 255 - (uint8_t)round(brightness);
-
-		/*
-		uint8_t brightness = pgm_read_byte(&breathing_table[i]);
-		brightness /= max_brightness;
-		scaled_breathing_table[i] = 255 - brightness;
-		*/
-	}
-
     /* Timer3 setup */
     /* CTC mode */
     TCCR3B |= _BV(WGM32);
@@ -74,6 +60,21 @@ void sleep_led_init(void)
     OCR3AH = (SLEEP_LED_TIMER_TOP >> 8) & 0xff;
     OCR3AL = SLEEP_LED_TIMER_TOP & 0xff;
     SREG = sreg;
+
+    sleep_led_scale_brightness();
+}
+
+void sleep_led_scale_brightness(void)
+{
+    double max_brightness = get_capslock_led_brightness();
+    double scaled_brightness = max_brightness / 255;
+
+    for (uint8_t i = 0; i < 64; i++)
+    {
+        double brightness = pgm_read_byte(&breathing_table[i]);
+        brightness *= scaled_brightness;
+        scaled_breathing_table[i] = 255 - (uint8_t)round(brightness);
+    }
 }
 
 void sleep_led_enable(void)

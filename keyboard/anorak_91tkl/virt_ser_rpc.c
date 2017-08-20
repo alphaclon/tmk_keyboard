@@ -333,7 +333,7 @@ bool cmd_user_status_leds_pwm(uint8_t argc, char **argv)
     	if (led == 0)
     	{
     		set_capslock_led_brightness(brightness);
-    		sleep_led_init();
+    		sleep_led_scale_brightness();
     	}
     	else
     	{

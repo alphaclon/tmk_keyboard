@@ -411,7 +411,9 @@ void queued_twi_start_transceiver(void)
 #ifdef DEBUG_I2C
         dprintf("no queue front\n");
         queued_twi_stats();
+#ifdef DEBUG_TX_QUEUE
         tx_queue_print_status();
+#endif
 #endif
         return;
     }

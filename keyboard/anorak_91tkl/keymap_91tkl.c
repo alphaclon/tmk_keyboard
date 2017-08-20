@@ -114,7 +114,7 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] =
      *      A     B     C     D     E     F     G     H     I     J     K     L     M     N      O     P     Q
      */
     KEYMAP_ISO(\
-    	 TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
+    	 TRNS, MUTE, VOLD, VOLU, TRNS, TRNS, FN29, FN30, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
   	     FN28, FN19, FN20, FN21, TRNS, TRNS, TRNS, TRNS, FN13, FN14, FN15, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
 	     TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, TRNS, FN16, FN17, FN18, TRNS, TRNS, TRNS,  TRNS, TRNS, TRNS,   \
          TRNS, FN22, FN23, FN24, FN25, FN26, FN27, TRNS,  FN7,  FN8,  FN9, TRNS, TRNS,                            \
@@ -150,7 +150,9 @@ enum function_id {
 enum macro_id
 {
     FN91_Macro_Cursor_Extra_Left,
-    FN91_Macro_Cursor_Extra_Right
+    FN91_Macro_Cursor_Extra_Right,
+	FN91_Macro_PW1,
+	FN91_Macro_PW2
 };
 
 /*
@@ -197,7 +199,8 @@ const action_t PROGMEM fn_actions[] =
 
    [28] = ACTION_FUNCTION(FN91_Backlight_Animate_Save_State),
 
-   [29] = ACTION_FUNCTION(FN91_Backlight_Reset_Restore)
+   [29] = ACTION_MACRO(FN91_Macro_PW1),
+   [30] = ACTION_MACRO(FN91_Macro_PW2),
 };
 
 /*
@@ -213,6 +216,16 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
     case FN91_Macro_Cursor_Extra_Right:
         return (record->event.pressed ? MACRO(D(LCTL), D(V), END) : MACRO(U(LCTL), U(V), END));
         break;
+    case FN91_Macro_PW1:
+    	return (record->event.pressed ?
+    			MACRO(I(0),T(3),D(LSHIFT),T(C),T(P),U(LSHIFT),T(3),T(8),T(2),T(SLSH),T(6),T(0),T(DOT),T(1),END) :
+				MACRO_NONE);
+    	break;
+    case FN91_Macro_PW2:
+    	return (record->event.pressed ?
+    			MACRO(I(0),T(A),T(S),T(O),T(G),T(D),T(A),T(3),T(1),T(0),END) :
+				MACRO_NONE);
+		break;
     }
 
     return MACRO_NONE;

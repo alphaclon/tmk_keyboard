@@ -24,10 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define EECONFIG_BACKLIGHT_MAGIC_NUMBER (uint16_t)0xAFFE
 #define EECONFIG_BACKLIGHT_DEFAULT_BRIGHTNESS 3
+
 /* eeprom parameteter address */
 #define EECONFIG_BACKLIGHT_MAGIC (uint16_t *)7
 #define EECONFIG_BACKLIGHT_REGIONS (uint8_t *)9
 #define EECONFIG_BACKLIGHT_REGION_PWM (uint8_t *)10
+#define EECONFIG_BACKLIGHT_ANIMATION (uint8_t *)11
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,6 +45,9 @@ void eeconfig_write_backlight_regions(uint8_t val);
 
 uint8_t eeconfig_read_backlight_region_brightness(uint8_t region);
 void eeconfig_write_backlight_region_brightness(uint8_t region, uint8_t brightness);
+
+uint8_t eeconfig_read_animation_current(void);
+void eeconfig_write_animation_current(uint8_t current);
 #endif
 
 #ifdef __cplusplus

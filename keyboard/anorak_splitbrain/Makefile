@@ -72,8 +72,11 @@ SRC += \
 	keymap_splitbrain.c \
 	splitbrain.c \
 	hooks.c \
+	utils.c \
 	command.c \
 	sleep_led.cpp \
+	virt_ser_rpc.c \
+	mini-snprintf.c \
 	uart/uart.c \
 	twi/avr315/TWI_Master.c \
 	twi/avr315/twi_transmit_queue.c \
@@ -162,12 +165,12 @@ OPT_DEFS += -DBOOTLOADER_SIZE=8192
 #
 BOOTMAGIC_ENABLE = yes      # Virtual DIP switch configuration(+1000)
 EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
-CONSOLE_ENABLE = yes        # Console for debug(+400)
+#CONSOLE_ENABLE = yes        # Console for debug(+400)
 COMMAND_ENABLE = yes        # Commands for debug and configuration
 NKRO_ENABLE = yes          # USB Nkey Rollover - not yet supported in LUFA
 BACKLIGHT_ENABLE = yes     # Enable keyboard backlight functionality
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
-#VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
+VIRTSER_ENABLE = yes       # Virtual Serial Interface (/dev/tty...)
 #MOUSEKEY_ENABLE = yes       # Mouse keys(+4700)
 
 #OPT_DEFS += -DNO_ACTION_TAPPING

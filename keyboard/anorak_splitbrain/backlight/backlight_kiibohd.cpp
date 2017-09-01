@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../nfo_led.h"
 #include "../splitbrain.h"
 #include "../twi/twi_config.h"
+#include "animations/animation.h"
 #include "backlight.h"
 #include "config.h"
 #include "led_control.h"
@@ -353,15 +354,22 @@ void backlight_decrease_brightness_selected_region()
 
 void backlight_set_brightness_for_region(uint8_t region, uint8_t brightness)
 {
-    dprintf("bl_bri_set_by_mask %d\n", brightness);
-    uint8_t pos = get_index_for_region(current_region);
-    set_and_save_brightness_for_region(current_region, pos, brightness);
+    dprintf("bl_bri_set_by_mask %u %u\n", region, brightness);
+    uint8_t pos = get_index_for_region(region);
+    set_and_save_brightness_for_region(region, pos, brightness);
     show_region_brightness(region);
+}
+
+uint8_t backlight_get_brightness_for_region(uint8_t region)
+{
+    dprintf("bl_bri_get_by_mask %u\n", region);
+    uint8_t pos = get_index_for_region(region);
+    return region_brightness[pos];
 }
 
 void backlight_brightness_set_all(uint8_t brightness)
 {
-    dprintf("bl_bri_set_all %d\n", brightness);
+    dprintf("bl_bri_set_all %u\n", brightness);
 
     uint8_t index = get_index_for_region(backlight_region_ALL);
     region_brightness[index] = brightness;
@@ -401,6 +409,11 @@ void backlight_select_region(uint8_t region)
     current_region = region;
     dprintf("backlight_select_region %u on=%u\n", region, (regions & region) ? 1 : 0);
     show_region_info(region);
+}
+
+bool backlight_is_region_enabled(uint8_t region)
+{
+    return (regions & region);
 }
 
 void backlight_toggle_region(uint8_t region)
@@ -561,6 +574,7 @@ void backlight_setup()
     }
 
     backlight_load_region_states();
+    initialize_animation();
 #endif
 
     dprintf("backlight_setup done\n");

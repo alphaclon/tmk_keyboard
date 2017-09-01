@@ -208,24 +208,23 @@ const action_t PROGMEM fn_actions[] =
  */
 const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
 {
+    if (!record->event.pressed)
+        return MACRO_NONE;
+
     switch (id)
     {
     case FN91_Macro_Cursor_Extra_Left:
-        return (record->event.pressed ? MACRO(D(LCTL), D(C), END) : MACRO(U(LCTL), U(C), END));
+        return MACRO(D(LCTL), T(C), U(LCTL), END);
         break;
     case FN91_Macro_Cursor_Extra_Right:
-        return (record->event.pressed ? MACRO(D(LCTL), D(V), END) : MACRO(U(LCTL), U(V), END));
+        return MACRO(D(LCTL), T(V), U(LCTL), END);
         break;
     case FN91_Macro_PW1:
-    	return (record->event.pressed ?
-    			MACRO(I(0),T(3),D(LSHIFT),T(C),T(P),U(LSHIFT),T(3),T(8),T(2),T(SLSH),T(6),T(0),T(DOT),T(1),END) :
-				MACRO_NONE);
-    	break;
+        return MACRO(I(0), T(3), D(LSHIFT), T(C), T(P), U(LSHIFT), T(3), T(8), T(2), T(SLSH), T(6), T(0), T(DOT), T(1), END);
+        break;
     case FN91_Macro_PW2:
-    	return (record->event.pressed ?
-    			MACRO(I(0),T(A),T(S),T(O),T(G),T(D),T(A),T(3),T(1),T(0),END) :
-				MACRO_NONE);
-		break;
+        return MACRO(I(0), T(A), T(S), T(O), T(G), T(D), T(A), T(3), T(1), T(0), END);
+        break;
     }
 
     return MACRO_NONE;
@@ -274,7 +273,6 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             break;
         case FN91_Backlight_Save_State:
             sector_save_state();
-            animation_save_state();
             break;
         case FN91_Backlight_Sector_Next_Custom_Map:
         	stop_animation();

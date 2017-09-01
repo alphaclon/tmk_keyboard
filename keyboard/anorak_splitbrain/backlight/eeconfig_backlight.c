@@ -48,4 +48,14 @@ void eeconfig_write_backlight_region_brightness(uint8_t region, uint8_t brightne
 {
     eeprom_write_byte(EECONFIG_BACKLIGHT_REGION_PWM + region, brightness);
 }
+
+uint8_t eeconfig_read_animation_current(void)
+{
+    return eeprom_read_byte(EECONFIG_BACKLIGHT_ANIMATION);
+}
+
+void eeconfig_write_animation_current(uint8_t current)
+{
+	eeprom_update_byte(EECONFIG_BACKLIGHT_ANIMATION, current);
+}
 #endif

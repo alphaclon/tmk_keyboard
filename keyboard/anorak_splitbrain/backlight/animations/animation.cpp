@@ -1,6 +1,8 @@
 
 #include "animation.h"
 #include "../../matrixdisplay/infodisplay.h"
+#include "../../utils.h"
+#include "../eeconfig_backlight.h"
 #include "animation_utils.h"
 #include "breathing.h"
 #include "sweep.h"
@@ -16,6 +18,9 @@
 #include "nodebug.h"
 #endif
 
+#define MINIMAL_DELAY_TIME_MS 10
+#define ANIMATION_SUSPEND_TIMEOUT (10L * 60L * 1000L)
+
 const char animation_type_o_matic[] PROGMEM = "Matic";
 const char animation_type_o_circles[] PROGMEM = "Circles";
 const char animation_sweep[] PROGMEM = "Sweep";
@@ -25,9 +30,43 @@ const char animation_none[] PROGMEM = "xxx";
 PGM_P animation_names[] = {animation_type_o_matic, animation_type_o_circles, animation_sweep, animation_breathing,
                            animation_none};
 
-uint8_t current_annimation = ANIMATION_TYPE_O_MATIC;
+animation_names current_animation = animation_type_o_matic;
+static uint32_t last_key_pressed_timestamp = 0;
+static bool suspend_animation_on_idle = true;
 
-void show_animaiton_info(uint8_t animation)
+#ifdef DEBUG_ANIMATION
+//#define DEBUG_ANIMATION_SPEED
+#endif
+
+#ifdef DEBUG_ANIMATION_SPEED
+static uint32_t duration_ms = 0;
+static uint32_t elapsed_ms = 0;
+static uint8_t loop_count = 10;
+#endif
+
+void initialize_animation(void)
+{
+    memset(&animation, 0, sizeof(struct _animation_interface));
+
+#ifdef BACKLIGHT_ENABLE
+    current_animation = eeconfig_read_animation_current();
+
+    if (current_animation >= animation_LAST)
+    {
+        current_animation = 0;
+        eeconfig_write_animation_current(current_animation);
+    }
+#endif
+}
+
+void animation_save_state(void)
+{
+#ifdef BACKLIGHT_ENABLE
+    eeconfig_write_animation_current(current_animation);
+#endif
+}
+
+void show_animaiton_info(animation_names animation)
 {
     if (!mcpu_is_initialized())
         return;
@@ -42,7 +81,7 @@ void show_animaiton_info(uint8_t animation)
     mcpu_send_info_text(infotext);
 }
 
-void show_animaiton_info_stopped(uint8_t animation)
+void show_animaiton_info_stopped(animation_names animation)
 {
     if (!mcpu_is_initialized())
         return;
@@ -73,141 +112,99 @@ void show_animaiton_info_delay(uint16_t delay_in_ms)
     mcpu_send_info_text(infotext);
 }
 
-void set_animation_sweep()
+animation_names animation_current(void)
 {
-    dprintf("sweep\r\n");
-
-    animation.brightness = 255;
-    animation.delay_in_ms = 150;
-    animation.duration_in_ms = 0;
-
-    animation.animationStart = &sweep_animation_start;
-    animation.animationStop = &sweep_animation_stop;
-    animation.animationLoop = &sweep_animation_loop;
-    animation.animation_typematrix_row = 0;
+    return current_animation;
 }
 
-void set_animation_type_o_matic()
+void set_animation(animation_names animation_by_name)
 {
-    dprintf("type_o_matic\r\n");
+    current_animation = animation_by_name;
 
-    animation.brightness = 255;
-    animation.delay_in_ms = 250;
-    animation.duration_in_ms = 0;
-
-    animation.animationStart = &type_o_matic_animation_start;
-    animation.animationStop = &type_o_matic_animation_stop;
-    animation.animationLoop = &type_o_matic_animation_loop;
-    animation.animation_typematrix_row = &type_o_matic_typematrix_row;
-}
-
-void set_animation_type_o_circles()
-{
-    dprintf("type_o_circles\r\n");
-
-    animation.brightness = 255;
-    animation.delay_in_ms = 250;
-    animation.duration_in_ms = 0;
-
-    animation.animationStart = &type_o_circles_animation_start;
-    animation.animationStop = &type_o_circles_animation_stop;
-    animation.animationLoop = &type_o_circles_animation_loop;
-    animation.animation_typematrix_row = &type_o_circles_typematrix_row;
-}
-
-void set_animation_breathing()
-{
-    dprintf("breathing\r\n");
-
-    animation.brightness = 255;
-    animation.delay_in_ms = 1000;
-    animation.duration_in_ms = 0;
-
-    animation.animationStart = &breathing_animation_start;
-    animation.animationStop = &breathing_animation_stop;
-    animation.animationLoop = 0;
-    animation.animation_typematrix_row = 0;
-}
-
-void set_animation(uint8_t animation_number)
-{
-    switch (animation_number)
+    if (current_animation >= animation_LAST)
     {
-    case ANIMATION_SWEEP:
+        current_animation = 0;
+    }
+
+    switch (current_animation)
+    {
+    case animation_sweep:
         set_animation_sweep();
         break;
-    case ANIMATION_BREATHING:
+    case animation_breathing:
         set_animation_breathing();
         break;
-    case ANIMATION_TYPE_O_MATIC:
+    case animation_type_o_matic:
         set_animation_type_o_matic();
         break;
-    case ANIMATION_TYPE_O_CIRCLES:
+    case animation_type_o_circles:
         set_animation_type_o_circles();
+        break;
+
+    case animation_LAST:
         break;
     }
 }
 
 void animation_next()
 {
-    current_annimation++;
-    if (current_annimation >= ANIMATIONS_COUNT)
-        current_annimation = 0;
-
-    dprintf("animation_next: %u\r\n", current_annimation);
-
-    if (!animation_is_running())
-        return;
-
     stop_animation();
 
-    set_animation(current_annimation);
+    current_animation = increment(current_animation, 1, 0, animation_LAST);
+    if (current_animation == animation_LAST)
+        current_animation = 0;
+    dprintf("animation_next: %u\n", current_animation);
+
+    set_animation(current_animation);
     start_animation();
 }
 
 void animation_previous()
 {
-    if (current_annimation == 0)
-        current_annimation = ANIMATIONS_COUNT;
-    current_annimation--;
-
-    dprintf("animation_previous: %u\r\n", current_annimation);
-
-    if (!animation_is_running())
-        return;
-
     stop_animation();
+    if (current_animation == 0)
+        current_animation = animation_LAST;
+    current_animation = decrement(current_animation, 1, 0, animation_LAST);
+    dprintf("animation_previous: %u\n", current_animation);
 
-    set_animation(current_annimation);
+    set_animation(current_animation);
     start_animation();
+}
+
+void animation_set_speed(uint16_t delay_in_ms)
+{
+    if (delay_in_ms < MINIMAL_DELAY_TIME_MS)
+        animation.delay_in_ms = MINIMAL_DELAY_TIME_MS;
+    animation.delay_in_ms = delay_in_ms;
 }
 
 void animation_increase_speed(void)
 {
-    if (animation.delay_in_ms > 10)
-        animation.delay_in_ms -= 50;
-    else
-        animation.delay_in_ms = 10;
-
-    show_animaiton_info_delay(animation.delay_in_ms);
+    animation.delay_in_ms = decrement16(animation.delay_in_ms, 25, MINIMAL_DELAY_TIME_MS, 1000);
 }
 
 void animation_decrease_speed(void)
 {
-    animation.delay_in_ms += 50;
-    show_animaiton_info_delay(animation.delay_in_ms);
+    animation.delay_in_ms = increment16(animation.delay_in_ms, 25, MINIMAL_DELAY_TIME_MS, 1000);
 }
 
-void animation_test()
+void toggle_animation(void)
 {
+    dprintf("toggle_animation\n");
+
     if (animation_is_running())
     {
         stop_animation();
         return;
     }
 
-    set_animation_type_o_matic();
+    set_animation(current_animation);
     start_animation();
+}
+
+bool animation_is_running()
+{
+    return (animation.is_running);
 }
 
 void animation_toggle(void)
@@ -220,7 +217,7 @@ void animation_toggle(void)
         return;
     }
 
-    set_animation(current_annimation);
+    set_animation(current_animation);
     start_animation();
 }
 
@@ -231,57 +228,143 @@ bool animation_is_running()
 
 void start_animation()
 {
-    dprintf("start_animation\r\n");
+    dprintf("start_animation\n");
+
+    if (animation.is_running || animation.is_suspended)
+        return;
 
     if (animation.animationStart)
         animation.animationStart();
 
+    animation.is_running = true;
+    animation.is_suspended = false;
     animation.loop_timer = timer_read();
     animation.duration_timer = timer_read32();
+    last_key_pressed_timestamp = timer_read32();
 
-    show_animaiton_info(current_annimation);
+    show_animaiton_info(current_animation);
+}
+
+void set_and_start_animation(animation_names animation_by_name)
+{
+    stop_animation();
+    set_animation(animation_by_name);
+    start_animation();
 }
 
 void stop_animation()
 {
-    dprintf("stop_animation\r\n");
+    dprintf("stop_animation\n");
 
-    if (!animation_is_running())
+    if (!animation.is_running && !animation.is_suspended)
         return;
 
-    animation.animationStop();
+    if (animation.animationStop)
+        animation.animationStop();
 
+    animation.is_running = false;
+    animation.is_suspended = false;
     animation.animationStart = 0;
     animation.animationStop = 0;
     animation.animationLoop = 0;
     animation.animation_typematrix_row = 0;
 
-    show_animaiton_info(current_annimation);
+    show_animaiton_info(current_animation);
+}
+
+void suspend_animation()
+{
+    // dprintf("suspend_animation\n");
+
+    if (!animation.is_running)
+        return;
+
+    animation.is_running = false;
+    animation.is_suspended = true;
+}
+
+void resume_animation()
+{
+    // dprintf("resume_animation\n");
+
+    if (!animation.is_suspended)
+        return;
+
+    animation.is_running = true;
+    animation.is_suspended = false;
+
+    last_key_pressed_timestamp = timer_read32();
+}
+
+void resume_animation_in_idle_state()
+{
+    // dprintf("resume_animation\n");
+
+    if (!animation.is_suspended)
+        return;
+
+    animation.is_running = true;
+    animation.is_suspended = false;
+
+    last_key_pressed_timestamp -= ANIMATION_SUSPEND_TIMEOUT;
 }
 
 void animate()
 {
-    if (animation.animationLoop == 0)
+    if (!animation.is_running || animation.animationLoop == 0)
         return;
 
     if (timer_elapsed(animation.loop_timer) < animation.delay_in_ms)
         return;
 
-    if (animation.duration_in_ms > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_in_ms)
-    {
-        stop_animation();
+    if (suspend_animation_on_idle && timer_elapsed32(last_key_pressed_timestamp) > ANIMATION_SUSPEND_TIMEOUT)
         return;
+
+	/*
+	if (animation.duration_in_ms > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_in_ms)
+	{
+		stop_animation();
+		return;
+	}
+	*/
+
+#ifdef DEBUG_ANIMATION_SPEED
+    if (loop_count)
+    {
+        loop_count--;
+        elapsed_ms = timer_read32();
     }
+    else
+    {
+        loop_count = 10;
+        duration_ms /= 10;
+        dprintf("avg: %lu\n", duration_ms);
+        duration_ms = 0;
+        elapsed_ms = timer_read32();
+    }
+#endif
 
     animation.loop_timer = timer_read();
     animation.animationLoop();
+
+#ifdef DEBUG_ANIMATION_SPEED
+    duration_ms += timer_elapsed32(elapsed_ms);
+    // dprintf("el: %u\n", duration_ms);
+#endif
 }
 
 void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
+    last_key_pressed_timestamp = timer_read32();
+
+    if (!animation.is_running)
+        return;
+
+    animation_default_typematrix_row(row_number, row);
+
     if (animation.animation_typematrix_row)
     {
-        animation.loop_timer = timer_read();
+        // animation.loop_timer = timer_read();
         animation.animation_typematrix_row(row_number, row);
     }
 }

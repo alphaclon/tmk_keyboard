@@ -182,13 +182,16 @@ const action_t PROGMEM fn_actions[] =
  */
 const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
 {
+    if (!record->event.pressed)
+        return MACRO_NONE;
+
     switch (id)
     {
     case KIIBOHD_MACRO_EXTRA_LEFT:
-        return (record->event.pressed ? MACRO(D(LCTL), D(C), END) : MACRO(U(LCTL), U(C), END));
+    	return MACRO(D(LCTL), T(C), U(LCTL), END);
         break;
     case KIIBOHD_MACRO_EXTRA_RIGHT:
-        return (record->event.pressed ? MACRO(D(LCTL), D(V), END) : MACRO(U(LCTL), U(V), END));
+    	return MACRO(D(LCTL), T(V), U(LCTL), END);
         break;
     }
 
@@ -200,39 +203,40 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
  */
 void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
 {
-    /*
-    if (record->event.pressed) dprint("P");	else dprint("R");
-    dprintf("%d", record->tap.count);
-    if (record->tap.interrupted) dprint("i");
-    dprint("\n");
-    */
-
     if (record->event.pressed)
     {
         switch (id)
         {
         case KIIBOHD_FUNCTION_Backlight_Select_Region:
+        	stop_animation();
             backlight_select_region(BACKLIGHT_BV(opt));
             break;
         case KIIBOHD_FUNCTION_Backlight_Region_On:
+        	stop_animation();
             backlight_selected_region_on();
             break;
         case KIIBOHD_FUNCTION_Backlight_Region_Off:
+        	stop_animation();
             backlight_selected_region_off();
             break;
         case KIIBOHD_FUNCTION_Backlight_Increase_All:
+        	stop_animation();
             backlight_increase_brightness();
             break;
         case KIIBOHD_FUNCTION_Backlight_Decrease_All:
+        	stop_animation();
             backlight_decrease_brightness();
             break;
         case KIIBOHD_FUNCTION_Backlight_Increase_Region:
+        	stop_animation();
             backlight_increase_brightness_selected_region();
             break;
         case KIIBOHD_FUNCTION_Backlight_Decrease_Region:
+        	stop_animation();
             backlight_decrease_brightness_selected_region();
             break;
         case KIIBOHD_FUNCTION_Backlight_Save_Current_State:
+        	animation_save_state();
             backlight_save_region_states();
             break;
         case KIIBOHD_FUNCTION_Backlight_Breath:

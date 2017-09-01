@@ -166,6 +166,8 @@ COMMAND_ENABLE = yes    	# Commands for debug and configuration
 BACKLIGHT_ENABLE = yes      # Enable keyboard backlight functionality
 #NKRO_ENABLE = yes		    # USB Nkey Rollover
 SLEEP_LED_ENABLE = yes      # Breathing sleep LED during USB suspend
+SLEEP_LED_USE_COMMON = yes
+
 
 #OPT_DEFS += -DNO_ACTION_TAPPING
 #OPT_DEFS += -DNO_ACTION_LAYER

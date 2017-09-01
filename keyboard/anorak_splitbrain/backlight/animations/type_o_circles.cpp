@@ -6,30 +6,32 @@
 #include "animation_utils.h"
 #include "config.h"
 
+#ifdef DEBUG_ANIMATION
+#include "debug.h"
+#else
+#include "nodebug.h"
+#endif
+
 #define RADIUS_COUNT 15
 
 static uint8_t *pressed_keys = 0;
 static uint8_t animation_frame = 1;
 
-void type_o_circles_typematrix_row(uint8_t row_number, matrix_row_t row)
-{
-    type_o_circles_animation_loop();
-}
 
-void type_o_circles_animation_start()
+void type_o_circles_animation_start(void)
 {
     animation_frame = 1;
     pressed_keys = (uint8_t *)calloc(MATRIX_ROWS * MATRIX_COLS, sizeof(uint8_t));
     animation_prepare(animation_frame);
 }
 
-void type_o_circles_animation_stop()
+void type_o_circles_animation_stop(void)
 {
     animation_postpare(animation_frame);
     free(pressed_keys);
 }
 
-void type_o_circles_animation_loop()
+void type_o_circles_animation_loop(void)
 {
     bool is_left_side;
     uint8_t led_row;
@@ -59,4 +61,23 @@ void type_o_circles_animation_loop()
     }
 
     issi.blitToFrame(animation_frame);
+}
+
+void type_o_circles_typematrix_row(uint8_t row_number, matrix_row_t row)
+{
+    type_o_circles_animation_loop();
+}
+
+void set_animation_type_o_circles()
+{
+    dprintf("type_o_circles\r\n");
+
+    animation.brightness = 255;
+    animation.delay_in_ms = 250;
+    animation.duration_in_ms = 0;
+
+    animation.animationStart = &type_o_circles_animation_start;
+    animation.animationStop = &type_o_circles_animation_stop;
+    animation.animationLoop = &type_o_circles_animation_loop;
+    animation.animation_typematrix_row = &type_o_circles_typematrix_row;
 }

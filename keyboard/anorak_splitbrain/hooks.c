@@ -60,8 +60,10 @@ void hook_late_init(void)
 
 	splitbrain_communication_task();
 
+#ifdef BACKLIGHT_ENABLE
     backlight_setup();
     backlight_setup_finish();
+#endif
 
     splitbrain_communication_task();
 }
@@ -97,7 +99,7 @@ static uint8_t _led_stats = 0;
 
 void hook_usb_suspend_entry(void)
 {
-	dprintf("hook_usb_suspend_entry\n");
+	//dprintf("huse\n");
 
     // Turn LED off to save power
     // Set 0 with putting aside status before suspend and restore
@@ -113,7 +115,7 @@ void hook_usb_suspend_entry(void)
     mcpu_hardware_shutdown(true);
 
 #ifdef BACKLIGHT_ENABLE
-    stop_animation();
+    suspend_animation();
     backlight_enableShutdown(true);
 #endif
 
@@ -124,18 +126,23 @@ void hook_usb_suspend_entry(void)
 
 void hook_usb_wakeup(void)
 {
-	dprintf("hook_usb_wakeup\n");
+	//dprintf("huwu\n");
 
-    // This replaces the call of suspend_wakeup_init()
+	//
+    // ---> This replaces the call of suspend_wakeup_init() <--
+	//
     // suspend_wakeup_init();
 
     // clear keyboard state
     matrix_clear();
     clear_keyboard();
 #ifdef BACKLIGHT_ENABLE
-    // backlight_init(); /! do not call this! I2C IRQ will destroy USB communication!
+    //
+    // --> do not call this! I2C IRQ will destroy USB communication! <--
+    //
+    // backlight_init();
     backlight_enableShutdown(false);
-    stop_animation();
+    resume_animation_in_idle_state();
 #endif
 
 #ifdef SLEEP_LED_ENABLE

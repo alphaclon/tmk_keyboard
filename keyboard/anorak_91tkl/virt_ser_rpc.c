@@ -145,8 +145,8 @@ const user_command user_command_table[] PROGMEM = {
     {"fee", &cmd_user_eeprom_clear, 0, "clear eeprom"},
     {"bee", &cmd_user_backlight_eeprom_clear, 0, "clear backlight eeprom"},
 	{"bl", &cmd_user_backlight, 0, "enable backlight"},
-    {"sector", &cmd_user_sector, "save | map # | # 0|1 | # h s v", "set sector"},
-    {"animation", &cmd_user_animation, "save | delay ms | # 0|1 | c h s v", "set animation"},
+    {"sector", &cmd_user_sector, "save | map # | # [0|1] | # h s v", "control sector"},
+    {"animation", &cmd_user_animation, "save | list | delay ms | # [0|1] | c h s v", "control animation"},
 	{"hsv", &cmd_user_key_hsv, "row col h s v", "set hsv"},
     {"debug", &cmd_user_debug_config, 0, "debug configuration"},
 	{"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
@@ -728,26 +728,43 @@ bool cmd_user_key_hsv(uint8_t argc, char **argv)
 
 bool cmd_user_animation(uint8_t argc, char **argv)
 {
-    // "save | fps ms | # 0|1 | 0|1 h s v"
+    // "save | list | fps ms | # 0|1 | 0|1 h s v"
 
 	vserprintf(".animation ");
 
     if (argc == 0)
     {
+    	char *namebuffer = animation_name(animation_current());
+
     	vserprintfln("%u", animation_current());
+    	vserprintfln(".name %s", namebuffer);
         vserprintfln(".running %u", animation_is_running());
         vserprintfln(".delay %u", animation.delay_in_ms);
         vserprintfln(".duration %u", animation.duration_in_ms);
         vserprintfln(".hsv1 %X %X %X", animation.hsv.h, animation.hsv.s, animation.hsv.v);
         vserprintfln(".hsv2 %X %X %X", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
         vserprintfln(".rgb %X %X %X", animation.rgb.r, animation.rgb.g, animation.rgb.b);
+
+        free(namebuffer);
+
         return true;
     }
+
+    if (argc == 1 && strcmp_P(argv[0], PSTR("list")) == 0)
+	{
+    	vserprintfln("names");
+    	for (uint8_t i = 0; i < animation_LAST; i++)
+    	{
+    		char *namebuffer = animation_name(i);
+    		vserprintfln(".name %u %s", i, namebuffer);
+    		free(namebuffer);
+    	}
+	}
 
     if (argc == 1)
 	{
 		uint8_t selected_animation = atoi(argv[0]);
-		vserprintfln("%u %u", selected_animation, animation_is_running());
+		vserprintfln("%u %u", selected_animation, (selected_animation == animation_current() ? animation_is_running() : 0));
 		return true;
 	}
 
@@ -1340,6 +1357,7 @@ void interpret_user_command(uint8_t *buffer, uint8_t length)
     if (!user_command.pfn_command)
     {
     	vserprintfln(">NC");
+    	vserprintfln("> '!?' for help");
     }
 }
 

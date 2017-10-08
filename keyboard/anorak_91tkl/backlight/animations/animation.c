@@ -21,7 +21,9 @@
 #include "gradient_left_right.h"
 #include "gradient_full_flicker.h"
 #include "conway.h"
+#include <avr/pgmspace.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef DEBUG_ANIMATION
 #include "debug.h"
@@ -47,9 +49,43 @@ static uint32_t elapsed_ms = 0;
 static uint8_t loop_count = 10;
 #endif
 
+const char animation_name_string_cycle_all[] PROGMEM = "cycle all";
+const char animation_name_string_cycle_up_down[] PROGMEM = "cycle up down";
+const char animation_name_string_cycle_left_right[] PROGMEM = "cycle left right";
+const char animation_name_string_gradient_up_down[] PROGMEM = "gradient up down";
+const char animation_name_string_gradient_left_right[] PROGMEM = "gradient left right";
+const char animation_name_string_gradient_full_flicker[] PROGMEM = "gradient full flicker";
+const char animation_name_string_raindrops[] PROGMEM = "raindrops";
+const char animation_name_string_jellybean_raindrops[] PROGMEM = "jellybean raindrops";
+const char animation_name_string_flying_ball[] PROGMEM = "flying ball";
+const char animation_name_string_type_o_matic[] PROGMEM = "type-o-matic";
+const char animation_name_string_type_o_raindrops[] PROGMEM = "type-o-raindrops";
+const char animation_name_string_type_o_circles[] PROGMEM = "type-o-circles";
+const char animation_name_string_sweep[] PROGMEM = "sweep";
+const char animation_name_string_wave[] PROGMEM = "wave";
+const char animation_name_string_conway[] PROGMEM = "conway";
+const char animation_name_string_breathing[] PROGMEM = "breate";
+
+PGM_P animation_name_strings[] = {animation_name_string_cycle_all,
+                                  animation_name_string_cycle_up_down,
+                                  animation_name_string_cycle_left_right,
+                                  animation_name_string_gradient_up_down,
+                                  animation_name_string_gradient_left_right,
+                                  animation_name_string_gradient_full_flicker,
+                                  animation_name_string_raindrops,
+                                  animation_name_string_jellybean_raindrops,
+                                  animation_name_string_flying_ball,
+                                  animation_name_string_type_o_matic,
+                                  animation_name_string_type_o_raindrops,
+                                  animation_name_string_type_o_circles,
+                                  animation_name_string_sweep,
+                                  animation_name_string_wave,
+                                  animation_name_string_conway,
+                                  animation_name_string_breathing};
+
 void initialize_animation(void)
 {
-	initLedPosByMatrix();
+    initLedPosByMatrix();
 
     memset(&animation, 0, sizeof(struct _animation_interface));
 
@@ -58,8 +94,8 @@ void initialize_animation(void)
 
     if (current_animation >= animation_LAST)
     {
-    	current_animation = 0;
-    	eeconfig_write_animation_current(current_animation);
+        current_animation = 0;
+        eeconfig_write_animation_current(current_animation);
     }
 
     eeconfig_read_animation_hsv_values(0, &animation.hsv.h, &animation.hsv.s, &animation.hsv.v);
@@ -80,17 +116,17 @@ void animation_save_state(void)
 
 animation_names animation_current(void)
 {
-	return current_animation;
+    return current_animation;
 }
 
 void set_animation(animation_names animation_by_name)
 {
-	current_animation = animation_by_name;
+    current_animation = animation_by_name;
 
-	if (current_animation >= animation_LAST)
-	{
-		current_animation = 0;
-	}
+    if (current_animation >= animation_LAST)
+    {
+        current_animation = 0;
+    }
 
     switch (current_animation)
     {
@@ -140,11 +176,11 @@ void set_animation(animation_names animation_by_name)
         set_animation_gradient_full_flicker();
         break;
     case animation_conway:
-    	set_animation_convay();
-    	break;
+        set_animation_conway();
+        break;
 
     case animation_LAST:
-    	break;
+        break;
     }
 }
 
@@ -154,7 +190,7 @@ void animation_next()
 
     current_animation = increment(current_animation, 1, 0, animation_LAST);
     if (current_animation == animation_LAST)
-    	current_animation = 0;
+        current_animation = 0;
     dprintf("animation_next: %u\n", current_animation);
 
     set_animation(current_animation);
@@ -165,7 +201,7 @@ void animation_previous()
 {
     stop_animation();
     if (current_animation == 0)
-    	current_animation = animation_LAST;
+        current_animation = animation_LAST;
     current_animation = decrement(current_animation, 1, 0, animation_LAST);
     dprintf("animation_previous: %u\n", current_animation);
 
@@ -175,9 +211,9 @@ void animation_previous()
 
 void animation_set_speed(uint16_t delay_in_ms)
 {
-	if (delay_in_ms < MINIMAL_DELAY_TIME_MS)
-		animation.delay_in_ms = MINIMAL_DELAY_TIME_MS;
-	animation.delay_in_ms = delay_in_ms;
+    if (delay_in_ms < MINIMAL_DELAY_TIME_MS)
+        animation.delay_in_ms = MINIMAL_DELAY_TIME_MS;
+    animation.delay_in_ms = delay_in_ms;
 }
 
 void animation_increase_speed(void)
@@ -211,10 +247,10 @@ bool animation_is_running()
 
 void start_animation()
 {
-	dprintf("start_animation\n");
+    dprintf("start_animation\n");
 
-	if (animation.is_running || animation.is_suspended)
-		return;
+    if (animation.is_running || animation.is_suspended)
+        return;
 
     if (animation.animationStart)
         animation.animationStart();
@@ -228,7 +264,7 @@ void start_animation()
 
 void set_and_start_animation(animation_names animation_by_name)
 {
-	stop_animation();
+    stop_animation();
     set_animation(animation_by_name);
     start_animation();
 }
@@ -238,7 +274,7 @@ void stop_animation()
     dprintf("stop_animation\n");
 
     if (!animation.is_running && !animation.is_suspended)
-    	return;
+        return;
 
     if (animation.animationStop)
         animation.animationStop();
@@ -253,10 +289,10 @@ void stop_animation()
 
 void suspend_animation()
 {
-    //dprintf("suspend_animation\n");
+    // dprintf("suspend_animation\n");
 
     if (!animation.is_running)
-    	return;
+        return;
 
     animation.is_running = false;
     animation.is_suspended = true;
@@ -264,10 +300,10 @@ void suspend_animation()
 
 void resume_animation()
 {
-    //dprintf("resume_animation\n");
+    // dprintf("resume_animation\n");
 
     if (!animation.is_suspended)
-    	return;
+        return;
 
     animation.is_running = true;
     animation.is_suspended = false;
@@ -277,10 +313,10 @@ void resume_animation()
 
 void resume_animation_in_idle_state()
 {
-    //dprintf("resume_animation\n");
+    // dprintf("resume_animation\n");
 
     if (!animation.is_suspended)
-    	return;
+        return;
 
     animation.is_running = true;
     animation.is_suspended = false;
@@ -325,29 +361,29 @@ void animate()
         return;
 
     if (suspend_animation_on_idle && timer_elapsed32(last_key_pressed_timestamp) > ANIMATION_SUSPEND_TIMEOUT)
-    	return;
-
-    /*
-    if (animation.duration_in_ms > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_in_ms)
-    {
-        stop_animation();
         return;
-    }
-    */
+
+/*
+if (animation.duration_in_ms > 0 && timer_elapsed32(animation.duration_timer) > animation.duration_in_ms)
+{
+    stop_animation();
+    return;
+}
+*/
 
 #ifdef DEBUG_ANIMATION_SPEED
     if (loop_count)
     {
-    	loop_count--;
-    	elapsed_ms = timer_read32();
+        loop_count--;
+        elapsed_ms = timer_read32();
     }
     else
     {
-    	loop_count = 10;
-    	duration_ms /= 10;
-    	dprintf("avg: %lu\n", duration_ms);
-    	duration_ms = 0;
-    	elapsed_ms = timer_read32();
+        loop_count = 10;
+        duration_ms /= 10;
+        dprintf("avg: %lu\n", duration_ms);
+        duration_ms = 0;
+        elapsed_ms = timer_read32();
     }
 #endif
 
@@ -356,22 +392,29 @@ void animate()
 
 #ifdef DEBUG_ANIMATION_SPEED
     duration_ms += timer_elapsed32(elapsed_ms);
-    //dprintf("el: %u\n", duration_ms);
+// dprintf("el: %u\n", duration_ms);
 #endif
 }
 
 void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
 {
-	last_key_pressed_timestamp = timer_read32();
+    last_key_pressed_timestamp = timer_read32();
 
-	if (!animation.is_running)
-		return;
+    if (!animation.is_running)
+        return;
 
-	animation_default_typematrix_row(row_number, row);
+    animation_default_typematrix_row(row_number, row);
 
     if (animation.animation_typematrix_row)
     {
-    	//animation.loop_timer = timer_read();
+        // animation.loop_timer = timer_read();
         animation.animation_typematrix_row(row_number, row);
     }
+}
+
+char *animation_name(animation_names animation_by_name)
+{
+	char *buf = (char*)malloc((strlen_P(animation_name_strings[animation_by_name])+1) * sizeof(char));
+	strcpy_P(buf, animation_name_strings[animation_by_name]);
+	return buf;
 }

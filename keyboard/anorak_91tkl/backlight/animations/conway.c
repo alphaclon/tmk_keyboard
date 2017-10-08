@@ -12,6 +12,8 @@
 #include "nodebug.h"
 #endif
 
+#define MCPOS(row, col) (row * MATRIX_COLS + col)
+
 static uint8_t *cells = 0;
 
 void conway_init_cells(void)
@@ -22,8 +24,8 @@ void conway_init_cells(void)
         {
             bool draw = rand() % 7 ? false : true;
 
-            // cells[key_row * MATRIX_COLS + key_col]
-            cells[key_row][key_col] = draw;
+            cells[MCPOS(key_row, key_col)] = draw;
+            // cells[key_row][key_col] = draw;
 
             if (draw)
             {
@@ -62,31 +64,31 @@ void conway_animation_loop(void)
             cm = (0 == key_col) ? (MATRIX_COLS - 1) : (key_col - 1);
             cp = ((MATRIX_COLS - 1) == key_col) ? 0 : (key_col + 1);
 
-            nsum = cells[rm][cm] + cells[rm][key_col] + cells[rm][cp] + cells[key_row][cm] + cells[key_row][cp] +
-                   cells[rp][cm] + cells[rp][key_col] + cells[rp][cp];
+            nsum = cells[MCPOS(rm, cm)] + cells[MCPOS(rm, key_col)] + cells[MCPOS(rm, cp)] + cells[MCPOS(key_row, cm)] +
+                   cells[MCPOS(key_row, cp)] + cells[MCPOS(rp, cm)] + cells[MCPOS(rp, key_col)] + cells[MCPOS(rp, cp)];
 
             switch (nsum)
             {
 
             case 3:
                 draw_keymatrix_hsv_pixel(&issi, key_row, key_col, animation.hsv);
-                cells[key_row][key_col] = true;
+                cells[MCPOS(key_row, key_col)] = true;
                 is_empty = false;
                 break;
 
             case 2:
                 draw_keymatrix_hsv_pixel(&issi, key_row, key_col,
-                                         (cells[key_row][key_col]) ? hsv_black : animation.hsv);
+                                         (cells[MCPOS(key_row, key_col)]) ? hsv_black : animation.hsv);
 
                 // cells[key_row][key_col] = cells[key_row][key_col];
                 break;
 
             default:
                 draw_keymatrix_hsv_pixel(&issi, key_row, key_col, hsv_black);
-                cells[key_row][key_col] = false;
+                cells[MCPOS(key_row, key_col)] = false;
             }
 
-            if (cells[key_row][key_col])
+            if (cells[MCPOS(key_row, key_col)])
                 is_empty = false;
         }
     }

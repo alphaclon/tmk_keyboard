@@ -44,6 +44,8 @@ typedef enum animation_hsv_names_t animation_hsv_names;
 void initialize_animation(void);
 void animation_save_state(void);
 
+char *animation_name(animation_names animation_by_name);
+
 void set_animation(animation_names animation_by_name);
 void set_and_start_animation(animation_names animation_by_name);
 void start_animation(void);

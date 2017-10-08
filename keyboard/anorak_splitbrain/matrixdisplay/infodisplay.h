@@ -1,8 +1,8 @@
 #ifndef KEYBOARD_ANORAK_SPLITBRAIN_INFODISPLAY_H_
 #define KEYBOARD_ANORAK_SPLITBRAIN_INFODISPLAY_H_
 
-#include "matrix.h"
 #include "commands.h"
+#include "matrix.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -23,6 +23,9 @@ void mcpu_send_scroll_text(char const *msg, uint8_t direction, uint8_t duration)
 void mcpu_send_animation_sweep(uint8_t direction, uint8_t duration);
 void mcpu_send_animation_box(uint8_t direction, uint8_t duration);
 void mcpu_send_animation_typematrix(void);
+
+void mcpu_send_animation(uint8_t animation, uint8_t speed, uint8_t direction, uint8_t duration, uint8_t color,
+                         uint8_t font);
 
 void mcpu_send_lock_state(uint8_t lock_state);
 void mcpu_send_typematrix_row(uint8_t row_number, matrix_row_t row);

@@ -1,4 +1,7 @@
 #----------------------------------------------------------------------------
+#-------- Anorak 91 tkl -----------------------------------------------------
+#----------------------------------------------------------------------------
+#
 # On command line:
 #
 # make all = Make software.
@@ -115,7 +118,8 @@ SRC += \
 	backlight/animations/flying_ball.c \
 	backlight/animations/gradient_up_down.c \
 	backlight/animations/gradient_left_right.c \
-	backlight/animations/gradient_full_flicker.c
+	backlight/animations/gradient_full_flicker.c \
+	backlight/animations/conway.c
 	
 	
 	

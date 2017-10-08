@@ -1,4 +1,6 @@
 #----------------------------------------------------------------------------
+#-------- Anorak splitbrain--------------------------------------------------
+#----------------------------------------------------------------------------
 # On command line:
 #
 # make all = Make software.
@@ -201,16 +203,19 @@ debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN_SLOW_INIT
 #debug-on: EXTRAFLAGS += -DDEBUG_SPLITBRAIN_RECV_OFF
 #debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-#debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
+debug-on: EXTRAFLAGS += -DDEBUG_INFODISPLAY
 debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
 #debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all
 
-debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
-debug-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
-debug-off: all
+release-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
+release-off: OPT_DEFS := $(filter-out -DCONSOLE_ENABLE,$(OPT_DEFS))
+release-off: all
+
+release-on: EXTRAFLAGS += -DDEBUG
+release-on: all
 
 dfu-hex: $(TARGET).hex
 	@echo -n dfu-programmer: waiting

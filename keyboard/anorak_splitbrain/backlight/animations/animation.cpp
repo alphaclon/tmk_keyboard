@@ -11,6 +11,7 @@
 #include "type_o_matic.h"
 #include <avr/pgmspace.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef DEBUG_ANIMATION
 #include "debug.h"
@@ -21,14 +22,14 @@
 #define MINIMAL_DELAY_TIME_MS 10
 #define ANIMATION_SUSPEND_TIMEOUT (10L * 60L * 1000L)
 
-const char animation_type_o_matic[] PROGMEM = "Matic";
-const char animation_type_o_circles[] PROGMEM = "Circles";
-const char animation_sweep[] PROGMEM = "Sweep";
-const char animation_breathing[] PROGMEM = "Breathing";
-const char animation_none[] PROGMEM = "xxx";
+const char animation_string_type_o_matic[] PROGMEM = "Matic";
+const char animation_string_type_o_circles[] PROGMEM = "Circles";
+const char animation_string_sweep[] PROGMEM = "Sweep";
+const char animation_string_breathing[] PROGMEM = "Breathing";
+const char animation_string_none[] PROGMEM = "xxx";
 
-PGM_P animation_names[] = {animation_type_o_matic, animation_type_o_circles, animation_sweep, animation_breathing,
-                           animation_none};
+PGM_P animation_string_names[] = {animation_string_type_o_matic, animation_string_type_o_circles, animation_string_sweep, animation_string_breathing,
+                           animation_string_none};
 
 animation_names current_animation = animation_type_o_matic;
 static uint32_t last_key_pressed_timestamp = 0;
@@ -49,11 +50,11 @@ void initialize_animation(void)
     memset(&animation, 0, sizeof(struct _animation_interface));
 
 #ifdef BACKLIGHT_ENABLE
-    current_animation = eeconfig_read_animation_current();
+    current_animation = (animation_names)eeconfig_read_animation_current();
 
     if (current_animation >= animation_LAST)
     {
-        current_animation = 0;
+        current_animation = animation_type_o_matic;
         eeconfig_write_animation_current(current_animation);
     }
 #endif
@@ -74,7 +75,7 @@ void show_animaiton_info(animation_names animation)
     char infotext[32];
 
     strcpy_P(infotext, PSTR("A: "));
-    strcat_P(infotext, animation_names[animation]);
+    strcat_P(infotext, animation_string_names[animation]);
 
     dprintf("info: %s\n", infotext);
 
@@ -89,7 +90,7 @@ void show_animaiton_info_stopped(animation_names animation)
     char infotext[32];
 
     strcpy_P(infotext, PSTR("S: "));
-    strcat_P(infotext, animation_names[animation]);
+    strcat_P(infotext, animation_string_names[animation]);
 
     dprintf("info: %s\n", infotext);
 
@@ -123,7 +124,7 @@ void set_animation(animation_names animation_by_name)
 
     if (current_animation >= animation_LAST)
     {
-        current_animation = 0;
+        current_animation = animation_type_o_matic;
     }
 
     switch (current_animation)
@@ -150,9 +151,9 @@ void animation_next()
 {
     stop_animation();
 
-    current_animation = increment(current_animation, 1, 0, animation_LAST);
+    current_animation = (animation_names)increment(current_animation, 1, 0, animation_LAST);
     if (current_animation == animation_LAST)
-        current_animation = 0;
+        current_animation = animation_type_o_matic;
     dprintf("animation_next: %u\n", current_animation);
 
     set_animation(current_animation);
@@ -162,9 +163,9 @@ void animation_next()
 void animation_previous()
 {
     stop_animation();
-    if (current_animation == 0)
+    if (current_animation == animation_type_o_matic)
         current_animation = animation_LAST;
-    current_animation = decrement(current_animation, 1, 0, animation_LAST);
+    current_animation = (animation_names)decrement(current_animation, 1, 0, animation_LAST);
     dprintf("animation_previous: %u\n", current_animation);
 
     set_animation(current_animation);
@@ -219,11 +220,6 @@ void animation_toggle(void)
 
     set_animation(current_animation);
     start_animation();
-}
-
-bool animation_is_running()
-{
-    return (animation.animationStart && animation.animationStop);
 }
 
 void start_animation()

@@ -106,7 +106,6 @@ void mcpu_send_command(uint8_t command, uint8_t const *data, uint8_t data_length
 
 #elif TWILIB == AVR315_QUEUED
 
-    // TWI_write_data_to_register(MATRIX_TWI_ADDRESS, command, data, data_length);
     queued_twi_write_data_to_register(MATRIX_TWI_ADDRESS, command, data, data_length);
 
 #elif TWILIB == BUFFTW
@@ -143,6 +142,7 @@ void mcpu_read_config()
 #if TWILIB == AVR315 || TWILIB == AVR315_QUEUED
 
     TWI_write_byte(MATRIX_TWI_ADDRESS, MATRIX_CMD_READ_CFG);
+    _delay_ms(1);
     TWI_read_data(MATRIX_TWI_ADDRESS, MATRIX_MAX_CFG_REG);
     bool lastTransOK = TWI_get_data_from_transceiver(cfg, MATRIX_MAX_CFG_REG);
 
@@ -160,13 +160,13 @@ void mcpu_read_config()
 
 #endif
 
-    //    current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
-    //    first_animation = cfg[MATRIX_CFG_REG_ANIMATION_FIRST];
-    //    last_animation = cfg[MATRIX_CFG_REG_ANIMATION_LAST];
+    current_animation = cfg[MATRIX_CFG_REG_ANIMATION];
+    first_animation = cfg[MATRIX_CFG_REG_ANIMATION_FIRST];
+    last_animation = cfg[MATRIX_CFG_REG_ANIMATION_LAST];
 
-    current_animation = MATRIX_FIRST_ANIMATION;
-    first_animation = MATRIX_FIRST_ANIMATION;
-    last_animation = MATRIX_LAST_ANIMATION;
+    //current_animation = MATRIX_FIRST_ANIMATION;
+    //first_animation = MATRIX_FIRST_ANIMATION;
+    //last_animation = MATRIX_LAST_ANIMATION;
 }
 
 void mcpu_read_and_dump_config()

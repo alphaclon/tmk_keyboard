@@ -249,7 +249,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         	queued_twi_stats();
         	break;
         case KIIBOHD_FUNCTION_Backlight_Animate:
-            animation_toggle();
+        	toggle_animation();
             break;
         case KIIBOHD_FUNCTION_Backlight_Animate_Increase_Speed:
             animation_increase_speed();

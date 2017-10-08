@@ -1,4 +1,5 @@
 
+#if 1
 #include "backlight/animations/animation.h"
 #include "backlight/animations/animation_utils.h"
 #include "backlight/key_led_map.h"
@@ -21,11 +22,9 @@
 #include "keycode.h"
 #include "keymap.h"
 #include "backlight.h"
-#include "keyboard_layout_json.h"
 #include "backlight/eeconfig_backlight.h"
 #include "../../tmk_core/common/avr/xprintf.h"
 #include "mini-snprintf.h"
-#include "statusled_pwm.h"
 #ifdef SLEEP_LED_ENABLE
 #include "sleep_led.h"
 #include "led.h"
@@ -58,7 +57,7 @@
 #define DATAGRAM_CMD_GET_PWM_MODE 0x55
 #define DATAGRAM_CMD_GET_PWM_ROW 0x56
 
-#define MAX_MSG_LENGTH 32
+#define VIRTSER_MAX_MSG_LENGTH 32
 
 int virtser_printf_P(const char *fmt, ...);
 int virtser_print_P(const char *s);
@@ -82,12 +81,12 @@ int virtser_print_P(const char *s);
 #undef print_hex8
 #define print_hex8(i) vserprintf("%02X", i)
 
-uint16_t last_receive_ts = 0;
-uint8_t recv_buffer[MAX_MSG_LENGTH];
+uint16_t virtser_last_receive_ts = 0;
+uint8_t recv_buffer[VIRTSER_MAX_MSG_LENGTH];
 
 extern backlight_config_t backlight_config;
 
-enum recvStatus
+enum virtserRecvStatus
 {
     recvStatusIdle = 0,
     recvStatusFoundStart = 1,
@@ -96,7 +95,7 @@ enum recvStatus
     recvStatusFindStop = 4
 };
 
-enum recvStatus recv_status = recvStatusIdle;
+enum virtserRecvStatus virtser_recv_status = recvStatusIdle;
 
 struct user_command_t
 {
@@ -121,6 +120,7 @@ bool cmd_user_backlight(uint8_t argc, char **argv);
 bool cmd_user_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_backlight_eeprom_clear(uint8_t argc, char **argv);
 bool cmd_user_default_layer(uint8_t argc, char **argv);
+bool cmd_user_infodisplay(uint8_t argc, char **argv);
 
 const user_command user_command_table[] PROGMEM = {
     {"?", &cmd_user_help, 0, "show help"},
@@ -136,6 +136,7 @@ const user_command user_command_table[] PROGMEM = {
 	{"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
     {"layer", &cmd_user_default_layer, 0, "default layer"},
     {"boot", &cmd_user_bootloader_jump, 0, "jump to bootloader"},
+	{"mx", &cmd_user_infodisplay, 0, "infodisplay" },
 
     {0, 0, 0, 0}};
 
@@ -166,6 +167,43 @@ bool cmd_user_help(uint8_t argc, char **argv)
 
     vserprintf("\n");
     return true;
+}
+
+bool cmd_user_infodisplay(uint8_t argc, char **argv)
+{
+#ifdef DEBUG
+	if (argc == 0 || strcmp_P(argv[0], PSTR("status")) == 0)
+	{
+		mcpu_read_and_dump_config();
+	}
+#endif
+
+	if (argc >= 2 && strcmp_P(argv[0], PSTR("text")) == 0)
+	{
+		mcpu_send_scroll_text(argv[1], 0, 100);
+		return true;
+	}
+
+	if (argc >= 2 && strcmp_P(argv[0], PSTR("stop")) == 0)
+	{
+		mcpu_send_animation_stop();
+		return true;
+	}
+
+	if (argc >= 2 && strcmp_P(argv[0], PSTR("animation")) == 0)
+	{
+
+		uint8_t animation = atoi(argv[1]);
+
+		uint8_t direction = (argc >= 3 ? atoi(argv[2]) : 0);
+		uint8_t duration = (argc >= 4 ? atoi(argv[3]) : 0);
+
+		mcpu_send_animation(animation, 3, direction, duration, 3, 0);
+
+		return true;
+	}
+
+	return false;
 }
 
 bool cmd_user_backlight(uint8_t argc, char **argv)
@@ -343,8 +381,8 @@ bool cmd_user_sector(uint8_t argc, char **argv)
     {
         for (uint8_t s = 0; s < BACKLIGHT_MAX_REGIONS; ++s)
         {
-        	bool enabled = backlight_is_region_enabled(BACKLIGHT_BV(selected_sector));
-        	uint8_t brightness = backlight_get_brightness_for_region(BACKLIGHT_BV(selected_sector));
+        	bool enabled = backlight_is_region_enabled(BACKLIGHT_BV(s));
+        	uint8_t brightness = backlight_get_brightness_for_region(BACKLIGHT_BV(s));
         	vserprintfln(" %u %u %X %X %X", s, enabled, 0x3c, 0xff, brightness);
         }
         return true;
@@ -365,10 +403,10 @@ bool cmd_user_sector(uint8_t argc, char **argv)
 
     if (argc == 1)
     {
-    	uint8_t s = atoi(argv[0]);
+    	uint8_t selected_sector = atoi(argv[0]);
     	bool enabled = backlight_is_region_enabled(BACKLIGHT_BV(selected_sector));
     	uint8_t brightness = backlight_get_brightness_for_region(BACKLIGHT_BV(selected_sector));
-    	vserprintfln(" %u %u %X %X %X", s, enabled, 0x3c, 0xff, brightness);
+    	vserprintfln(" %u %u %X %X %X", selected_sector, enabled, 0x3c, 0xff, brightness);
         return true;
     }
 
@@ -431,11 +469,11 @@ bool cmd_user_sector(uint8_t argc, char **argv)
     if (argc == 4)
     {
     	uint8_t brightness = atoi(argv[3]);
-        uint8_t s = atoi(argv[0]);
+        uint8_t selected_sector = atoi(argv[0]);
 
-    	backlight_set_brightness_for_region(BACKLIGHT_BV(s), brightness);
-    	uint8_t brightness = backlight_get_brightness_for_region(BACKLIGHT_BV(selected_sector));
-        vserprintfln(" %u %X %X %X", s, 0x3c, 0xff, brightness);
+    	backlight_set_brightness_for_region(BACKLIGHT_BV(selected_sector), brightness);
+    	brightness = backlight_get_brightness_for_region(BACKLIGHT_BV(selected_sector));
+        vserprintfln(" %u %X %X %X", selected_sector, 0x3c, 0xff, brightness);
 
         return true;
     }
@@ -677,7 +715,7 @@ bool cmd_user_dump_eeprom(uint8_t argc, char **argv)
 void virtser_send_data(uint8_t const *data, uint8_t length)
 {
     // dprintf("send ");
-    // dump_buffer(data, length);
+    // virtser_dump_buffer(data, length);
 
 	//LedInfo1_On();
     for (uint8_t i = 0; i < length; ++i)
@@ -813,9 +851,10 @@ void interpret_user_command(uint8_t *buffer, uint8_t length)
     }
 }
 
-/*
+
 void command_set_pwm_row(uint8_t const *buffer, uint8_t length)
 {
+	/*
     struct cmd_set_pwm_row
     {
         // start + len + cmd + payload + crc8
@@ -838,10 +877,12 @@ void command_set_pwm_row(uint8_t const *buffer, uint8_t length)
     IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
     uint8_t *pwm_buffer = is31fl3733_pwm_buffer(device);
     memcpy(pwm_buffer + (cmd->row * IS31FL3733_CS), cmd->pwm, IS31FL3733_CS);
+    */
 }
 
 void command_update_pwm_row(uint8_t const *buffer, uint8_t length)
 {
+	/*
     struct cmd_update_pwm_row
     {
         // start + len + cmd + payload + crc8
@@ -861,10 +902,12 @@ void command_update_pwm_row(uint8_t const *buffer, uint8_t length)
 
     IS31FL3733 *device = (cmd->dev == 0 ? issi.lower->device : issi.upper->device);
     is31fl3733_update_led_pwm(device);
+    */
 }
 
 void command_set_pwm_mode(uint8_t const *buffer, uint8_t length)
 {
+	/*
     struct cmd_set_pwm_row
     {
         // start + len + cmd + payload + crc8
@@ -884,10 +927,12 @@ void command_set_pwm_mode(uint8_t const *buffer, uint8_t length)
 
     vserprintfln("\n    custom map %u", cmd->map);
     sector_set_custom_map(cmd->map);
+    */
 }
 
 void command_get_pwm_mode(uint8_t const *buffer, uint8_t length)
 {
+	/*
     struct cmd_get_pwm_mode
     {
         // start + len + cmd + payload + crc8
@@ -911,10 +956,12 @@ void command_get_pwm_mode(uint8_t const *buffer, uint8_t length)
     cmd->crc = crc8_calc(recv_buffer, 0x2D, payload_length);
 
     virtser_send_data(recv_buffer, sizeof(struct cmd_get_pwm_mode));
+    */
 }
 
 void command_get_pwm_row(uint8_t const *buffer, uint8_t length)
 {
+	/*
     struct cmd_get_pwm_row
     {
         // start + len + cmd + payload + crc8
@@ -943,27 +990,27 @@ void command_get_pwm_row(uint8_t const *buffer, uint8_t length)
     cmd->crc = crc8_calc(recv_buffer, 0x2D, payload_length);
 
     virtser_send_data(recv_buffer, sizeof(struct cmd_get_pwm_row));
+    */
 }
 
 void command_save_pwm(uint8_t const *buffer, uint8_t length)
 {
-    sector_save_custom_pwm_map();
+    //sector_save_custom_pwm_map();
 }
 
 void command_update_pwm(uint8_t const *buffer, uint8_t length)
 {
     // sector_save_custom_pwm_map();
 }
-*/
 
-uint8_t get_datagram_cmd(uint8_t const *buffer)
+uint8_t virtser_get_datagram_cmd(uint8_t const *buffer)
 {
     return buffer[2];
 }
 
-void interpret_command(uint8_t const *buffer, uint8_t length)
+void virtser_interpret_command(uint8_t const *buffer, uint8_t length)
 {
-    uint8_t cmd = get_datagram_cmd(buffer);
+    uint8_t cmd = virtser_get_datagram_cmd(buffer);
     dprintf("cmd: %x %c, l:%u\n", cmd, cmd, length);
 
     if (cmd == DATAGRAM_CMD_SET_PWM_ROW)
@@ -1002,7 +1049,7 @@ void interpret_command(uint8_t const *buffer, uint8_t length)
     }
 }
 
-void dump_buffer(uint8_t const *buffer, uint8_t length)
+void virtser_dump_buffer(uint8_t const *buffer, uint8_t length)
 {
     dprintf("[");
     for (uint8_t i = 0; i < length; ++i)
@@ -1010,7 +1057,7 @@ void dump_buffer(uint8_t const *buffer, uint8_t length)
     dprintf("]\n");
 }
 
-bool check_crc(uint8_t const *buffer, uint8_t length)
+bool virtser_datagram_check_crc(uint8_t const *buffer, uint8_t length)
 {
     uint8_t crc = crc8_calc(buffer, 0x2D, length - 1);
 
@@ -1018,26 +1065,26 @@ bool check_crc(uint8_t const *buffer, uint8_t length)
     {
         dprintf("crc error: [%X] [%X]\n", crc, buffer[length - 1]);
         dprint("msg: ");
-        dump_buffer(buffer, length);
+        virtser_dump_buffer(buffer, length);
         return false;
     }
 
     return true;
 }
 
-bool datagram_is_valid(uint8_t buffer_pos, uint8_t expected_length)
+bool virtser_datagram_is_valid(uint8_t buffer_pos, uint8_t expected_length)
 {
-    return (buffer_pos == expected_length && check_crc(recv_buffer, buffer_pos));
+    return (buffer_pos == expected_length && virtser_datagram_check_crc(recv_buffer, buffer_pos));
 }
 
-bool datagram_is_data_start(uint8_t ucData)
+bool virtser_datagram_is_data_start(uint8_t ucData)
 {
-    return (ucData == DATAGRAM_START && recv_status == recvStatusIdle);
+    return (ucData == DATAGRAM_START && virtser_recv_status == recvStatusIdle);
 }
 
-bool datagram_is_userdata_start(uint8_t ucData)
+bool virtser_datagram_is_userdata_start(uint8_t ucData)
 {
-    return (ucData == DATAGRAM_USER_START && recv_status == recvStatusIdle);
+    return (ucData == DATAGRAM_USER_START && virtser_recv_status == recvStatusIdle);
 }
 
 void virtser_recv(uint8_t ucData)
@@ -1045,7 +1092,7 @@ void virtser_recv(uint8_t ucData)
     static uint8_t buffer_pos = 0;
     static uint8_t expected_length = 0;
 
-    last_receive_ts = timer_read();
+    virtser_last_receive_ts = timer_read();
 
     //LedInfo2_On();
 
@@ -1053,9 +1100,9 @@ void virtser_recv(uint8_t ucData)
     virtser_send(ucData);
 #endif
 
-    // dprintf("recv: [%02X] <%c> s:%u\n", ucData, (char)ucData, recv_status);
+    // dprintf("recv: [%02X] <%c> s:%u\n", ucData, (char)ucData, virtser_recv_status);
 
-    if (datagram_is_data_start(ucData))
+    if (virtser_datagram_is_data_start(ucData))
     {
         dprintf("recv: start\n");
 
@@ -1064,9 +1111,9 @@ void virtser_recv(uint8_t ucData)
         recv_buffer[buffer_pos] = ucData;
         buffer_pos++;
 
-        recv_status = recvStatusFoundStart;
+        virtser_recv_status = recvStatusFoundStart;
     }
-    else if (datagram_is_userdata_start(ucData))
+    else if (virtser_datagram_is_userdata_start(ucData))
     {
         // dprintf("recv: user start\n");
 
@@ -1076,10 +1123,10 @@ void virtser_recv(uint8_t ucData)
         // recv_buffer[buffer_pos] = ucData;
         // buffer_pos++;
 
-        recv_status = recvStatusFoundUserStart;
+        virtser_recv_status = recvStatusFoundUserStart;
     }
 
-    else if (recv_status == recvStatusFoundStart)
+    else if (virtser_recv_status == recvStatusFoundStart)
     {
         // start + len + cmd + payload + crc
         expected_length = ucData + 4;
@@ -1089,23 +1136,23 @@ void virtser_recv(uint8_t ucData)
         recv_buffer[buffer_pos] = ucData;
         buffer_pos++;
 
-        recv_status = recvStatusRecvPayload;
+        virtser_recv_status = recvStatusRecvPayload;
 
-        if (expected_length >= MAX_MSG_LENGTH)
+        if (expected_length >= VIRTSER_MAX_MSG_LENGTH)
         {
             // bail out
             buffer_pos = 0;
-            recv_status = recvStatusIdle;
+            virtser_recv_status = recvStatusIdle;
             print("recv: payload too long\n");
         }
     }
-    else if (recv_status == recvStatusFoundUserStart)
+    else if (virtser_recv_status == recvStatusFoundUserStart)
     {
-        if (buffer_pos + 1 >= MAX_MSG_LENGTH)
+        if (buffer_pos + 1 >= VIRTSER_MAX_MSG_LENGTH)
         {
             // bail out
             buffer_pos = 0;
-            recv_status = recvStatusIdle;
+            virtser_recv_status = recvStatusIdle;
             print("recv: payload too long\n");
         }
 
@@ -1121,11 +1168,11 @@ void virtser_recv(uint8_t ucData)
             interpret_user_command(recv_buffer, buffer_pos);
 
             buffer_pos = 0;
-            recv_status = recvStatusIdle;
+            virtser_recv_status = recvStatusIdle;
         }
     }
 
-    else if (recv_status == recvStatusRecvPayload && buffer_pos < expected_length)
+    else if (virtser_recv_status == recvStatusRecvPayload && buffer_pos < expected_length)
     {
         dprintf("recv: bpos %u\n", buffer_pos);
 
@@ -1133,38 +1180,39 @@ void virtser_recv(uint8_t ucData)
         buffer_pos++;
 
         if (buffer_pos >= expected_length)
-            recv_status = recvStatusFindStop;
+            virtser_recv_status = recvStatusFindStop;
     }
 
-    else if (recv_status == recvStatusFindStop && ucData == DATAGRAM_STOP)
+    else if (virtser_recv_status == recvStatusFindStop && ucData == DATAGRAM_STOP)
     {
         // dprintf("recv: stop %u\n", buffer_pos);
 
-        if (datagram_is_valid(buffer_pos, expected_length))
+        if (virtser_datagram_is_valid(buffer_pos, expected_length))
         {
             dprintf("recv: ");
-            dump_buffer(recv_buffer, buffer_pos);
-            interpret_command(recv_buffer, buffer_pos);
+            virtser_dump_buffer(recv_buffer, buffer_pos);
+            virtser_interpret_command(recv_buffer, buffer_pos);
         }
         else
         {
             print("recv: crc invalid: ");
-            dump_buffer(recv_buffer, buffer_pos);
+            virtser_dump_buffer(recv_buffer, buffer_pos);
         }
 
         buffer_pos = 0;
-        recv_status = recvStatusIdle;
+        virtser_recv_status = recvStatusIdle;
     }
 
-    if ((recv_status == recvStatusRecvPayload || recv_status == recvStatusFindStop) &&
-        (buffer_pos > expected_length || buffer_pos >= MAX_MSG_LENGTH))
+    if ((virtser_recv_status == recvStatusRecvPayload || virtser_recv_status == recvStatusFindStop) &&
+        (buffer_pos > expected_length || buffer_pos >= VIRTSER_MAX_MSG_LENGTH))
     {
         buffer_pos = 0;
         expected_length = 0;
-        recv_status = recvStatusIdle;
+        virtser_recv_status = recvStatusIdle;
         print("recv: msg invalid: ");
-        dump_buffer(recv_buffer, buffer_pos);
+        virtser_dump_buffer(recv_buffer, buffer_pos);
     }
 
     //LedInfo2_Off();
 }
+#endif

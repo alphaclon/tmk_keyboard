@@ -21,6 +21,8 @@
 #include "gradient_left_right.h"
 #include "gradient_full_flicker.h"
 #include "conway.h"
+#include "floating_plasma.h"
+#include "particle_sys_flame.h"
 #include <avr/pgmspace.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,24 +66,28 @@ const char animation_name_string_type_o_circles[] PROGMEM = "type-o-circles";
 const char animation_name_string_sweep[] PROGMEM = "sweep";
 const char animation_name_string_wave[] PROGMEM = "wave";
 const char animation_name_string_conway[] PROGMEM = "conway";
+const char animation_name_string_floating_plasma[] PROGMEM = "floating plasma";
+const char animation_name_string_particle_sys_flame[] PROGMEM = "flame";
 const char animation_name_string_breathing[] PROGMEM = "breate";
 
-PGM_P animation_name_strings[] = {animation_name_string_cycle_all,
-                                  animation_name_string_cycle_up_down,
-                                  animation_name_string_cycle_left_right,
-                                  animation_name_string_gradient_up_down,
-                                  animation_name_string_gradient_left_right,
-                                  animation_name_string_gradient_full_flicker,
-                                  animation_name_string_raindrops,
-                                  animation_name_string_jellybean_raindrops,
-                                  animation_name_string_flying_ball,
-                                  animation_name_string_type_o_matic,
-                                  animation_name_string_type_o_raindrops,
-                                  animation_name_string_type_o_circles,
-                                  animation_name_string_sweep,
-                                  animation_name_string_wave,
-                                  animation_name_string_conway,
-                                  animation_name_string_breathing};
+PGM_P animation_name_strings[animation_LAST] = {animation_name_string_cycle_all,
+                                                animation_name_string_cycle_up_down,
+                                                animation_name_string_cycle_left_right,
+                                                animation_name_string_gradient_up_down,
+                                                animation_name_string_gradient_left_right,
+                                                animation_name_string_gradient_full_flicker,
+                                                animation_name_string_raindrops,
+                                                animation_name_string_jellybean_raindrops,
+                                                animation_name_string_flying_ball,
+                                                animation_name_string_type_o_matic,
+                                                animation_name_string_type_o_raindrops,
+                                                animation_name_string_type_o_circles,
+                                                animation_name_string_sweep,
+                                                animation_name_string_wave,
+                                                animation_name_string_conway,
+                                                animation_name_string_floating_plasma,
+                                                animation_name_string_particle_sys_flame,
+                                                animation_name_string_breathing};
 
 void initialize_animation(void)
 {
@@ -94,7 +100,7 @@ void initialize_animation(void)
 
     if (current_animation >= animation_LAST)
     {
-        current_animation = 0;
+        current_animation = (animation_names)0;
         eeconfig_write_animation_current(current_animation);
     }
 
@@ -108,6 +114,7 @@ void initialize_animation(void)
 void animation_save_state(void)
 {
 #ifdef BACKLIGHT_ENABLE
+	dprintf("animation save\n");
     eeconfig_write_animation_current(current_animation);
     eeconfig_write_animation_hsv_values(0, animation.hsv.h, animation.hsv.s, animation.hsv.v);
     eeconfig_write_animation_hsv_values(1, animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
@@ -125,7 +132,7 @@ void set_animation(animation_names animation_by_name)
 
     if (current_animation >= animation_LAST)
     {
-        current_animation = 0;
+        current_animation = (animation_names)0;
     }
 
     switch (current_animation)
@@ -177,6 +184,12 @@ void set_animation(animation_names animation_by_name)
         break;
     case animation_conway:
         set_animation_conway();
+        break;
+    case animation_floating_plasma:
+        set_animation_floating_plasma();
+        break;
+    case animation_particle_sys_flame:
+    	set_animation_particle_sys_flame();
         break;
 
     case animation_LAST:
@@ -417,4 +430,162 @@ char *animation_name(animation_names animation_by_name)
 	char *buf = (char*)malloc((strlen_P(animation_name_strings[animation_by_name])+1) * sizeof(char));
 	strcpy_P(buf, animation_name_strings[animation_by_name]);
 	return buf;
+}
+
+uint16_t get_options_for_animation(animation_names animation_by_name)
+{
+    uint16_t options = 0;
+    dprintf("get_options_for_animation: %d\n", animation_by_name);
+
+    switch (animation_by_name)
+    {
+    case animation_sweep:
+        break;
+    case animation_type_o_matic:
+        break;
+    case animation_type_o_raindrops:
+        break;
+    case animation_type_o_circles:
+        break;
+    case animation_raindrops:
+        break;
+    case animation_jellybean_raindrops:
+        break;
+    case animation_cycle_all:
+        break;
+    case animation_cycle_up_down:
+        break;
+    case animation_cycle_left_right:
+        break;
+    case animation_flying_ball:
+        break;
+    case animation_wave:
+        break;
+    case animation_gradient_up_down:
+        break;
+    case animation_gradient_left_right:
+        break;
+    case animation_gradient_full_flicker:
+        break;
+    case animation_conway:
+        break;
+    case animation_particle_sys_flame:
+        break;
+    case animation_floating_plasma:
+    	options = get_animation_options_floating_plasma();
+        break;
+    case animation_breathing:
+        break;
+    case animation_LAST:
+        break;
+    }
+
+    return options;
+}
+
+void set_animation_option(animation_names animation_by_name, animation_options option)
+{
+    switch (animation_by_name)
+    {
+    case animation_sweep:
+        break;
+    case animation_type_o_matic:
+        break;
+    case animation_type_o_raindrops:
+        break;
+    case animation_type_o_circles:
+        break;
+    case animation_raindrops:
+        break;
+    case animation_jellybean_raindrops:
+        break;
+    case animation_cycle_all:
+        break;
+    case animation_cycle_up_down:
+        break;
+    case animation_cycle_left_right:
+        break;
+    case animation_flying_ball:
+        break;
+    case animation_wave:
+        break;
+    case animation_gradient_up_down:
+        break;
+    case animation_gradient_left_right:
+        break;
+    case animation_gradient_full_flicker:
+        break;
+    case animation_conway:
+        break;
+    case animation_particle_sys_flame:
+        break;
+    case animation_floating_plasma:
+    	set_animation_option_floating_plasma(option);
+        break;
+    case animation_breathing:
+        break;
+    case animation_LAST:
+        break;
+    }
+}
+
+animation_options get_animation_option(animation_names animation_by_name)
+{
+    animation_options option = animation_option_none;
+    dprintf("get_options_for_animation: %d\n", animation_by_name);
+
+    switch (animation_by_name)
+    {
+    case animation_sweep:
+        break;
+    case animation_type_o_matic:
+        break;
+    case animation_type_o_raindrops:
+        break;
+    case animation_type_o_circles:
+        break;
+    case animation_raindrops:
+        break;
+    case animation_jellybean_raindrops:
+        break;
+    case animation_cycle_all:
+        break;
+    case animation_cycle_up_down:
+        break;
+    case animation_cycle_left_right:
+        break;
+    case animation_flying_ball:
+        break;
+    case animation_wave:
+        break;
+    case animation_gradient_up_down:
+        break;
+    case animation_gradient_left_right:
+        break;
+    case animation_gradient_full_flicker:
+        break;
+    case animation_conway:
+        break;
+    case animation_particle_sys_flame:
+        break;
+    case animation_floating_plasma:
+    	option = get_animation_option_floating_plasma();
+        break;
+    case animation_breathing:
+        break;
+    case animation_LAST:
+        break;
+    }
+
+    return option;
+}
+
+void set_current_animation_option(animation_options option)
+{
+    set_animation_option(current_animation, option);
+}
+
+animation_options get_current_animation_option()
+{
+    return get_animation_option(current_animation);
 }

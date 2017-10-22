@@ -47,7 +47,7 @@
 #endif
 
 #define VIRTSER_ENABLE_ECHO
-#define VIRT_SER_PRINTF_BUFFER_SIZE 64
+#define VIRT_SER_PRINTF_BUFFER_SIZE 80
 
 #define DATAGRAM_START 0x02
 #define DATAGRAM_STOP 0x03
@@ -146,7 +146,7 @@ const user_command user_command_table[] PROGMEM = {
     {"bee", &cmd_user_backlight_eeprom_clear, 0, "clear backlight eeprom"},
 	{"bl", &cmd_user_backlight, 0, "enable backlight"},
     {"sector", &cmd_user_sector, "save | map # | # [0|1] | # h s v", "control sector"},
-    {"animation", &cmd_user_animation, "save | list | delay ms | # [0|1] | c h s v", "control animation"},
+    {"animation", &cmd_user_animation, " # save | list | fps # | # [0|1] | # c [h s v]", "animation"},
 	{"hsv", &cmd_user_key_hsv, "row col h s v", "set hsv"},
     {"debug", &cmd_user_debug_config, 0, "debug configuration"},
 	{"keymap", &cmd_user_keymap_config, 0, "keymap configuration"},
@@ -739,7 +739,7 @@ bool cmd_user_animation(uint8_t argc, char **argv)
     	vserprintfln("%u", animation_current());
     	vserprintfln(".name %s", namebuffer);
         vserprintfln(".running %u", animation_is_running());
-        vserprintfln(".delay %u", animation.delay_in_ms);
+        vserprintfln(".fps %u", DELAY_TO_FPS(animation.delay_in_ms));
         vserprintfln(".duration %u", animation.duration_in_ms);
         vserprintfln(".hsv1 %X %X %X", animation.hsv.h, animation.hsv.s, animation.hsv.v);
         vserprintfln(".hsv2 %X %X %X", animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
@@ -759,6 +759,7 @@ bool cmd_user_animation(uint8_t argc, char **argv)
     		vserprintfln(".name %u %s", i, namebuffer);
     		free(namebuffer);
     	}
+    	return true;
 	}
 
     if (argc == 1)
@@ -793,8 +794,9 @@ bool cmd_user_animation(uint8_t argc, char **argv)
     if (argc == 3 && strcmp_P(argv[1], PSTR("fps")) == 0)
     {
     	//uint8_t selected_animation = atoi(argv[0]);
-        uint16_t delay_in_ms = atoi(argv[2]);
+        uint16_t delay_in_ms = DELAY_TO_FPS(atoi(argv[2]));
         animation_set_speed(delay_in_ms);
+        vserprintfln(".fps %u %u", 0, DELAY_TO_FPS(animation.delay_in_ms));
         return true;
     }
 

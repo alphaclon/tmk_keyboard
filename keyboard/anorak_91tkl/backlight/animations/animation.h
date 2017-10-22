@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "../color.h"
+#include "animation_options.h"
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -27,6 +28,8 @@ enum animation_names_t
     animation_sweep,
     animation_wave,
 	animation_conway,
+	animation_floating_plasma,
+	animation_particle_sys_flame,
     animation_breathing,
     animation_LAST
 };
@@ -54,6 +57,13 @@ void toggle_animation(void);
 void suspend_animation(void);
 void resume_animation(void);
 void resume_animation_in_idle_state(void);
+
+void set_animation_option(animation_names animation_by_name, animation_options option);
+animation_options get_animation_option(animation_names animation_by_name);
+void set_current_animation_option(animation_options option);
+animation_options get_current_animation_option(void);
+
+uint16_t get_options_for_animation(animation_names animation_by_name);
 
 void animation_next(void);
 void animation_previous(void);

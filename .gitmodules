@@ -1,0 +1,4 @@
+[submodule "keyboard/anorak_91tkl/backlight/animations/arduino-particle-sys"]
+	path = keyboard/anorak_91tkl/backlight/animations/arduino-particle-sys
+	url = https://github.com/giladaya/arduino-particle-sys.git
+	branch = master

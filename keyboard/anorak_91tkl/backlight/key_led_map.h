@@ -4,6 +4,10 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NLED 0xff
 
 /*
@@ -55,5 +59,8 @@
 void initLedPosByMatrix(void);
 bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* KEYBOARD_ANORAK_KIIBOHD_LED_BACKLIGHT_KEY_LED_MAP_H_ */

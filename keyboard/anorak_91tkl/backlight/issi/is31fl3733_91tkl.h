@@ -6,6 +6,10 @@
 #include <stdbool.h>
 #include "is31fl3733_rgb.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** IS31FL3733_RGB 91TKL structure.
   */
 struct IS31FL3733_RGB_91TKL
@@ -41,5 +45,9 @@ void is31fl3733_91tkl_update(IS31FL3733_91TKL *device);
 void is31fl3733_91tkl_update_led_enable(IS31FL3733_91TKL *device);
 /// Update LED matrix LED brightness values with internal buffer values.
 void is31fl3733_91tkl_update_led_pwm(IS31FL3733_91TKL *device);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _is31fl3733_91tkl_H_ */

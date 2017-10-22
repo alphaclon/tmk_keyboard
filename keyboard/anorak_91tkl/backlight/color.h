@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(__GNUC__)
 #define PACKED __attribute__((__packed__))
 #else
@@ -63,7 +67,14 @@ enum HSVColorName_t
 
 typedef enum HSVColorName_t HSVColorName;
 
+extern uint8_t const g_cie_curve[];
+extern HSV const hsv_black;
+
 RGB hsv_to_rgb(HSV hsv);
 HSV rgb_to_hsv(RGB rgb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* KEYBOARD_ANORAK_91TKL_BACKLIGHT_ISSI_COLOR_H_ */

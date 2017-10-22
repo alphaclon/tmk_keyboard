@@ -4,6 +4,10 @@
 #include "is31fl3733.h"
 #include "../color.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** IS31FL3733_RGB structure.
   */
 struct IS31FL3733_RGB_Device
@@ -44,5 +48,9 @@ void is31fl3733_fill_rgb_masked(IS31FL3733_RGB *device, RGB color);
 
 /// Set brightness level for one color all enabled LEDs.
 void is31fl3733_fill_hsv_masked(IS31FL3733_RGB *device, HSV color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IS31FL3733_RGB_H_ */

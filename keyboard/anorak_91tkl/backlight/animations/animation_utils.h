@@ -6,7 +6,12 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FPS_TO_DELAY(fps) (1000/fps)
+#define DELAY_TO_FPS(delay) (1000/delay)
 #define DEVICE_BY_NUMBER(issi, device_number) (device_number ? issi.upper : issi.lower)
 
 struct _animation_interface
@@ -50,5 +55,9 @@ void draw_keymatrix_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t row, int16
 
 void draw_direct_keymatrix_rgb_pixel(IS31FL3733_91TKL *device_91tkl, int16_t row, int16_t col, RGB color);
 void draw_direct_keymatrix_hsv_pixel(IS31FL3733_91TKL *device_91tkl, int16_t row, int16_t col, HSV color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

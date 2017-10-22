@@ -104,6 +104,8 @@ SRC += \
 	backlight/key_led_map.c \
 	backlight/animations/animation.c \
 	backlight/animations/animation_utils.c \
+	backlight/animations/sinus_lut.c \
+	backlight/animations/plasma_color_lut.c \
 	backlight/animations/sweep.c \
 	backlight/animations/breathing.c \
 	backlight/animations/type_o_matic.c \
@@ -119,10 +121,23 @@ SRC += \
 	backlight/animations/gradient_up_down.c \
 	backlight/animations/gradient_left_right.c \
 	backlight/animations/gradient_full_flicker.c \
-	backlight/animations/conway.c
-	
-	
-	
+	backlight/animations/conway.c \
+	backlight/animations/floating_plasma.c \
+	backlight/animations/particle_sys_flame.cpp \
+	backlight/animations/arduino-particle-sys/Emitter_Fire.cpp \
+	backlight/animations/arduino-particle-sys/Emitter_Fixed.cpp \
+	backlight/animations/arduino-particle-sys/Emitter_Fountain.cpp \
+	backlight/animations/arduino-particle-sys/Emitter_Side.cpp \
+	backlight/animations/arduino-particle-sys/Emitter_Spin.cpp \
+	backlight/animations/arduino-particle-sys/Particle_Attractor.cpp \
+	backlight/animations/arduino-particle-sys/Particle_Bounce.cpp \
+	backlight/animations/arduino-particle-sys/Particle_Fixed.cpp \
+	backlight/animations/arduino-particle-sys/Particle_Std.cpp \
+	backlight/animations/arduino-particle-sys/ParticleSys.cpp \
+	backlight/animations/arduino-particle-sys/PartMatrix.cpp \
+	$(TMK_DIR)/protocol/usb_hid/arduino-1.0.1/cores/arduino/WMath.cpp \
+	$(TMK_DIR)/protocol/usb_hid/arduino-1.0.1/cores/arduino/new.cpp
+
 
 
 CONFIG_H = config.h
@@ -198,6 +213,9 @@ SLEEP_LED_USE_COMMON = no
 # Search Path
 VPATH += $(TARGET_DIR)
 VPATH += $(TMK_DIR)
+# Extra Serarch Pathes for arduino-particle-sys
+VPATH += $(TMK_DIR)/protocol/usb_hid/arduino-1.0.1/cores/arduino
+VPATH += $(TMK_DIR)/protocol/usb_hid/arduino-1.0.1/variants/standard
 
 include $(TMK_DIR)/protocol/lufa.mk
 include $(TMK_DIR)/common.mk

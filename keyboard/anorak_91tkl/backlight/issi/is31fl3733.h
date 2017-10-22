@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Number of CS lines.
   */
 #define IS31FL3733_CS (16)
@@ -248,6 +252,10 @@ void is31fl3733_write_paged_reg(IS31FL3733 *device, uint16_t reg_addr, uint8_t r
 
 #ifdef DEBUG_ISSI
 void is31fl3733_update_led_pwm_fast(IS31FL3733 *device);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _IS31FL3733_H_ */

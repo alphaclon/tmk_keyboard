@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "../color.h"
+#include "animation_enable.h"
 #include "animation_options.h"
 #include <inttypes.h>
 #include <stdbool.h>
@@ -28,8 +29,12 @@ enum animation_names_t
     animation_sweep,
     animation_wave,
 	animation_conway,
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
 	animation_floating_plasma,
+#endif
+#ifdef ANIMATION_ENABLE_PARTICLE_SYSTEM
 	animation_particle_sys_flame,
+#endif
     animation_breathing,
     animation_LAST
 };

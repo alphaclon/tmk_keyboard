@@ -16,6 +16,7 @@ struct IS31FL3733_RGB_91TKL
 {
 	IS31FL3733_RGB *upper;
 	IS31FL3733_RGB *lower;
+	uint16_t global_power_target_milliampere;
 };
 
 typedef struct IS31FL3733_RGB_91TKL IS31FL3733_91TKL;

@@ -1,8 +1,9 @@
 
 #include "plasma_color_lut.h"
-#include <avr/pgmspace.h>
 
-const uint8_t PROGMEM PlasmaColorSpace[3*3*256] =
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
+
+const uint8_t PlasmaColorSpace[3*3*256] PROGMEM =
 {
     0,	255,	0,
     1,	254,	0,
@@ -775,4 +776,4 @@ const uint8_t PROGMEM PlasmaColorSpace[3*3*256] =
 
 };
 
-
+#endif

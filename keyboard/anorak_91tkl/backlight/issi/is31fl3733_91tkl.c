@@ -47,6 +47,7 @@ uint32_t compute_power_target(uint16_t milliampere)
 
 void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
 {
+	device->global_power_target_milliampere = 90;
 	uint8_t gcc = compute_power_target(90) / 2;
 
     device->upper = &device_rgb_upper;
@@ -102,6 +103,7 @@ void is31fl3733_91tkl_fill_hsv_masked(IS31FL3733_91TKL *device, HSV color)
 
 void is31fl3733_91tkl_power_target(IS31FL3733_91TKL *device, uint16_t milliampere)
 {
+	device->global_power_target_milliampere = milliampere;
     uint32_t gcc2 = compute_power_target(milliampere) / 2;
 
     device->upper->device->gcc = gcc2;

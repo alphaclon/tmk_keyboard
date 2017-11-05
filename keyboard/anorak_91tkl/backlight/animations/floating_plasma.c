@@ -1,5 +1,8 @@
 
 #include "floating_plasma.h"
+
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
+
 #include "animation_utils.h"
 #include "utils.h"
 #include "sinus_lut.h"
@@ -7,8 +10,6 @@
 #include "../key_led_map.h"
 #include "config.h"
 #include <stdlib.h>
-
-#define DEBUG_ANIMATION
 
 #ifdef DEBUG_ANIMATION
 #include "debug.h"
@@ -24,30 +25,43 @@ void floating_plasma_animation_loop(void)
     uint16_t color;
     RGB rgb;
 
-    for (uint16_t y = 0; y < MATRIX_ROWS; ++y)
+    for (uint8_t y = 0; y < MATRIX_ROWS; ++y)
     {
-        for (uint16_t x = 0; x < MATRIX_COLS; ++x)
+        for (uint8_t x = 0; x < MATRIX_COLS; ++x)
         {
             uint8_t temp1 = (x << 4) + plasmacounter;
             uint8_t temp2 = (y << 5) + plasmacounter;
             uint8_t temp3 = ((x << 4) + (y << 4)) + (plasmacounter >> 1);
             uint8_t temp4 = (((x * x) << 3) + ((y * y) << 3)) / (x + y + 1);
 
+            color = pgm_read_word(&sin_lut[temp1]);
+            color += pgm_read_word(&sin_lut[temp2]);
+            color += pgm_read_word(&sin_lut[temp3]);
+            color += pgm_read_word(&sin_lut[temp4]);
+
             if (plasma_option | animation_option_variant_1)
             {
-                color = (((pgm_read_byte(&sin_lut[temp1]) + pgm_read_byte(&sin_lut[temp2]) +
-                           pgm_read_byte(&sin_lut[temp3]) + pgm_read_byte(&sin_lut[temp4])) >>
+                color = ((color >> 4) + plasmacounter) % (256 * 3);
+
+                /*
+                color = (((pgm_read_word(&sin_lut[temp1]) + pgm_read_word(&sin_lut[temp2]) +
+                           pgm_read_word(&sin_lut[temp3]) + pgm_read_word(&sin_lut[temp4])) >>
                           4) +
                          plasmacounter) %
                         256 * 3;
+                        */
             }
             else
             {
-                color = (((pgm_read_byte(&sin_lut[temp1]) + pgm_read_byte(&sin_lut[temp2]) +
-                           pgm_read_byte(&sin_lut[temp3]) + pgm_read_byte(&sin_lut[temp4]) +
-                           (plasmacounter << 2)) >>
+                color += (plasmacounter << 2);
+                color = (color >> 4) % (256 * 3);
+
+                /*
+                color = (((pgm_read_word(&sin_lut[temp1]) + pgm_read_word(&sin_lut[temp2]) +
+                           pgm_read_word(&sin_lut[temp3]) + pgm_read_word(&sin_lut[temp4]) + (plasmacounter << 2)) >>
                           4)) %
                         (256 * 3);
+                                */
             }
 
             rgb.r = pgm_read_byte(&PlasmaColorSpace[color * 3]);
@@ -107,3 +121,5 @@ animation_options get_animation_option_floating_plasma()
 {
     return plasma_option;
 }
+
+#endif

@@ -90,6 +90,7 @@ SRC += \
 	mini-snprintf.c \
 	twi/avr315/TWI_Master.c \
 	twi/avr315/twi_transmit_queue.c \
+	jsonparser/jsmn.c \
 	backlight/issi/is31fl3733.c \
 	backlight/issi/is31fl3733_twi.c \
 	backlight/issi/is31fl3733_sdb.c \
@@ -224,17 +225,17 @@ include $(TMK_DIR)/rules.mk
 
 debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
-debug-on: EXTRAFLAGS += -DDEBUG_ISSI
+#debug-on: EXTRAFLAGS += -DDEBUG_ISSI
 #debug-on: EXTRAFLAGS += -DDEBUG_ISSI_SLOW_I2C
-debug-on: EXTRAFLAGS += -DDEBUG_I2C
+#debug-on: EXTRAFLAGS += -DDEBUG_I2C
 #debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
-debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
+#debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT
 #debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT_EXTENDED
-#debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
-debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
+debug-on: EXTRAFLAGS += -DDEBUG_ANIMATION
+#debug-on: EXTRAFLAGS += -DDEBUG_HOOKS
 #debug-on: EXTRAFLAGS += -DDEBUG_VIRTSER
-debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
-debug-on: EXTRAFLAGS += -DLUFA_DEBUG
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG_UART
+#debug-on: EXTRAFLAGS += -DLUFA_DEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_ACTION
 debug-on: all
 

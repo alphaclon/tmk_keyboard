@@ -66,8 +66,12 @@ const char animation_name_string_type_o_circles[] PROGMEM = "type-o-circles";
 const char animation_name_string_sweep[] PROGMEM = "sweep";
 const char animation_name_string_wave[] PROGMEM = "wave";
 const char animation_name_string_conway[] PROGMEM = "conway";
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
 const char animation_name_string_floating_plasma[] PROGMEM = "floating plasma";
+#endif
+#ifdef ANIMATION_ENABLE_PARTICLE_SYSTEM
 const char animation_name_string_particle_sys_flame[] PROGMEM = "flame";
+#endif
 const char animation_name_string_breathing[] PROGMEM = "breate";
 
 PGM_P animation_name_strings[animation_LAST] = {animation_name_string_cycle_all,
@@ -85,8 +89,12 @@ PGM_P animation_name_strings[animation_LAST] = {animation_name_string_cycle_all,
                                                 animation_name_string_sweep,
                                                 animation_name_string_wave,
                                                 animation_name_string_conway,
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
                                                 animation_name_string_floating_plasma,
+#endif
+#ifdef ANIMATION_ENABLE_PARTICLE_SYSTEM
                                                 animation_name_string_particle_sys_flame,
+#endif
                                                 animation_name_string_breathing};
 
 void initialize_animation(void)
@@ -114,7 +122,7 @@ void initialize_animation(void)
 void animation_save_state(void)
 {
 #ifdef BACKLIGHT_ENABLE
-	dprintf("animation save\n");
+    dprintf("animation save\n");
     eeconfig_write_animation_current(current_animation);
     eeconfig_write_animation_hsv_values(0, animation.hsv.h, animation.hsv.s, animation.hsv.v);
     eeconfig_write_animation_hsv_values(1, animation.hsv2.h, animation.hsv2.s, animation.hsv2.v);
@@ -185,13 +193,16 @@ void set_animation(animation_names animation_by_name)
     case animation_conway:
         set_animation_conway();
         break;
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
     case animation_floating_plasma:
         set_animation_floating_plasma();
         break;
+#endif
+#ifdef ANIMATION_ENABLE_PARTICLE_SYSTEM
     case animation_particle_sys_flame:
-    	set_animation_particle_sys_flame();
+        set_animation_particle_sys_flame();
         break;
-
+#endif
     case animation_LAST:
         break;
     }
@@ -427,9 +438,9 @@ void animation_typematrix_row(uint8_t row_number, matrix_row_t row)
 
 char *animation_name(animation_names animation_by_name)
 {
-	char *buf = (char*)malloc((strlen_P(animation_name_strings[animation_by_name])+1) * sizeof(char));
-	strcpy_P(buf, animation_name_strings[animation_by_name]);
-	return buf;
+    char *buf = (char *)malloc((strlen_P(animation_name_strings[animation_by_name]) + 1) * sizeof(char));
+    strcpy_P(buf, animation_name_strings[animation_by_name]);
+    return buf;
 }
 
 uint16_t get_options_for_animation(animation_names animation_by_name)
@@ -439,6 +450,7 @@ uint16_t get_options_for_animation(animation_names animation_by_name)
 
     switch (animation_by_name)
     {
+#if 0
     case animation_sweep:
         break;
     case animation_type_o_matic:
@@ -469,14 +481,19 @@ uint16_t get_options_for_animation(animation_names animation_by_name)
         break;
     case animation_conway:
         break;
-    case animation_particle_sys_flame:
-        break;
-    case animation_floating_plasma:
-    	options = get_animation_options_floating_plasma();
-        break;
     case animation_breathing:
         break;
-    case animation_LAST:
+#endif
+#ifdef ANIMATION_ENABLE_PARTICLE_SYSTEM
+    case animation_particle_sys_flame:
+        break;
+#endif
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
+    case animation_floating_plasma:
+        options = get_animation_options_floating_plasma();
+        break;
+#endif
+    default:
         break;
     }
 
@@ -487,6 +504,7 @@ void set_animation_option(animation_names animation_by_name, animation_options o
 {
     switch (animation_by_name)
     {
+#if 0
     case animation_sweep:
         break;
     case animation_type_o_matic:
@@ -517,14 +535,19 @@ void set_animation_option(animation_names animation_by_name, animation_options o
         break;
     case animation_conway:
         break;
-    case animation_particle_sys_flame:
-        break;
-    case animation_floating_plasma:
-    	set_animation_option_floating_plasma(option);
-        break;
     case animation_breathing:
         break;
-    case animation_LAST:
+#endif
+#ifdef ANIMATION_ENABLE_PARTICLE_SYSTEM
+    case animation_particle_sys_flame:
+        break;
+#endif
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
+    case animation_floating_plasma:
+        set_animation_option_floating_plasma(option);
+        break;
+#endif
+    default:
         break;
     }
 }
@@ -536,6 +559,7 @@ animation_options get_animation_option(animation_names animation_by_name)
 
     switch (animation_by_name)
     {
+#if 0
     case animation_sweep:
         break;
     case animation_type_o_matic:
@@ -566,14 +590,19 @@ animation_options get_animation_option(animation_names animation_by_name)
         break;
     case animation_conway:
         break;
-    case animation_particle_sys_flame:
-        break;
-    case animation_floating_plasma:
-    	option = get_animation_option_floating_plasma();
-        break;
     case animation_breathing:
         break;
-    case animation_LAST:
+#endif
+#ifdef ANIMATION_ENABLE_PARTICLE_SYSTEM
+    case animation_particle_sys_flame:
+        break;
+#endif
+#ifdef ANIMATION_ENABLE_FLOATING_PLASMA
+    case animation_floating_plasma:
+        option = get_animation_option_floating_plasma();
+        break;
+#endif
+    default:
         break;
     }
 

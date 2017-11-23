@@ -50,16 +50,13 @@ RGB is31fl3733_rgb_get_pwm(IS31FL3733_RGB *device, uint8_t x, uint8_t y)
 
 void is31fl3733_fill_rgb_masked(IS31FL3733_RGB *device, RGB rgb)
 {
-    // for (uint8_t c = 0; c < 3; ++c)
-    //	is31fl3733_fill_masked(device->device, color.rgb[device->offsets.color[c]]);
-
     uint8_t pos;
     uint8_t offset;
     uint8_t mask_bit;
     uint8_t color;
 
     // Set brightness level of all LED's.
-    for (uint8_t c = 0; c < IS31FL3733_SW; ++c)
+    for (uint8_t c = 0; c < IS31FL3733_USED_SW; ++c)
     {
         for (uint8_t i = 0; i < IS31FL3733_CS; i++)
         {

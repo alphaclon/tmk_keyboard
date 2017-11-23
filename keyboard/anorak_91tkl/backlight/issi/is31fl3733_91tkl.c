@@ -30,19 +30,65 @@ uint32_t compute_power_target(uint16_t milliampere)
 	 * I_led = PWM/256 * I_out * DUTY
 	 *
 	 * PWM=255, GCC=255
-	 * I_led = 3.29mA
-	 *
-	 * I_max = I_led * 90 * 3 = 888,3mA
+	 * I_out_csx = 41,8359
+	 * I_led = 3,2684
 	 *
 	 *
 	 *
 	 */
 
-    dprintf("issi: power target %u\n", milliampere);
+    dprintf("issi: pt %u\n", milliampere);
+
+    /*
     uint32_t gcc2 = 5 + (2560L * (milliampere * 10L)) / 6720L;
     gcc2 /= 10;
     dprintf("issi: gcc %u\n", gcc2);
     return gcc2;
+	*/
+
+    const uint32_t number_of_leds = 3*91;
+
+    uint32_t ma_per_led = (milliampere * 1000) / number_of_leds;
+    dprintf("mpl: %u\n", ma_per_led);
+
+    //uint32_t gcc_x2 = (16711680*ma_per_led)/214200;
+    uint32_t gcc_x2 = (8192*ma_per_led)/105;
+    gcc_x2 /= 1000;
+
+    return gcc_x2;
+}
+
+
+uint16_t compute_current_power_usage_for_device(IS31FL3733 *device)
+{
+	uint8_t pos;
+	uint8_t offset;
+	uint8_t mask_bit;
+	uint32_t milliampere;
+	const uint16_t i_out = (840 / 20) * ((device->gcc * 1000) / 256);
+
+	// Set brightness level of all LED's.
+	for (uint8_t c = 0; c < IS31FL3733_USED_SW; ++c)
+	{
+		for (uint8_t i = 0; i < IS31FL3733_CS; i++)
+		{
+			pos = i + (IS31FL3733_CS * c);
+			offset = pos / 8;
+			mask_bit = (0x01 << (pos % 8));
+
+			if (device->leds[offset] & mask_bit)
+			{
+				//milliampere += ((device->pwm[pos] * 1000) / 256) * i_out * (1/12,75);
+				uint16_t led_ma = ((device->pwm[pos] * 1000) / 256) * i_out * (78);
+				dprintf("%u/%u %u ", c, i, led_ma);
+				milliampere += led_ma;
+			}
+		}
+	}
+
+	dprintf("pt %u\n", milliampere);
+
+	return milliampere / 1000;
 }
 
 void is31fl3733_91tkl_init(IS31FL3733_91TKL *device)
@@ -102,13 +148,25 @@ void is31fl3733_91tkl_fill_hsv_masked(IS31FL3733_91TKL *device, HSV color)
 
 void is31fl3733_91tkl_power_target(IS31FL3733_91TKL *device, uint16_t milliampere)
 {
-    uint32_t gcc2 = compute_power_target(milliampere) / 2;
+    uint8_t gcc = compute_power_target(milliampere) / 2;
 
-    device->upper->device->gcc = gcc2;
-    device->lower->device->gcc = gcc2;
+    device->upper->device->gcc = gcc;
+    device->lower->device->gcc = gcc;
 
     is31fl3733_update_global_current_control(device->upper->device);
     is31fl3733_update_global_current_control(device->lower->device);
+}
+
+uint16_t is31fl3733_91tkl_current_power_usage(IS31FL3733_91TKL *device)
+{
+	uint16_t milliampere = 0;
+
+	milliampere += compute_current_power_usage_for_device(device->upper->device);
+	milliampere += compute_current_power_usage_for_device(device->lower->device);
+
+	dprintf("pt %u\n", milliampere);
+
+	return milliampere;
 }
 
 bool is31fl3733_91tkl_initialized(void)

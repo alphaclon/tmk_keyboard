@@ -114,6 +114,8 @@ SRC += \
 	backlight/animations/color_cycle_all.c \
 	backlight/animations/color_cycle_up_down.c \
 	backlight/animations/color_cycle_left_right.c \
+	backlight/animations/color_cycle_radial_1.c \
+	backlight/animations/color_cycle_radial_2.c \
 	backlight/animations/color_wave.c \
 	backlight/animations/raindrops.c \
 	backlight/animations/jellybean_raindrops.c \
@@ -225,7 +227,6 @@ include $(TMK_DIR)/rules.mk
 debug-on: EXTRAFLAGS += -DDEBUG
 #debug-on: EXTRAFLAGS += -DDEBUG_LATE_TEST
 debug-on: EXTRAFLAGS += -DDEBUG_ISSI
-#debug-on: EXTRAFLAGS += -DDEBUG_ISSI_SLOW_I2C
 debug-on: EXTRAFLAGS += -DDEBUG_I2C
 #debug-on: EXTRAFLAGS += -DDEBUG_TX_QUEUE
 debug-on: EXTRAFLAGS += -DDEBUG_BACKLIGHT

@@ -36,6 +36,7 @@ void is31fl3733_91tkl_fill_hsv_masked(IS31FL3733_91TKL *device, HSV color);
 
 // power target in milliampere
 void is31fl3733_91tkl_power_target(IS31FL3733_91TKL *device, uint16_t milliampere);
+uint16_t is31fl3733_91tkl_current_power_usage(IS31FL3733_91TKL *device);
 
 bool is31fl3733_91tkl_initialized(void);
 

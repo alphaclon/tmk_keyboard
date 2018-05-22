@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VENDOR_ID       0x1209
 #define PRODUCT_ID      0xAA91
-#define DEVICE_VER      0x0204
+#define DEVICE_VER      0x0206
 #define MANUFACTURER    Anorak
 #define PRODUCT         91tkl
 #define DESCRIPTION     t.m.k. keyboard firmware for Anorak 91tkl

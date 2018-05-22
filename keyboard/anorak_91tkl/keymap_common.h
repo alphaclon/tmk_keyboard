@@ -83,7 +83,7 @@ extern const action_t fn_actions[];
      /*               10        11        12        13        14        15        16        17                     */ \
                 {                                                                                                     \
      /* row 5 */{                                                                                                     \
-                KC_##K5A, KC_##K5B, KC_##K5C, KC_##K5D, KC_##K5E, KC_##K5F, KC_##K4G, KC_##K5H, KC_##K5I, KC_##K5J,   \
+                KC_##K5A, KC_##K5B, KC_##K5C, KC_##K5D, KC_##K5E, KC_##K5F, KC_##K5G, KC_##K5H, KC_##K5I, KC_##K5J,   \
                 KC_##K5K, KC_##K5L, KC_##K5M, KC_##K5N, KC_##K5O, KC_##K5P, KC_##K5Q                                  \
                 },                                                                                                    \
         /* 4 */ {                                                                                                     \

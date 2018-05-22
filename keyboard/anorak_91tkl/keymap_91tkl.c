@@ -59,7 +59,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * |-----------------------------------------------------------|  ,-----------.
  * |Shft|ISO|  Z|  X|  C|  V|  B|  N|  M|  ,|  .|  /|Shift     |  |FN1|Up |FN2|
  * |-----------------------------------------------------------|  ,-----------.
- * |Ctl|Gui|Alt|         Space               |AltGr|FN1|App|Ctl|  |Lef|Dow|Rig|
+ * |Ctl|Gui|Alt|         Space               |AltGr|FN0|App|Ctl|  |Lef|Dow|Rig|
  * `-----------------------------------------------------------'  `-----------'
  */
 

@@ -52,7 +52,9 @@
 #define DATAGRAM_USER_START '!'
 #define DATAGRAM_USER_STOP '\n'
 
-#define MAX_MSG_LENGTH 256
+//.map set {"map":0,"row":1,"cols":[[0,"FFFFFF"],[1,"FFFFFF"],[2,"FFFFFF"],[3,"FFFFFF"],[4,"FFFFFF"],[5,"FFFFFF"],[6,"FFFFFF"],[7,"FFFFFF"],[8,"FFFFFF"],[9,"FFFFFF"],[10,"FFFFFF"],[11,"FFFFFF"],[12,"FFFFFF"],[13,"FFFFFF"],[14,"FFFFFF"],[15,"FFFFFF"],[16,"FFFFFF"]]}
+
+#define MAX_MSG_LENGTH 300
 
 int virtser_printf_P(const char *fmt, ...);
 int virtser_print_P(const char *s);
@@ -336,6 +338,7 @@ bool cmd_user_status_leds_pwm(uint8_t argc, char **argv)
 }
 #endif
 
+#ifdef DEBUG_ISSI
 bool cmd_user_test_issi(uint8_t argc, char **argv)
 {
     bool found = false;
@@ -541,6 +544,7 @@ bool cmd_user_test_issi(uint8_t argc, char **argv)
 
     return found;
 }
+#endif
 
 bool cmd_user_issi(uint8_t argc, char **argv)
 {
@@ -592,6 +596,17 @@ bool cmd_user_issi(uint8_t argc, char **argv)
         vserprintfln(".gcc %u", device->gcc);
         return true;
     }
+
+    if (argc == 2 && strcmp_P(argv[0], PSTR("bri")) == 0)
+	{
+    	uint8_t gcc = atoi(argv[2]);
+    	issi.lower->device->gcc = gcc;
+    	issi.upper->device->gcc = gcc;
+		is31fl3733_update_global_current_control(issi.lower->device);
+		is31fl3733_update_global_current_control(issi.upper->device);
+		vserprintfln(".gcc %u", gcc);
+		return true;
+	}
 
     if (argc == 3 && strcmp_P(argv[0], PSTR("gcc")) == 0)
     {
@@ -1046,7 +1061,7 @@ bool cmd_user_map(uint8_t argc, char **argv)
     if (argc == 2 && strcmp_P(argv[0], PSTR("set")) == 0)
     {
         // map set {...}
-        char const *jsonstring = argv[0];
+        char const *jsonstring = argv[1];
 
         jsmn_parser parser;
         jsmntok_t tokens[60];
@@ -1061,20 +1076,21 @@ bool cmd_user_map(uint8_t argc, char **argv)
 
         if (r < 0)
         {
-            vserprintfln("Failed to parse JSON: %d", r);
+            vserprintfln("parse fail: %d", r);
             return false;
         }
 
         /* Assume the top-level element is an object */
         if (r < 1 || tokens[0].type != JSMN_OBJECT)
         {
-            vserprintfln("Object expected");
+            vserprintfln("Obj expected");
             return false;
         }
 
         uint8_t key_column = 0;
         uint8_t key_row = 0;
         uint8_t selected_map = 0;
+        char hexcolor[3];
         char buf[10];
 
         for (int i = 1; i < r; i++)
@@ -1099,7 +1115,7 @@ bool cmd_user_map(uint8_t argc, char **argv)
                 memset(buf, '\0', 10);
                 strncpy(buf, jsonstring + tokens[i + 1].start, tokens[i + 1].end - tokens[i + 1].start);
                 key_row = atoi(buf);
-                vserprintfln("row: %s %d", buf, key_row);
+                //vserprintfln("row: %s %d", buf, key_row);
                 //free(rowidstr);
 
                 i++;
@@ -1108,7 +1124,7 @@ bool cmd_user_map(uint8_t argc, char **argv)
             {
                 if (tokens[i + 1].type != JSMN_ARRAY)
                 {
-                    vserprintfln("not an array of arrays");
+                    vserprintfln("not array of arrays");
                     return false;
                 }
 
@@ -1120,48 +1136,39 @@ bool cmd_user_map(uint8_t argc, char **argv)
                 for (int j = 0; j < arraysize; j++)
                 {
                     jsmntok_t *g = &tokens[i + j + 2];
-                    vserprintfln(" %d: %.*s", j, g->end - g->start, jsonstring + g->start);
+                    //vserprintfln(" %d: %.*s", j, g->end - g->start, jsonstring + g->start);
 
                     if (g->type != JSMN_ARRAY)
                     {
-                        vserprintfln("not an array");
+                        vserprintfln("not array");
+                        return false;
                     }
 
     				//char *colidstr = strndup(jsonstring + tokens[i + j + 1 + 2].start, tokens[i + j + 1 + 2].end - tokens[i + j + 1 + 2].start);
     				memset(buf, '\0', 10);
     				strncpy(buf, jsonstring + tokens[i + j + 1 + 2].start, tokens[i + j + 1 + 2].end - tokens[i + j + 1 + 2].start);
-    				uint8_t column = atoi(buf);
-    				vserprintfln("col: %s %d", buf, column);
+    				key_column = atoi(buf);
+    				//vserprintfln("col: %s %d", buf, column);
     				//free(colidstr);
 
     				//char *colorstr = strndup(jsonstring + tokens[i + j + 2 + 2].start, tokens[i + j + 2 + 2].end - tokens[i + j + 2 + 2].start);
     				memset(buf, '\0', 10);
 					strncpy(buf, jsonstring + tokens[i + j + 2 + 2].start, tokens[i + j + 2 + 2].end - tokens[i + j + 2 + 2].start);
-    				vserprintfln("color: %s", buf);
+    				//vserprintfln("color: %s", buf);
 
     				if (strlen(buf) != 6)
     				{
-    					vserprintfln("not a color");
+    					vserprintfln("not color");
     					return false;
     				}
 
-    				char hexcolor[3];
-
     				for (int c = 0; c< 3; ++c)
     				{
-    					//char *hexcolor = strndup(colorstr + (c * 2), 2);
-
     					strncpy(hexcolor, buf + (c * 2), 2);
     					hexcolor[2] = '\0';
-
     					rgb.rgb[c] = strtol(hexcolor, 0, 16);
-
     					vserprintfln("color %d: '%s' %d %X", c, hexcolor, rgb.rgb[c], rgb.rgb[c]);
-
-    					//free(hexcolor);
     				}
-
-    				//free(colorstr);
 
                     i += g->size;
 
@@ -1174,12 +1181,14 @@ bool cmd_user_map(uint8_t argc, char **argv)
 
                     if (getLedPosByMatrixKey(key_row, key_column, &dev, &row, &col))
 					{
+                    	vserprintfln("set: %u %u %u %u %u", key_row, key_column, dev, row, col);
+
 						IS31FL3733_RGB *device = DEVICE_BY_NUMBER(issi, dev);
 						is31fl3733_rgb_set_pwm(device, col, row, rgb);
 					}
                     else
                     {
-                    	vserprintfln("not a matrix key");
+                    	vserprintfln("no mx key");
                     }
                 }
 
@@ -1191,11 +1200,14 @@ bool cmd_user_map(uint8_t argc, char **argv)
 
                 memset(buf, '\0', 10);
 				strncpy(buf, jsonstring + tokens[i + 1].start, tokens[i + 1].end - tokens[i + 1].start);
-                vserprintfln("Unexpected key: %s", buf);
+                vserprintfln("???: %s", buf);
 
                 //free(key);
             }
         }
+
+        //TODO: add a "update" command for this
+        is31fl3733_91tkl_update_led_pwm(&issi);
 
         vserprintfln(".map set %u", selected_map);
 
@@ -1216,15 +1228,17 @@ bool cmd_user_map(uint8_t argc, char **argv)
         uint8_t col;
         uint8_t dev;
 
-		for (uint8_t key_col = MATRIX_COLS - 1 ; key_col >= 0; key_col--)
+        // for (int8_t key_col = MATRIX_COLS - 1 ; key_col >= 0; key_col--)
+        for (uint8_t key_col = 0; key_col < MATRIX_COLS; ++key_col)
         {
             if (getLedPosByMatrixKey(selected_map_row, key_col, &dev, &row, &col))
             {
                 IS31FL3733_RGB *device = DEVICE_BY_NUMBER(issi, dev);
                 RGB rgb = is31fl3733_rgb_get_pwm(device, col, row);
                 vserprintf("[%u,\"%X%X%X\"]", key_col, rgb.r, rgb.g, rgb.b);
-                if (key_col > 0)
-                	vserprint(",");
+                //	if (key_col > 0)
+                if (key_col < MATRIX_COLS - 1)
+                    vserprint(",");
             }
         }
         vserprintln("]}");
@@ -1507,8 +1521,8 @@ int virtser_printf(const char *fmt, ...)
 int virtser_printf_P(const char *fmt, ...)
 {
     static char buffer[VIRT_SER_PRINTF_BUFFER_SIZE];
-    static char fbuffer[32];
 
+    static char fbuffer[32];
     strcpy_P(fbuffer, fmt);
 
     int ret;
@@ -1551,7 +1565,7 @@ int virtser_print_P(const char *progmem_s)
     return ret;
 }
 
-void interpret_user_command(uint8_t *buffer, uint8_t length)
+void shell_command(uint8_t *buffer, uint8_t length)
 {
     uint8_t pos = 0;
     char *str = (char *)buffer;
@@ -1670,7 +1684,7 @@ void virtser_recv(uint8_t ucData)
         {
             // dprintf("recv: user stop\n");
             recv_buffer[buffer_pos] = '\0';
-            interpret_user_command(recv_buffer, buffer_pos);
+            shell_command(recv_buffer, buffer_pos);
 
             buffer_pos = 0;
             recv_status = recvStatusIdle;
@@ -1680,9 +1694,7 @@ void virtser_recv(uint8_t ucData)
             // bail out
             buffer_pos = 0;
             recv_status = recvStatusIdle;
-            // print("recv: payload too long\n");
-            vserprintfln(">ERR payload");
-            vserprintfln(">ERR");
+            vserprintfln("payload\n>ERR");
         }
 
         else

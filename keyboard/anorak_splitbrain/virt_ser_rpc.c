@@ -797,7 +797,7 @@ int virtser_print_P(const char *progmem_s)
     return ret;
 }
 
-void interpret_user_command(uint8_t *buffer, uint8_t length)
+void shell_command(uint8_t *buffer, uint8_t length)
 {
     uint8_t pos = 0;
     char *str = (char *)buffer;
@@ -1165,7 +1165,7 @@ void virtser_recv(uint8_t ucData)
         {
             // dprintf("recv: user stop\n");
             recv_buffer[buffer_pos] = '\0';
-            interpret_user_command(recv_buffer, buffer_pos);
+            shell_command(recv_buffer, buffer_pos);
 
             buffer_pos = 0;
             virtser_recv_status = recvStatusIdle;

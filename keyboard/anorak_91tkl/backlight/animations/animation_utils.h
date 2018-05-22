@@ -10,8 +10,8 @@
 extern "C" {
 #endif
 
-#define FPS_TO_DELAY(fps) (1000/fps)
-#define DELAY_TO_FPS(delay) (1000/delay)
+#define FPS_TO_DELAY(fps) (fps ? (1000/fps) : 1)
+#define DELAY_TO_FPS(delay) (delay ? (1000/delay) : 1)
 #define DEVICE_BY_NUMBER(issi, device_number) (device_number ? issi.upper : issi.lower)
 
 struct _animation_interface

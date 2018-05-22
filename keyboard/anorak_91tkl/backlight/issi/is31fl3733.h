@@ -19,6 +19,7 @@ extern "C" {
 #define IS31FL3733_SW (12)
 
 /** Number of used SW lines.
+  *  Only lines 0..8 are used in this project
   */
 #define IS31FL3733_USED_SW (9)
 
@@ -160,7 +161,7 @@ struct IS31FL3733Device
     /// LED matrix enabled.
     uint8_t leds[IS31FL3733_LED_ENABLE_SIZE];
     /// LED matrix brightness.
-    uint8_t pwm[IS31FL3733_LED_PWM_SIZE];
+    uint8_t pwm[IS31FL3733_LED_PWM_USED_SIZE];
     /// LED matrix mask.
     uint8_t mask[IS31FL3733_LED_ENABLE_SIZE];
     /// Pointer to I2C write data to register function.

@@ -1,0 +1,8 @@
+#ifndef KEYBOARD_ANORAK_91TKL_BACKLIGHT_ANIMATIONS_MAP_LED_TO_POINT_POLAR_H_
+#define KEYBOARD_ANORAK_91TKL_BACKLIGHT_ANIMATIONS_MAP_LED_TO_POINT_POLAR_H_
+
+#include <inttypes.h>
+
+void map_led_to_point_polar(uint8_t index, uint8_t *row, uint8_t *col);
+
+#endif /* KEYBOARD_ANORAK_91TKL_BACKLIGHT_ANIMATIONS_MAP_LED_TO_POINT_POLAR_H_ */

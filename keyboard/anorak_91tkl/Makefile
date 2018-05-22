@@ -115,6 +115,8 @@ SRC += \
 	backlight/animations/color_cycle_all.c \
 	backlight/animations/color_cycle_up_down.c \
 	backlight/animations/color_cycle_left_right.c \
+	backlight/animations/color_cycle_radial_1.c \
+	backlight/animations/color_cycle_radial_2.c \
 	backlight/animations/color_wave.c \
 	backlight/animations/raindrops.c \
 	backlight/animations/jellybean_raindrops.c \

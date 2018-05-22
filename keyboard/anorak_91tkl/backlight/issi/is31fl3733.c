@@ -9,6 +9,11 @@
 #include "nodebug.h"
 #endif
 
+//#define ISSI_SLOW_NOQUEUE_I2C
+//#define ISSI_FAST_NOQUEUE_I2C
+//#define ISSI_DECTECT_DEVICE
+
+
 void is31fl3733_write_common_reg(IS31FL3733 *device, uint8_t reg_addr, uint8_t reg_value)
 {
     // Write value to register.
@@ -52,28 +57,33 @@ void is31fl3733_init(IS31FL3733 *device)
 
     memset(device->leds, 0, IS31FL3733_LED_ENABLE_SIZE);
     memset(device->mask, 0, IS31FL3733_LED_ENABLE_SIZE);
-    memset(device->pwm, 0, IS31FL3733_LED_PWM_SIZE);
+    memset(device->pwm, 0, IS31FL3733_LED_PWM_USED_SIZE);
 
     /// Hardware I2C reset (IICRSET)
 	device->pfn_iic_reset();
 	_delay_ms(10);
 
-#ifdef DEBUG_ISSI_SLOW_I2C
+#ifdef ISSI_SLOW_NOQUEUE_I2C
     device->pfn_i2c_read_reg = &i2c_read_reg;
     device->pfn_i2c_read_reg8 = &i2c_read_reg8;
     device->pfn_i2c_write_reg = &i2c_write_reg;
     device->pfn_i2c_write_reg8 = &i2c_write_reg8;
 #else
+#ifdef ISSI_FAST_NOQUEUE_I2C
     device->pfn_i2c_read_reg = &i2c_read_no_errorhandling_reg;
     device->pfn_i2c_read_reg8 = &i2c_read_no_errorhandling_reg8;
 
-    //device->pfn_i2c_write_reg = &i2c_write_no_errorhandling_reg;
-    //device->pfn_i2c_write_reg8 = &i2c_write_no_errorhandling_reg8;
+    device->pfn_i2c_write_reg = &i2c_write_no_errorhandling_reg;
+    device->pfn_i2c_write_reg8 = &i2c_write_no_errorhandling_reg8;
+#else
+    device->pfn_i2c_read_reg = &i2c_read_no_errorhandling_reg;
+    device->pfn_i2c_read_reg8 = &i2c_read_no_errorhandling_reg8;
 
     device->pfn_i2c_write_reg = &i2c_queued_write_reg;
     device->pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
 #endif
 
+#ifdef ISSI_DECTECT_DEVICE
     bool device_present = i2c_detect(device->address);
     dprintf("issi: device at 0x%X: %u\n", device->address, device_present);
 
@@ -86,6 +96,7 @@ void is31fl3733_init(IS31FL3733 *device)
         device->pfn_i2c_read_reg8 = &i2c_dummy_read_reg8;
         device->pfn_i2c_write_reg8 = &i2c_dummy_write_reg8;
     }
+#endif
 
     // clear software reset in configuration register.
     device->cr = IS31FL3733_CR_SSD;
@@ -198,18 +209,12 @@ void is31fl3733_update_led_enable(IS31FL3733 *device)
     // Select IS31FL3733_LEDONOFF register page.
     is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDONOFF));
 
-#if 0
-    // Write LED states.
-    device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDONOFF), device->leds,
-                              sizeof(device->leds));
-#else
     // Write LED states.
     for (uint8_t offset = 0; offset < IS31FL3733_LED_ENABLE_SIZE; offset += IS31FL3733_LED_ENABLE_SIZE / 2)
     {
         device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDONOFF) + offset,
                                   device->leds + offset, IS31FL3733_LED_ENABLE_SIZE / 2);
     }
-#endif
 }
 
 void is31fl3733_update_led_pwm(IS31FL3733 *device)
@@ -219,21 +224,15 @@ void is31fl3733_update_led_pwm(IS31FL3733 *device)
     // Select IS31FL3733_LEDPWM register page.
     is31fl3733_select_page(device, IS31FL3733_GET_PAGE(IS31FL3733_LEDPWM));
 
-#if 0
-    // Write PWM values.
-    device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDPWM), device->pwm,
-    			IS31FL3733_LED_PWM_USED_SIZE);
-#else
     // Write PWM values.
     for (uint8_t offset = 0; offset < IS31FL3733_LED_PWM_USED_SIZE; offset += IS31FL3733_CS)
     {
         device->pfn_i2c_write_reg(device->address, IS31FL3733_GET_ADDR(IS31FL3733_LEDPWM) + offset,
                                   device->pwm + offset, IS31FL3733_CS);
     }
-#endif
 }
 
-#ifdef DEBUG_ISSI
+#ifdef ISSI_ENABLE_DIRECT_WRITE
 void is31fl3733_update_led_pwm_fast(IS31FL3733 *device)
 {
     dprintf("issi: up pwm fast %X\n", device->address);
@@ -387,7 +386,7 @@ void is31fl3733_set_pwm_masked(IS31FL3733 *device, uint8_t cs, uint8_t sw, uint8
 void is31fl3733_fill(IS31FL3733 *device, uint8_t brightness)
 {
 	// Set brightness level of all LED's.
-	memset(device->pwm, brightness, IS31FL3733_LED_PWM_SIZE);
+	memset(device->pwm, brightness, IS31FL3733_LED_PWM_USED_SIZE);
 }
 
 void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness)
@@ -397,7 +396,7 @@ void is31fl3733_fill_masked(IS31FL3733 *device, uint8_t brightness)
     uint8_t mask_bit;
 
     // Set brightness level of all LED's.
-    for (i = 0; i < IS31FL3733_LED_PWM_SIZE; i++)
+    for (i = 0; i < IS31FL3733_LED_PWM_USED_SIZE; i++)
     {
     	offset = i / 8;
         mask_bit = (0x01 << (i % 8));

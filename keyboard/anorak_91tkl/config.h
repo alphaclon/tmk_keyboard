@@ -18,13 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define VENDOR_ID       0x1209
-#define PRODUCT_ID      0xAA91
-#define DEVICE_VER      0x0206
-#define MANUFACTURER    Anorak
-#define PRODUCT         91tkl
-#define DESCRIPTION     t.m.k. keyboard firmware for Anorak 91tkl
-#define SERIALNUMBER    1234
+#define VENDOR_ID 0x1209
+#define PRODUCT_ID 0xAA91
+#define DEVICE_VER 0x0206
+#define MANUFACTURER anorak
+#define PRODUCT 91tkl
+#define DESCRIPTION     t.m.k. keyboard firmware for anorak 91tkl
+#define SERIALNUMBER 1234
 
 // 55438313133351211180
 
@@ -38,14 +38,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define IS_COMMAND() (keyboard_report->mods == (MOD_BIT(KC_LGUI) | MOD_BIT(KC_LCTRL)))
 
 /* period of tapping(ms) */
-#define TAPPING_TERM    300
+#define TAPPING_TERM 300
 /* tap count needed for toggling a feature */
-#define TAPPING_TOGGLE  5
+#define TAPPING_TOGGLE 5
 /* Oneshot timeout(ms) */
 #define ONESHOT_TIMEOUT 300
 
 /* Boot Magic salt key: Space */
-#define BOOTMAGIC_KEY_SALT      KC_SPACE
+#define BOOTMAGIC_KEY_SALT KC_SPACE
 
 /*
  * Feature disable options

@@ -82,6 +82,7 @@ void is31fl3733_init(IS31FL3733 *device)
     device->pfn_i2c_write_reg = &i2c_queued_write_reg;
     device->pfn_i2c_write_reg8 = &i2c_queued_write_reg8;
 #endif
+#endif
 
 #ifdef ISSI_DECTECT_DEVICE
     bool device_present = i2c_detect(device->address);

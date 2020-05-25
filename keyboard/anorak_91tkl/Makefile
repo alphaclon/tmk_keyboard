@@ -54,6 +54,15 @@
 # If flashing fuses fails, try a chip erase:
 #  avrdude -v -c stk500v2 -p usb646 -P /dev/ttySTK500 -B100 -e
 #
+# Flashing firmware using the bootloader:
+# 
+# dfu-programmer at90usb646 get bootloader-version
+# dfu-programmer at90usb646 erase --force
+# dfu-programmer at90usb646 flash anorak_91tkl_lufa.hex
+# dfu-programmer at90usb646 launch --no-reset
+#
+# Virtual Serial Console: Enable RTS and DTR, use LF for input
+#
 # NOTE: Out-of-the-box at90usb works only with external 8MHz crystal!
 # NOTE: Out-of-the-box at90usb works only with external 8MHz crystal!
 # NOTE: Out-of-the-box at90usb works only with external 8MHz crystal!

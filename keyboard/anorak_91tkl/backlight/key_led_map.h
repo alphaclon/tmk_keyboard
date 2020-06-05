@@ -38,6 +38,8 @@ extern "C" {
  * `-----------------------------------------------------------'  `-----------'
  */
 
+// clang-format off
+
 //    0      1     2     3     4     5     6     7     8     9    10    11    12    13    14    15    16
 //    A      B     C     D     E     F     G     H     I     J     K     L     M     N     O     P     Q
 #define KEY_TO_LED_MAP_91TKL( \
@@ -56,8 +58,11 @@ extern "C" {
   {  K0A,  K0B,  K0C,  K0D, NLED, NLED, NLED, NLED, NLED,  K0J,  K0K,  K0L,  K0M, NLED,  K0O,  K0P,  K0Q }  \
 }
 
+// clang-format on
+
 void initLedPosByMatrix(void);
-bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t* device_number, uint8_t *row, uint8_t *col);
+bool getLedPosByMatrixKey(uint8_t key_row, uint8_t key_col, uint8_t *device_number, uint8_t *row, uint8_t *col);
+bool hasLedAtMatrixKey(uint8_t key_row, uint8_t key_col);
 
 #ifdef __cplusplus
 }
